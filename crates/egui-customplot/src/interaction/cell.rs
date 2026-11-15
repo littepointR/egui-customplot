@@ -34,19 +34,21 @@ pub(crate) fn pick_cell(
     diagnostics: &mut PlotDiagnostics,
 ) -> Option<HoveredCell> {
     for (layer_index, layer) in layers.iter().enumerate().rev() {
-        let PlotLayer::Heatmap(heatmap) = *layer else {
-            continue;
+        let (data, colors) = match *layer {
+            PlotLayer::Heatmap(heatmap) => (heatmap.data, heatmap.colors),
+            PlotLayer::CategoricalHeatmap(cat) => (cat.data.grid(), cat.colors),
+            _ => continue,
         };
         if !state.series_visible(layer.id(layer_index)) {
             continue;
         }
         diagnostics.heatmap_pick_queries += 1;
         let transform = transforms.for_axis(layer.y_axis());
-        let Some([column, row]) = grid_cell_at(heatmap.data, transform, position) else {
+        let Some([column, row]) = grid_cell_at(data, transform, position) else {
             continue;
         };
-        let value = heatmap.data.value(column, row).expect("located cell");
-        if heatmap.colors.color(value).is_none() {
+        let value = data.value(column, row).expect("located cell");
+        if colors.color(value).is_none() {
             continue;
         }
         return Some(HoveredCell {
@@ -55,10 +57,7 @@ pub(crate) fn pick_cell(
             column,
             row,
             value,
-            bounds: heatmap
-                .data
-                .cell_bounds(column, row)
-                .expect("validated edges"),
+            bounds: data.cell_bounds(column, row).expect("validated edges"),
             y_axis: transforms.effective_axis(layer.y_axis()),
         });
     }

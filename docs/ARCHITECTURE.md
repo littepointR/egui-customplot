@@ -30,6 +30,12 @@ crates/egui-customplot/
       flow/                   # 二维规则向量场、RK4 streamline/streamslice 与 FeatherData
       spy.rs                  # 1-based CSR 稀疏矩阵模式存储与窗口剔除
       animation.rs            # 有界环形 AnimatedLine2D 与可重放 CometPlayback 游标
+      bar_groups.rs / hist_legacy.rs # 分组 / 堆叠柱预处理与 Pareto / rose / histfit 数据
+      bubble.rs / bivariate.rs # Swarm / Bubble 与 histogram2 / binscatterHex 双变量聚合
+      distribution/           # KDE 核密度与 BoxChart / Violin / Raincloud 分位摘要
+      pie.rs / clouds.rs      # PieChart / DonutChart 与 WordCloud / BubbleCloud 螺旋防重叠布局
+      multivariate/           # Categorical / Parallel / Stacked / ScatterHistogram / PlotMatrix 数据
+      composite.rs            # StackedPlot / ScatterHistogram / PlotMatrix 复合切片与作用域聚合
     model/
       line.rs                 # 折线的借用描述与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -41,8 +47,8 @@ crates/egui-customplot/
       style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
       theme.rs                # 科学浅色 / 监控深色，可共享 palette
       annotation.rs           # 不参与自动范围的基础注解与 Data/Normalized EX-027 图元描述
-      layer/                  # 兼容既有 Series 的有序异构 PlotLayer 与统一样式解析
-      summary/                # 合并预处理范围、身份与跨图元 payload 指针去重
+      layer/                  # 兼容既有 Series 的有序异构 PlotLayer 与统一样式解析（含 stage8c）
+      summary/                # 合并预处理范围、身份与跨图元 payload 指针去重（含 stage8c）
       heatmap.rs / color_scale.rs # 数值单元描述与显式共享色域
       bars.rs / error_bars.rs  # 柱 / 误差棒样式描述，不保存视图
       stems.rs                # 借用点样本的杆、方向 / 基线与 O(1) 范围
@@ -52,6 +58,8 @@ crates/egui-customplot/
       pcolor.rs / image.rs    # Pcolor 伪彩色网格（Flat / Interp）与图像图层模型
       function.rs / triangulation.rs # fplot / fimplicit 与 TriPlot / Voronoi / AlphaShape 图层模型
       flow.rs / spy.rs / animation.rs # Feather / Streamlines、Spy、AnimatedLine / Comet 图层模型
+      bubble_swarm.rs / distribution.rs # Bubble / Swarm / Bivariate 与 Box / Violin / Raincloud 图层模型
+      pie_clouds.rs / multivariate.rs   # Pie / Donut、WordCloud / BubbleCloud 与 ParallelCoords 图层模型
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -65,16 +73,16 @@ crates/egui-customplot/
     layout/
       plot.rs                 # 宿主空间分配、标题 / 轴标签留白
       legend.rs               # egui 图例排布和控件组装
-      figure.rs / color_bar.rs # 有界 cell 网格与色条空间分配
+      figure.rs / color_bar.rs / bubble_legend.rs # 有界 cell 网格、色条与气泡尺寸图例空间分配
     interaction/
       state.rs                # 显式视图、隐藏状态、帧快照、一次性切换
       navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
-      picking.rs / point_aux.rs / point_stage8b.rs # 原始点及 AreaBand/等高线/三角/Voronoi/Spy/动画点拾取
+      picking.rs / point_aux.rs / point_stage8b.rs / point_stage8c.rs # 原始点、Stage 8A/8B 及 Bubble/Swarm 点拾取
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
       link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
       cell.rs / bar.rs        # 原始单元 / 柱拾取
       quiver.rs               # 原始向量（Quiver / Feather）两锚点拾取、记录提示，复用点层距离仲裁
-      region/                 # 面积 / 多边形 / 面片 / 矩形 / 填充等高线 / 伪彩 / 图像 / AlphaShape 命中仲裁
+      region/                 # 面积 / 多边形 / 面片 / 矩形 / 填充等高线 / 伪彩 / 图像 / AlphaShape 与 Stage 8C 区域命中仲裁
       hover.rs                # 填充层遮挡及原始点最近距离仲裁
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
@@ -94,6 +102,8 @@ crates/egui-customplot/
       area.rs / polygon.rs / patch.rs / shapes.rs # 面积、多边形/孔洞、面片与椭圆绘制
       contour.rs / pcolor.rs / image.rs # 等值线/填充等高线、伪彩色节点与像素网格绘制
       triangulation.rs / flow.rs / spy.rs / animation.rs # 三角网/Voronoi/AlphaShape、流线/羽状、CSR Spy 与动画绘制
+      bubble_bivariate.rs / distribution.rs / pie_clouds.rs # 气泡群、双变量分箱、统计分布与饼图/词云绘制
+      multivariate.rs / stage8c.rs # ParallelCoords 与 Stage 8C 图层派发绘制
       right_axis.rs           # 右 Y 刻度与标签
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
@@ -105,6 +115,7 @@ crates/egui-customplot/
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
       response.rs             # 宿主可读取的本遍返回值
       figure/                 # Figure（含图窗级 annotations）与 cell 原生 Ui 接入，样本仍归宿主
+      composite/              # StackedPlot、Pareto / PlotYY 与 ScatterHistogram / PlotMatrix 复合组件
       color_bar.rs / hover.rs # 色条与悬停的阶段组装
   tests/
     support/                  # 无窗口 egui 测试共用驱动
@@ -133,6 +144,9 @@ crates/egui-customplot/
     functions.rs / triangulation_voronoi.rs # 自适应函数/奇点保护、三角剖分/Voronoi/AlphaShape 回归
     flow_spy.rs / animation_annotations.rs  # RK4 流线/Feather、CSR Spy、动画与 EX-027 注解回归
     export_stage8b.rs             # Stage 8B 孔洞像素与多图元/图窗注解 SVG/PNG 导出
+    bars_pareto_hist.rs / bubbles_swarm_bivariate.rs # 分组堆叠柱 / Pareto / Swarm / Bubble / 双变量回归
+    distributions_pie_clouds.rs / multivariate_composite.rs # Box / Violin / Raincloud / Pie / 云图与复合子图回归
+    export_stage8c.rs             # Stage 8C 多变量 / 云图 / 分布混合 SVG/PNG 导出
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -142,6 +156,7 @@ crates/egui-customplot/
     quiver_performance.rs     # 显式向量全区 / 窄区 / 原始拾取 CPU 与局部容量
     polygon_contour_performance.rs # 面积/面片/等高线/填充等高线/pcolor/图像 CPU
     stage8b_performance.rs    # 函数曲线/三角剖分/Voronoi/AlphaShape/流切片/100k Spy CPU
+    stage8c_performance.rs    # 双变量 200k / 分布 50k / 气泡群 5k / 平行坐标 / 云图 / 4x4 散点矩阵 CPU
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -155,6 +170,8 @@ examples/demo/src/
   contours.rs                 # 等高线 / contourf / pcolor / imshow_axes 图像 gallery
   functions.rs                # fplot / fimplicit / ezplot、animatedline / comet 与 EX-027 注解 gallery
   geometry.rs                 # Delaunay / Voronoi / alphaShape、streamslice / feather 与 CSR spy gallery
+  distributions.rs            # 分组堆叠柱、Pareto、Violin / Raincloud、Swarm / Bubble 与双变量 gallery
+  multivariate.rs             # 词云 / 气泡云、平行坐标与 Stacked / ScatterHistogram / PlotMatrix gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

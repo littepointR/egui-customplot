@@ -1,11 +1,14 @@
 use egui::IdSalt;
 
 use crate::{
-    AlphaShape, Area, Bars, Comet, Contours, ErrorBars, Feather, Fill, FilledContours, Heatmap,
-    Line, Patch, Pcolor, PlotData, PlotImage, PolyShape, Quiver, Rectangles, Scatter, Series, Spy,
-    Stems, Streamlines, TriPlot, Voronoi, YAxis,
+    AlphaShape, Area, Bars, BinScatter, BoxChart, BubbleChart, BubbleCloud, CategoricalHeatmap,
+    Comet, Contours, ErrorBars, Feather, Fill, FilledContours, Heatmap, Histogram2, Line,
+    ParallelPlot, Patch, Pcolor, PieChart, PlotData, PlotImage, PolyShape, Quiver, Raincloud,
+    Rectangles, Scatter, Series, Spy, Stems, Streamlines, SwarmChart, TriPlot, ViolinPlot, Voronoi,
+    WordCloud, YAxis,
 };
 
+mod stage8c;
 mod style;
 
 /// Ordered heterogeneous layers. This extends the plotting API without changing
@@ -35,6 +38,18 @@ pub enum PlotLayer<'a> {
     Feather(Feather<'a>),
     Spy(Spy<'a>),
     Comet(Comet<'a>),
+    BubbleChart(BubbleChart<'a>),
+    SwarmChart(SwarmChart<'a>),
+    Histogram2(Histogram2<'a>),
+    BinScatter(BinScatter<'a>),
+    BoxChart(BoxChart<'a>),
+    ViolinPlot(ViolinPlot<'a>),
+    Raincloud(Raincloud<'a>),
+    PieChart(PieChart<'a>),
+    WordCloud(WordCloud<'a>),
+    BubbleCloud(BubbleCloud<'a>),
+    CategoricalHeatmap(CategoricalHeatmap<'a>),
+    ParallelPlot(ParallelPlot<'a>),
 }
 
 impl<'a> From<Series<'a>> for PlotLayer<'a> {
@@ -183,6 +198,18 @@ impl<'a> PlotLayer<'a> {
             Self::Feather(s) => s.name,
             Self::Spy(s) => s.name,
             Self::Comet(s) => s.name,
+            Self::BubbleChart(s) => s.name,
+            Self::SwarmChart(s) => s.name,
+            Self::Histogram2(s) => s.name,
+            Self::BinScatter(s) => s.name,
+            Self::BoxChart(s) => s.name,
+            Self::ViolinPlot(s) => s.name,
+            Self::Raincloud(s) => s.name,
+            Self::PieChart(s) => s.name,
+            Self::WordCloud(s) => s.name,
+            Self::BubbleCloud(s) => s.name,
+            Self::CategoricalHeatmap(s) => s.name,
+            Self::ParallelPlot(s) => s.name,
         }
     }
 
@@ -210,6 +237,18 @@ impl<'a> PlotLayer<'a> {
             Self::Feather(s) => s.y_axis,
             Self::Spy(s) => s.y_axis,
             Self::Comet(s) => s.y_axis,
+            Self::BubbleChart(s) => s.y_axis,
+            Self::SwarmChart(s) => s.y_axis,
+            Self::Histogram2(s) => s.y_axis,
+            Self::BinScatter(s) => s.y_axis,
+            Self::BoxChart(s) => s.y_axis,
+            Self::ViolinPlot(s) => s.y_axis,
+            Self::Raincloud(s) => s.y_axis,
+            Self::PieChart(s) => s.y_axis,
+            Self::WordCloud(s) => s.y_axis,
+            Self::BubbleCloud(s) => s.y_axis,
+            Self::CategoricalHeatmap(s) => s.y_axis,
+            Self::ParallelPlot(s) => s.y_axis,
         }
     }
 

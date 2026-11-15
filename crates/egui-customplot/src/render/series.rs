@@ -197,6 +197,29 @@ pub(crate) fn paint_series(
                 super::animation::paint_comet(&painter, comet, transform, resolved, diagnostics);
                 continue;
             }
+            other @ (PlotLayer::BubbleChart(_)
+            | PlotLayer::SwarmChart(_)
+            | PlotLayer::Histogram2(_)
+            | PlotLayer::BinScatter(_)
+            | PlotLayer::BoxChart(_)
+            | PlotLayer::ViolinPlot(_)
+            | PlotLayer::Raincloud(_)
+            | PlotLayer::PieChart(_)
+            | PlotLayer::WordCloud(_)
+            | PlotLayer::BubbleCloud(_)
+            | PlotLayer::CategoricalHeatmap(_)
+            | PlotLayer::ParallelPlot(_)) => {
+                super::stage8c::paint_stage8c_layer(
+                    &painter,
+                    other,
+                    transform,
+                    resolved,
+                    style.text_color,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                );
+                continue;
+            }
             PlotLayer::Series(s) => s,
         };
         let color = resolved.stroke.color;

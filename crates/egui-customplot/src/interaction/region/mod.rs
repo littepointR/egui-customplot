@@ -9,6 +9,7 @@ use crate::{
 };
 
 mod hit;
+mod stage8c;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RegionKind {
@@ -21,6 +22,14 @@ pub enum RegionKind {
     PcolorCell,
     ImagePixel,
     AlphaShape,
+    Histogram2Bin,
+    BinScatterCell,
+    BoxChart,
+    Violin,
+    Raincloud,
+    PieSlice,
+    WordCloudItem,
+    BubbleCloudItem,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -293,7 +302,15 @@ pub(crate) fn pick_region(
                     },
                 )
             }
-            _ => None,
+            _ => stage8c::pick_stage8c_region(
+                *layer,
+                layer_id,
+                layer_index,
+                transforms.effective_axis(layer.y_axis()),
+                point,
+                p_norm,
+                transform,
+            ),
         };
         if hit.is_some() {
             return hit;

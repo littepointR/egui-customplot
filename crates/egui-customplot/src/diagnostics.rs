@@ -72,6 +72,25 @@ pub struct FlowDiagnostics {
     pub pick_queries: usize,
 }
 
+/// Statistical, categorical, pie/cloud, and bivariate counters (Stage 8C).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct StatDiagnostics {
+    pub input_bubbles: usize,
+    pub output_bubbles: usize,
+    pub input_boxes: usize,
+    pub output_boxes: usize,
+    pub input_violins: usize,
+    pub output_violins: usize,
+    pub input_slices: usize,
+    pub output_slices: usize,
+    pub input_clouds: usize,
+    pub output_clouds: usize,
+    pub input_bins: usize,
+    pub output_bins: usize,
+    pub input_parallel_rows: usize,
+    pub output_parallel_segments: usize,
+}
+
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
@@ -80,6 +99,7 @@ pub struct PlotDiagnostics {
     pub images: ImageDiagnostics,
     pub geometry: GeometryDiagnostics,
     pub flow: FlowDiagnostics,
+    pub stats: StatDiagnostics,
     pub input_quiver_arrows: usize,
     /// Nonfinite origins/vectors or overflowed true endpoints.
     pub invalid_quiver_arrows: usize,

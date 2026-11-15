@@ -1,10 +1,13 @@
 //! Plot allocation/margins and egui legend layout, not data geometry.
 
+mod bubble_legend;
 mod color_bar;
 mod figure;
 mod legend;
 mod plot;
 
+pub use bubble_legend::{BubbleLegend, BubbleLegendResponse};
+pub(crate) use bubble_legend::{bubble_legend_size, bubble_pixel_radius, paint_bubble_legend};
 pub(crate) use color_bar::allocate_color_bar;
 pub use figure::FigureError;
 pub(crate) use figure::FigureLayout;

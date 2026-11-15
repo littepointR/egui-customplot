@@ -187,6 +187,7 @@ impl Plot {
                     title: &self.title,
                     style: &style,
                     show_grid: self.show_grid,
+                    show_frame: self.show_frame,
                 },
             );
             if let Some((axis, t)) = self.right_y_axis.as_ref().zip(right_transform) {
@@ -202,6 +203,24 @@ impl Plot {
                 cache.as_deref_mut(),
             );
             paint_annotations(ui, &self.annotations, transform, &style, &mut diagnostics);
+            if let Some(legend) = &self.bubble_legend {
+                let samples = legend.resolved_samples();
+                if !samples.is_empty() {
+                    let size = crate::layout::bubble_legend_size(legend, &samples);
+                    let r = transform.rect();
+                    if r.width() >= size.x + 12.0 && r.height() >= size.y + 12.0 {
+                        let area =
+                            egui::Rect::from_min_size(r.max - size - egui::vec2(8.0, 8.0), size);
+                        crate::layout::paint_bubble_legend(
+                            ui,
+                            area,
+                            legend,
+                            &samples,
+                            style.text_color,
+                        );
+                    }
+                }
+            }
         }
         let legend_entries = legend_rect.map_or_else(Vec::new, |area| {
             show_legend(ui, state, series, area, self.id_salt, &style)

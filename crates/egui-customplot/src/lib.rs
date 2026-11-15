@@ -41,35 +41,46 @@ mod widget;
 pub use axis::{Axis, AxisScale, AxisTick, BoundsError, PlotBounds, PlotTransform, YAxis};
 pub use data::{
     AlphaShapeData, AnimatedLine2D, AppendReport, AreaBandData, AreaError, AreaStackMode, Bar,
-    BarData, BarOrientation, CometPlayback, ContourBand, ContourData, ContourError, ContourLevels,
-    ContourLine, DataRect, ErrorBar, ErrorBarData, FeatherData, FilledContourData, FlowError,
-    FunctionContourError, FunctionCurveData, FunctionPlotError, FunctionPlotOptions, GridData,
-    GridError, HistogramData, HistogramError, HistogramNormalization, ImageData, ImageError,
-    ImplicitCurveData, ImplicitOptions, LineIndexError, PatchData, PatchError, PlotData, PlotPoint,
-    PlotStream, PolyRegion, PolyShapeData, PolygonData, QuiverArrow, QuiverData, RectData,
-    ScalarField2D, SpyData, SpyError, StreamError, StreamOptions, StreamlineData, TriMesh2D,
-    TriMeshError, VectorField2D, VoronoiData,
+    BarData, BarOrientation, BarSeriesError, BinCell, BinScatterData, BinShape, BivariateError,
+    BivariateNormalization, BoxChartData, BoxSummary, BubbleCloudData, BubbleData, BubbleError,
+    BubblePoint, CategoricalHeatmapData, CloudError, CometPlayback, CompositeError, ContourBand,
+    ContourData, ContourError, ContourLevels, ContourLine, DataRect, ErrorBar, ErrorBarData,
+    FeatherData, FilledContourData, FlowError, FunctionContourError, FunctionCurveData,
+    FunctionPlotError, FunctionPlotOptions, GridData, GridError, Histogram2Data, HistogramData,
+    HistogramError, HistogramNormalization, ImageData, ImageError, ImplicitCurveData,
+    ImplicitOptions, LegacyHistData, LineIndexError, MarginalKind, MultivariateError, PackedBubble,
+    ParallelData, ParallelNormalization, ParetoData, PatchData, PatchError, PieData, PieError,
+    PieSlice, PlacedWord, PlotData, PlotMatrixData, PlotPoint, PlotStream, PolyRegion,
+    PolyShapeData, PolygonData, QuiverArrow, QuiverData, RaincloudData, RaincloudEntry, RectData,
+    ScalarField2D, ScatterHistogramData, SortOrder, SpyData, SpyError, StatError, StreamError,
+    StreamOptions, StreamlineData, SwarmData, SwarmPoint, TableAggregation, TriMesh2D,
+    TriMeshError, VectorField2D, ViolinData, ViolinEntry, ViolinHalf, ViolinOptions, ViolinScale,
+    VoronoiData, WordCloudData,
 };
 pub use diagnostics::{
     ContourDiagnostics, FlowDiagnostics, GeometryDiagnostics, ImageDiagnostics, PatchDiagnostics,
-    PlotDiagnostics,
+    PlotDiagnostics, StatDiagnostics,
 };
 pub use interaction::{
     AxisLink, HoverInfo, HoveredBar, HoveredCell, HoveredPoint, HoveredRegion, HoveredVector,
     LinkError, LinkReport, PlotState, RegionKind, VectorAnchor,
 };
-pub use layout::{FigureError, LegendEntry};
+pub use layout::{BubbleLegend, BubbleLegendResponse, FigureError, LegendEntry};
 pub use model::{
-    AlphaShape, AnimatedLine, Annotation, AnnotationCoord, Area, Bars, ColorMap, ColorScale,
-    ColorScaleError, Comet, Contours, ErrorBars, Feather, Fill, FilledContours, FunctionPlot,
-    Heatmap, ImplicitCurve, Line, LineInterpolation, LinePattern, LineSampling, MarkerShape,
-    MarkerStyle, Patch, PatchColoring, Pcolor, PcolorShading, PlotImage, PlotLayer, PlotStyle,
-    PlotTheme, PolyShape, Quiver, Rectangles, Scatter, Series, SeriesError, SeriesStyle, Spy,
-    StemOrientation, Stems, Streamlines, TriPlot, Voronoi,
+    AlphaShape, AnimatedLine, Annotation, AnnotationCoord, Area, Bars, BinScatter, BoxChart,
+    BubbleChart, BubbleCloud, CategoricalHeatmap, ColorMap, ColorScale, ColorScaleError, Comet,
+    Contours, ErrorBars, Feather, Fill, FilledContours, FunctionPlot, Heatmap, Histogram2,
+    ImplicitCurve, Line, LineInterpolation, LinePattern, LineSampling, MarkerShape, MarkerStyle,
+    ParallelPlot, Patch, PatchColoring, Pcolor, PcolorShading, PieChart, PlotImage, PlotLayer,
+    PlotStyle, PlotTheme, PolyShape, Quiver, Raincloud, Rectangles, Scatter, Series, SeriesError,
+    SeriesStyle, Spy, StemOrientation, Stems, Streamlines, SwarmChart, TriPlot, ViolinPlot,
+    Voronoi, WordCloud,
 };
 pub use render::PlotCache;
 #[cfg(feature = "export")]
 pub use render::{CaptureLimits, ExportError, ExportOptions, PlotSnapshot};
 pub use widget::{
-    ColorBar, ColorBarResponse, Figure, FigureCell, FigureResponse, Plot, PlotResponse,
+    ColorBar, ColorBarResponse, Figure, FigureCell, FigureResponse, ParetoChart, Plot, PlotMatrix,
+    PlotResponse, PlotYy, ScatterHistogram, ScatterHistogramState, StackedPlot,
+    StackedPlotResponse,
 };

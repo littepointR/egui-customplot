@@ -8,6 +8,7 @@ mod navigation;
 mod picking;
 mod point_aux;
 mod point_stage8b;
+mod point_stage8c;
 mod quiver;
 mod region;
 mod secondary;

@@ -7,6 +7,7 @@ pub(crate) struct AxesStyle<'a> {
     pub title: &'a str,
     pub style: &'a ResolvedPlotStyle<'a>,
     pub show_grid: bool,
+    pub show_frame: bool,
 }
 
 pub(crate) fn paint_axes(
@@ -41,7 +42,11 @@ pub(crate) fn paint_axes(
                 };
                 painter.line_segment(segment, stroke);
             }
-            if tick.major {
+            if tick.major
+                && style.axes[axis].visible
+                && style.axes[axis].tick_labels_visible
+                && !tick.label.is_empty()
+            {
                 let (pos, anchor) = if axis == 0 {
                     (
                         egui::pos2(p.x, rect.bottom() + 4.0),
@@ -84,5 +89,7 @@ pub(crate) fn paint_axes(
                 .with_angle_and_anchor(-std::f32::consts::FRAC_PI_2, egui::Align2::CENTER_CENTER),
         );
     }
-    painter.rect_stroke(rect, 0.0, colors.border_stroke, StrokeKind::Inside);
+    if style.show_frame {
+        painter.rect_stroke(rect, 0.0, colors.border_stroke, StrokeKind::Inside);
+    }
 }

@@ -17,7 +17,10 @@ pub struct Axis {
     pub(crate) reversed: bool,
     pub(crate) label: String,
     pub(crate) minor_grid: bool,
+    pub(crate) visible: bool,
+    pub(crate) tick_labels_visible: bool,
     max_ticks: usize,
+    explicit: Option<Vec<(f64, Option<String>)>>,
     formatter: Option<Arc<dyn Fn(f64) -> String + Send + Sync>>,
 }
 
@@ -27,6 +30,8 @@ impl fmt::Debug for Axis {
             .field("scale", &self.scale)
             .field("reversed", &self.reversed)
             .field("label", &self.label)
+            .field("visible", &self.visible)
+            .field("tick_labels_visible", &self.tick_labels_visible)
             .field("max_ticks", &self.max_ticks)
             .finish_non_exhaustive()
     }
@@ -39,7 +44,10 @@ impl Default for Axis {
             reversed: false,
             label: String::new(),
             minor_grid: false,
+            visible: true,
+            tick_labels_visible: true,
             max_ticks: 8,
+            explicit: None,
             formatter: None,
         }
     }
@@ -76,10 +84,66 @@ impl Axis {
 
     /// Ascending data values, independent of axis direction. Bounded work even
     /// for extreme ranges; the caller positions these using PlotTransform.
+    pub fn visible(mut self, visible: bool) -> Self {
+        self.visible = visible;
+        self
+    }
+
+    pub fn tick_labels_visible(mut self, visible: bool) -> Self {
+        self.tick_labels_visible = visible;
+        self
+    }
+
+    /// Sets bounded explicit major ticks; preserves finite positions (at most 1024).
+    pub fn explicit_ticks(mut self, ticks: impl IntoIterator<Item = (f64, String)>) -> Self {
+        let mut list: Vec<(f64, Option<String>)> = ticks
+            .into_iter()
+            .filter(|(value, _)| value.is_finite())
+            .take(1024)
+            .map(|(value, label)| (value, Some(label)))
+            .collect();
+        list.sort_by(|a, b| a.0.total_cmp(&b.0));
+        self.explicit = Some(list);
+        self
+    }
+
+    /// Sets categorical major ticks at 1-based positions `1.0, 2.0, ...` (at most 1024).
+    pub fn categories(self, labels: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        let pairs = labels
+            .into_iter()
+            .take(1024)
+            .enumerate()
+            .map(|(index, label)| (index as f64 + 1.0, label.into()));
+        self.explicit_ticks(pairs)
+    }
+
     pub fn ticks(&self, range: [f64; 2], pixels: f32) -> Vec<AxisTick> {
         let [min, max] = range;
-        if self.scale.forward(min).is_none() || self.scale.forward(max).is_none() || max <= min {
+        if !self.visible
+            || self.scale.forward(min).is_none()
+            || self.scale.forward(max).is_none()
+            || max <= min
+        {
             return Vec::new();
+        }
+        if let Some(explicit) = &self.explicit {
+            return explicit
+                .iter()
+                .filter(|(value, _)| {
+                    *value >= min && *value <= max && self.scale.forward(*value).is_some()
+                })
+                .map(|(value, label)| AxisTick {
+                    value: *value,
+                    major: true,
+                    label: if self.tick_labels_visible {
+                        label
+                            .clone()
+                            .unwrap_or_else(|| format_tick(*value, (max - min).max(1e-9)))
+                    } else {
+                        String::new()
+                    },
+                })
+                .collect();
         }
         let count = ((pixels / 80.0) as usize).clamp(2, self.max_ticks);
         let log_span = if self.scale == AxisScale::Log10 {
@@ -155,10 +219,13 @@ impl Axis {
         ticks.sort_by(|a, b| a.value.total_cmp(&b.value));
         for tick in &mut ticks {
             if tick.major {
-                tick.label = self
-                    .formatter
-                    .as_ref()
-                    .map_or_else(|| format_tick(tick.value, step), |f| f(tick.value));
+                tick.label = if self.tick_labels_visible {
+                    self.formatter
+                        .as_ref()
+                        .map_or_else(|| format_tick(tick.value, step), |f| f(tick.value))
+                } else {
+                    String::new()
+                };
             }
         }
         ticks

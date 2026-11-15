@@ -61,6 +61,16 @@ pub(super) fn pick_point(
                 resolved,
                 diagnostics,
             )
+        })
+        .or_else(|| {
+            super::point_stage8c::pick_stage8c_point(
+                *s,
+                transforms,
+                position,
+                radius,
+                resolved,
+                diagnostics,
+            )
         }) {
             if let Some((point_index, point, distance)) = hit
                 && closest

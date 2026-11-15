@@ -1,6 +1,6 @@
 # 阶段 8：二维类型补全切片
 
-日期：2026-11-16。**阶梯线、茎状图、二维矢量场、Stage 8A（面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像）与 Stage 8B（函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与七类图窗注解）基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
+日期：2026-11-16。**阶梯线、茎状图、二维矢量场、Stage 8A（面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像）、Stage 8B（函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与七类图窗注解）与 Stage 8C（统计分布 / 分组堆叠柱与 Pareto / 气泡群 / 双变量分箱 / 饼图与词云 / 平行坐标与多变量复合子图）基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
 
 ## 阶梯线（ML-003）
 
@@ -207,6 +207,27 @@ use egui_customplot::{AreaBandData, AreaStackMode, ContourData, ContourLevels, C
 
 - **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、交换链呈现、FPS 或进程峰值内存。CSR 行列窗口二分剔除将 `spy_100k_nnz_narrow_2pct` 访问图元数从 `100,000` 降至 `2,010`（合计 p95 由 `19.4777 ms` 降至 `0.1437 ms`），但全区 10 万非零散点标记（`19.4777 ms` p95 / ~36 MiB 几何 capacity）仍超过 16.7 ms 交互预算；5,000 站址 Bowyer-Watson 预处理约 80–82 ms 属宿主单线程同步开销，大规模动态重构或全区百万非零 `spy` 在未引入增量/合并绘制或 GPU 实例化前不宣称实时帧率。
 
+## Stage 8C：统计分布、类别/词云、多变量与复合子图
+
+- **Checklist 覆盖（20 项转为 `开发中`）：** 本切片新增 `17` 项 `ML`（`ML-006`, `ML-015`, `ML-017`, `ML-019`, `ML-022`, `ML-023`, `ML-024`, `ML-025`, `ML-026`, `ML-027`, `ML-028`, `ML-029`, `ML-030`, `ML-031`, `ML-032`, `ML-033`, `ML-038`）与 `3` 项 `LG`（`LG-001`, `LG-003`, `LG-007`），并补齐 `BarData::grouped` / `BarData::stacked`（深化 `ML-034`/`ML-035`）及 `Axis::{categories, explicit_ticks, visible, tick_labels_visible}`；133 项状态由 `46 开发中` 推进至 **66 开发中（44 ML + 16 EX + 6 LG）/ 67 未实现**，无条目宣称完整交付。
+- **核心模块与职责边界：**
+  - `data/`：`bar_groups.rs`、`hist_legacy.rs`（Pareto / rose / histfit 数据）、`bubble.rs`（Swarm / Bubble）、`bivariate.rs`（`histogram2` / `binscatterHex` 双变量聚合）、`distribution/`（KDE 核密度与 Box / Violin / Raincloud 分位摘要）、`pie.rs`（Pie / Donut 扇区）、`clouds.rs`（WordCloud / BubbleCloud 螺旋防重叠布局）、`multivariate/`（类别、ParallelCoords）与 `composite.rs`（Stacked / ScatterHistogram / PlotMatrix 复合数据切片）。
+  - `model/` / `layout/` / `interaction/` / `render/` / `widget/`：新增 `bubble_swarm.rs`、`distribution.rs`、`pie_clouds.rs`、`multivariate.rs`、`layer/stage8c.rs`、`summary/stage8c.rs`、`layout/bubble_legend.rs`、`interaction/{point_stage8c.rs, region/stage8c.rs}`、`render/{bubble_bivariate.rs, distribution.rs, pie_clouds.rs, multivariate.rs, stage8c.rs}` 与 `widget/composite/{mod.rs, stacked.rs, pareto_yy.rs, multivariate.rs}`；诊断层补充 `StatDiagnostics`。
+- **集成测试与预设核验：** 新增 `bars_pareto_hist.rs`（3 项）、`bubbles_swarm_bivariate.rs`（2 项）、`distributions_pie_clouds.rs`（2 项）、`multivariate_composite.rs`（2 项）与 `export_stage8c.rs`（1 项，含无 `<text` 纯矢量轮廓 / PNG 导出验证），以及 demo 预设 `--distributions`（8 单元 `Figure`）与 `--multivariate`（Overview 与 Stacked / ScatterHistogram / PlotMatrix 模式切换）和 2 项 demo 布局测试；`cargo test --workspace --all-features --locked` 合计 **258 项通过**（库单元 38、集成 200、demo 18、rustdoc 2），全 7 项构建 / 测试 / 严格 Clippy 见 [Stage 8C 检查记录](benchmarks/2026-11-16-stage8c-windows-final-checks.txt)。
+- **Windows 原生烟雾测试与 30 秒 CPU 实测：** Release 构建 `customplot-demo.exe`（SHA256 `FF3229E2E322BF6E918815FCEE983C1D52CED5515563CE07C02476B70B6BFBB6`）经 [十二预设 Windows 原生生命周期](benchmarks/2026-11-16-stage8c-windows-gallery-smoke.txt) 验证，含 `--distributions` 与 `--multivariate` 在内的全部 12 个预设均达到 `input_idle=True`、`responsive=true`、`close_requested=True` 且退出码 `0`。`stage8c_performance`（SHA256 `12C274E616B5FF16B4CA8B9DD920138FD2A98AAA116A3AF32B074F371298576C`）在 Windows `i9-14900KF` / `egui 0.37.0` / `plot=1920x1080` 下测得预处理 p50（ms）：`histogram2_200k=2.4132`（`h2_bins=4096`）、`binscatter_hex_200k=2.9089`（`bs_cells=1504`）、`violin_raincloud_50k=2.8672`、`swarm_bubble_5k=0.2220`、`parallel_1k_x_8=0.1690`、`pie_clouds_200=3.2839`、`plotmatrix_4x4=0.1185`；30 秒帧耗时与资源快照（[原始 CSV](benchmarks/2026-11-16-stage8c-windows-cpu.csv)、[环境记录](benchmarks/2026-11-16-stage8c-windows-cpu-environment.txt)、[空 stderr](benchmarks/2026-11-16-stage8c-windows-cpu.stderr.txt)）：
+
+| 场景 | items | frames | UI p95 (ms) | Tess p95 (ms) | 合计 p50 / p95 / p99 (ms) | 输出图元 / meshes | geometry capacity (bytes) | 样本字节 | 访问项 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `histogram2_200k` | 200,000 | 172,798 | 0.2323 | 0.0906 | 0.1388 / 0.3186 / 0.3794 | 4,096 / 2 | 425,984 | 3,200,000 | 4,096 |
+| `binscatter_hex_200k` | 200,000 | 27,723 | 1.2813 | 0.2299 | 0.9413 / 1.4924 / 2.0760 | 1,504 / 2 | 786,432 | 3,200,000 | 1,504 |
+| `violin_raincloud_50k` | 50,000 | 1,678 | 15.4496 | 9.3683 | 15.9146 / 24.4733 / 33.7367 | 4 / 2 | 73,728 | 400,000 | 4 |
+| `swarm_bubble_5k` | 5,000 | 6,528 | 3.2475 | 3.0489 | 4.1964 / 6.2393 / 8.8159 | 5,000 / 2 | 4,718,592 | 100,000 | 5,000 |
+| `parallel_1k_x_8` | 7,000 | 41,853 | 0.2374 | 0.6380 | 0.6204 / 0.8491 / 1.1454 | 7,000 / 2 | 0 | 64,000 | 1,000 |
+| `pie_clouds_200` | 200 | 64,145 | 0.0950 | 0.4520 | 0.3745 / 0.5363 / 0.6896 | 200 / 2 | 154,624 | 6,400 | 200 |
+| `plotmatrix_4x4` | 16,000 | 5,863 | 5.0469 | 4.3139 | 4.0670 / 8.0582 / 10.1948 | 12,048 / 32 | 28,311,552 | 32,000 | 12,000 |
+
+- **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、交换链呈现、FPS 或进程峰值内存。`violin_raincloud_50k` 合计 p95 为 `24.4733 ms`（高于 16.7 ms 交互预算），主因为雨云散点层按每点提交圆点标记几何（25k 雨滴散点在 UI 构造及 tessellation 阶段产生成本）；在未做雨滴合并绘制或显式降采样前，超大样本 Raincloud 不宣称全量实时 60 FPS。
+
 ## 剩余验收
 
-固定硬件门槛、人工及跨平台显示、GPU / 整应用资源、精确阶梯 LOD、杆 / 向量批处理与索引、Quiver 自动缩放 / 全属性和完整 MATLAB 布局兼容仍缺。阶段 8 其余统计、多变量、函数、极坐标、几何、网络类型继续推进；阶段 4 / 6 / 7 遗留验收也不因本切片消失。
+固定硬件门槛、人工及跨平台显示、GPU / 整应用资源、精确阶梯 LOD、杆 / 向量批处理与索引、Quiver 自动缩放 / 全属性和完整 MATLAB 布局兼容仍缺。阶段 8 其余极坐标（Stage 8D）与网络 / 图 / 树类型继续推进；阶段 4 / 6 / 7 / 8A～8C 遗留验收也不因本切片消失。

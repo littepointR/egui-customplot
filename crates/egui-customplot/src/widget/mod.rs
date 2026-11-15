@@ -1,6 +1,7 @@
 //! Public builder and thin per-pass orchestration. Algorithms live in their modules.
 
 mod color_bar;
+mod composite;
 mod figure;
 mod hover;
 mod response;
@@ -15,6 +16,10 @@ use crate::{
     interaction::{HoverFormatter, NavigationOptions},
 };
 pub use color_bar::{ColorBar, ColorBarResponse};
+pub use composite::{
+    ParetoChart, PlotMatrix, PlotYy, ScatterHistogram, ScatterHistogramState, StackedPlot,
+    StackedPlotResponse,
+};
 pub use figure::{Figure, FigureCell, FigureResponse};
 pub use response::PlotResponse;
 
@@ -23,6 +28,7 @@ pub struct Plot {
     id_salt: IdSalt,
     height: f32,
     show_grid: bool,
+    show_frame: bool,
     navigation: NavigationOptions,
     theme: Option<Arc<PlotTheme>>,
     inherited_style: PlotStyle,
@@ -37,6 +43,7 @@ pub struct Plot {
     data_aspect: Option<f64>,
     hover_formatter: Option<Arc<HoverFormatter>>,
     annotations: Arc<[Annotation]>,
+    bubble_legend: Option<crate::BubbleLegend>,
 }
 
 impl Plot {
@@ -45,6 +52,7 @@ impl Plot {
             id_salt: IdSalt::new(id_salt),
             height: 320.0,
             show_grid: true,
+            show_frame: true,
             navigation: NavigationOptions::default(),
             theme: None,
             inherited_style: PlotStyle::default(),
@@ -59,6 +67,7 @@ impl Plot {
             data_aspect: None,
             hover_formatter: None,
             annotations: Arc::from([]),
+            bubble_legend: None,
         }
     }
     pub fn height(mut self, height: f32) -> Self {
@@ -78,6 +87,10 @@ impl Plot {
     }
     pub fn show_grid(mut self, show: bool) -> Self {
         self.show_grid = show;
+        self
+    }
+    pub fn show_frame(mut self, show: bool) -> Self {
+        self.show_frame = show;
         self
     }
     pub fn allow_drag(mut self, allow: bool) -> Self {
@@ -179,6 +192,32 @@ impl Plot {
     pub fn spy_axes(mut self) -> Self {
         self.axes[1].reversed = true;
         self.data_aspect = Some(1.0);
+        self
+    }
+
+    pub fn bubble_legend(mut self, legend: crate::BubbleLegend) -> Self {
+        self.bubble_legend = Some(legend);
+        self
+    }
+
+    /// Configures a clean aspect-1:1 frame-free canvas for pie, donut, word, and bubble clouds.
+    pub fn canvas_axes(mut self) -> Self {
+        self.axes[0] = self.axes[0].clone().visible(false);
+        self.axes[1] = self.axes[1].clone().visible(false);
+        self.show_grid = false;
+        self.show_frame = false;
+        self.data_aspect = Some(1.0);
+        self
+    }
+
+    /// Configures explicit category ticks and top-down row order for [`CategoricalHeatmapData`].
+    pub fn categorical_heatmap_axes(mut self, data: &crate::CategoricalHeatmapData) -> Self {
+        self.axes[0] = self.axes[0].clone().explicit_ticks(data.x_ticks());
+        self.axes[1] = self.axes[1]
+            .clone()
+            .explicit_ticks(data.y_ticks())
+            .reversed(true);
+        self.show_grid = false;
         self
     }
 }

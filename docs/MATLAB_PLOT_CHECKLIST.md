@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：27 项 ML、16 项 EX 与 3 项 LG 共 46 项“开发中”，其余 87 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线 / 茎状图 / 二维矢量场 / 面积多边形等高线图像与函数 / 几何 / 流线 / 稀疏 / 动画 / 图窗注解见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：44 项 ML、16 项 EX 与 6 项 LG 共 66 项“开发中”，其余 67 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线 / 茎状图 / 二维矢量场 / Stage 8A～8C（面积多边形等高线图像、函数 / 几何 / 流线 / 稀疏 / 动画 / 图窗注解、分布 / 气泡群 / 词云 / 多变量与复合子图）见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -40,7 +40,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-003 | 开发中 | [`stairs`](https://ww2.mathworks.cn/help/matlab/ref/stairs.html) | 阶梯图，2D | [阶段 8](STAGE_8.md)：前 / 后阶、非等距 X、原始拾取 / 缓存 / 导出；完整验收未完成 |
 | ML-004 | 开发中 | [`errorbar`](https://ww2.mathworks.cn/help/matlab/ref/errorbar.html) | 误差棒图，2D | 已有独立水平 / 垂直非对称偏移、逻辑点端帽、log / 右轴及原始中心拾取；连接中心线可显式叠加 Line，导出 / 性能 / 完整验收仍缺，见阶段 6 |
 | ML-005 | 开发中 | [`area`](https://ww2.mathworks.cn/help/matlab/ref/area.html) | 面积图 / 堆积面积图，2D | [阶段 8](STAGE_8.md)：`Area`、`AreaBandData::{from_band, stack}`（Cumulative / PosNegSplit）、NaN 断段 / 非线基线交叉、显式 `LineIndex` 区间裁剪与区域 / 上边界原始点拾取；缺动态基准平滑与完整跨平台验收 |
-| ML-006 | 未实现 | [`stackedplot`](https://ww2.mathworks.cn/help/matlab/ref/stackedplot.html) | 共用 X 轴的纵向堆叠图，复合 2D | 各行独立 Y 轴、共享 X、时间数据与联动 |
+| ML-006 | 开发中 | [`stackedplot`](https://ww2.mathworks.cn/help/matlab/ref/stackedplot.html) | 共用 X 轴的纵向堆叠图，复合 2D | [阶段 8](STAGE_8.md)：`StackedPlot` 纵向面板、`Axis::tick_labels_visible` 与 `AxisLink` 同步 X 缩放平移；完整时间轴格式与完整验收仍缺 |
 | ML-007 | 开发中 | [`loglog`](https://ww2.mathworks.cn/help/matlab/ref/loglog.html) | 双对数折线，2D | 已有双 log 轴、非正值断段、导航 / 拾取与测试；导出和完整验收仍缺 |
 | ML-008 | 开发中 | [`semilogx`](https://ww2.mathworks.cn/help/matlab/ref/semilogx.html) | X 对数折线，2D | 已有 X log / Y linear 及正反变换；导出和完整验收仍缺 |
 | ML-009 | 开发中 | [`semilogy`](https://ww2.mathworks.cn/help/matlab/ref/semilogy.html) | Y 对数折线，2D | 已有 X linear / Y log 及正反变换；导出和完整验收仍缺 |
@@ -54,11 +54,11 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | --- | --- | --- | --- | --- |
 | ML-013 | 开发中 | [`scatter`](https://ww2.mathworks.cn/help/matlab/ref/scatter.html) | 散点图，2D | 已有逐点颜色 / 半径、7 种实心标记与拾取；空心样式、大小语义适配、导出及完整验收仍缺 |
 | ML-014 | 未实现 | [`scatter3`](https://ww2.mathworks.cn/help/matlab/ref/scatter3.html) | 散点图，3D | 深度排序 / 测试、三维拾取 |
-| ML-015 | 未实现 | [`bubblechart`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart.html) | 气泡图，2D | 气泡大小映射、大小范围与气泡图例 |
+| ML-015 | 开发中 | [`bubblechart`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart.html) | 气泡图，2D | [阶段 8](STAGE_8.md)：`BubbleData`（面积平方根半径映射）、`BubbleChart` 与 `BubbleLegend` 三档气泡尺寸图例及原始点拾取；完整验收仍缺 |
 | ML-016 | 未实现 | [`bubblechart3`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart3.html) | 气泡图，3D | 大小映射、深度与透明遮挡 |
-| ML-017 | 未实现 | [`swarmchart`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart.html) | 蜂群图，2D | 分类分组、避让布局、稳定可复现 |
+| ML-017 | 开发中 | [`swarmchart`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart.html) | 蜂群图，2D | [阶段 8](STAGE_8.md)：`SwarmData::{new, from_groups}` 确定性核密避让横向抖动与 `SwarmChart` 原始点拾取；分类表适配与完整验收仍缺 |
 | ML-018 | 未实现 | [`swarmchart3`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart3.html) | 蜂群图，3D | 三维分组 / 抖动策略与原数据对应关系 |
-| ML-019 | 未实现 | [`binscatter`](https://ww2.mathworks.cn/help/matlab/ref/binscatter.html) | 分箱散点密度图，2D | 二维分箱、计数映射、箱边界与色条 |
+| ML-019 | 开发中 | [`binscatter`](https://ww2.mathworks.cn/help/matlab/ref/binscatter.html) | 分箱散点密度图，2D | [阶段 8](STAGE_8.md)：`BinScatterData`（矩形 / 六边形二维分箱）、`BinScatter` 与 `HoveredRegion::BinScatterCell`；动态缩放松重分箱与完整验收仍缺 |
 | ML-020 | 开发中 | [`spy`](https://ww2.mathworks.cn/help/matlab/ref/spy.html) | 稀疏矩阵非零模式图，2D | 行列方向、非零定位、大型稀疏输入 |
 
 ### A3. 数据分布与多变量图：13 项
@@ -66,28 +66,28 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | ML-021 | 开发中 | [`histogram`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram.html) | 一维直方图，2D | 已有显式不等宽箱、边界、计数 / 概率 / 密度 / 累积、缺失与越界统计；自动估计器、类别数据、导出 / 完整验收仍缺，见阶段 6 |
-| ML-022 | 未实现 | [`histogram2`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram2.html) | 二维分箱直方图，2D / 3D | 二元分箱、柱体 / 平铺显示、归一化 |
-| ML-023 | 未实现 | [`scatterhistogram`](https://ww2.mathworks.cn/help/matlab/ref/scatterhistogram.html) | 带边缘分布的散点图，复合 2D | 中央散点与边缘直方 / 密度的一致分组 |
-| ML-024 | 未实现 | [`boxchart`](https://ww2.mathworks.cn/help/matlab/ref/boxchart.html) | 箱线图，2D | 四分位数、须、异常值、分组与方向 |
-| ML-025 | 未实现 | [`violinplot`](https://ww2.mathworks.cn/help/matlab/ref/violinplot.html) | 小提琴图，2D | 核密度、带宽、归一化与分组 |
-| ML-026 | 未实现 | [`raincloudplot`](https://ww2.mathworks.cn/help/matlab/ref/raincloudplot.html) | 雨云图，复合 2D | 半小提琴、箱线和原始点的一致统计与布局 |
-| ML-027 | 未实现 | [`piechart`](https://ww2.mathworks.cn/help/matlab/ref/piechart.html) | 饼图，2D | 扇区比例、标签、图例与零 / 非法值规则 |
-| ML-028 | 未实现 | [`donutchart`](https://ww2.mathworks.cn/help/matlab/ref/donutchart.html) | 环形图，2D | 内孔、扇区比例与中心标注布局 |
-| ML-029 | 未实现 | [`wordcloud`](https://ww2.mathworks.cn/help/matlab/ref/wordcloud.html) | 词云，2D | 权重字号、文本避碰、字体和确定性布局 |
-| ML-030 | 未实现 | [`bubblecloud`](https://ww2.mathworks.cn/help/matlab/ref/bubblecloud.html) | 气泡云，2D | 权重大小、圆形打包、标签与拾取 |
-| ML-031 | 未实现 | [`heatmap`](https://ww2.mathworks.cn/help/matlab/ref/heatmap.html) | 热力图，2D | 类别轴、表格聚合、缺失值、排序与色条；区别于 imagesc |
-| ML-032 | 未实现 | [`parallelplot`](https://ww2.mathworks.cn/help/matlab/ref/parallelplot.html) | 平行坐标图，2D | 多轴缩放 / 标准化、分类分组、轴间连线 |
-| ML-033 | 未实现 | [`plotmatrix`](https://ww2.mathworks.cn/help/matlab/ref/plotmatrix.html) | 散点矩阵，复合 2D | 两两变量组合、对角分布与子图标签 |
+| ML-022 | 开发中 | [`histogram2`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram2.html) | 二维分箱直方图，2D / 3D | [阶段 8](STAGE_8.md)：`Histogram2Data`（5 种 `BivariateNormalization`）、`Histogram2` 平铺渲染与 `HoveredRegion::Histogram2Bin`；3D 柱体渲染与完整验收仍缺 |
+| ML-023 | 开发中 | [`scatterhistogram`](https://ww2.mathworks.cn/help/matlab/ref/scatterhistogram.html) | 带边缘分布的散点图，复合 2D | [阶段 8](STAGE_8.md)：`ScatterHistogramData`（分组散点 + 边缘直方/KDE）与 `ScatterHistogram` 双轴同步布局；完整交互过滤与验收仍缺 |
+| ML-024 | 开发中 | [`boxchart`](https://ww2.mathworks.cn/help/matlab/ref/boxchart.html) | 箱线图，2D | [阶段 8](STAGE_8.md)：`BoxChartData`（四分位 / 须 / 异常值）、`BoxChart`（凹槽、均值点）与箱体区域/离群点拾取；横向箱线与完整验收仍缺 |
+| ML-025 | 开发中 | [`violinplot`](https://ww2.mathworks.cn/help/matlab/ref/violinplot.html) | 小提琴图，2D | [阶段 8](STAGE_8.md)：`ViolinData`（Silverman 核密度与超千样本分箱 KDE）、`ViolinScale` / `ViolinHalf` 与 `ViolinPlot`；完整验收仍缺 |
+| ML-026 | 开发中 | [`raincloudplot`](https://ww2.mathworks.cn/help/matlab/ref/raincloudplot.html) | 雨云图，复合 2D | [阶段 8](STAGE_8.md)：`RaincloudData`（半小提琴 + 箱线 + 低差异序列雨滴）与 `Raincloud`；25k+ 大样本标点仍受全量标记绘制开销限制 |
+| ML-027 | 开发中 | [`piechart`](https://ww2.mathworks.cn/help/matlab/ref/piechart.html) | 饼图，2D | [阶段 8](STAGE_8.md)：`PieData`（正值归一化与分离扇区）与 `PieChart` 扇区弧网格 + 标签及 `HoveredRegion::PieSlice`；完整验收仍缺 |
+| ML-028 | 开发中 | [`donutchart`](https://ww2.mathworks.cn/help/matlab/ref/donutchart.html) | 环形图，2D | [阶段 8](STAGE_8.md)：`PieChart::donut` / `inner_ratio` 内环裁剪与扇区拾取；中心总计微组件与完整验收仍缺 |
+| ML-029 | 开发中 | [`wordcloud`](https://ww2.mathworks.cn/help/matlab/ref/wordcloud.html) | 词云，2D | [阶段 8](STAGE_8.md)：`WordCloudData`（阿基米德螺线确定性防重叠布局）、`WordCloud` 与 `HoveredRegion::WordCloudItem`；完整字体度量验收仍缺 |
+| ML-030 | 开发中 | [`bubblecloud`](https://ww2.mathworks.cn/help/matlab/ref/bubblecloud.html) | 气泡云，2D | [阶段 8](STAGE_8.md)：`BubbleCloudData`（确定性无重叠圆打包弛豫）、`BubbleCloud` 与 `HoveredRegion::BubbleCloudItem`；完整验收仍缺 |
+| ML-031 | 开发中 | [`heatmap`](https://ww2.mathworks.cn/help/matlab/ref/heatmap.html) | 热力图，2D | [阶段 8](STAGE_8.md)：`CategoricalHeatmapData::{from_matrix, from_table}`（5 种 `TableAggregation`、排序）、`Plot::categorical_heatmap_axes` 与 `CategoricalHeatmap`；完整缺失项主题及验收仍缺 |
+| ML-032 | 开发中 | [`parallelplot`](https://ww2.mathworks.cn/help/matlab/ref/parallelplot.html) | 平行坐标图，2D | [阶段 8](STAGE_8.md)：`ParallelData`（5 种 `ParallelNormalization` 与分组）、`ParallelPlot` 与交点拾取；轴拖拽重排与完整验收仍缺 |
+| ML-033 | 开发中 | [`plotmatrix`](https://ww2.mathworks.cn/help/matlab/ref/plotmatrix.html) | 散点矩阵，复合 2D | [阶段 8](STAGE_8.md)：`PlotMatrixData`（对称格网与对角直方）、`PlotMatrix` 逐行列 `AxisLink` 联动；大矩阵交互与完整验收仍缺 |
 
 ### A4. 离散数据图：7 项
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-034 | 开发中 | [`bar`](https://ww2.mathworks.cn/help/matlab/ref/bar.html) | 竖向柱状图，2D | 已有独立柱、正负值、数据宽度 / 基线、边框与原始柱拾取；分组 / 堆积、类别、导出 / 完整验收仍缺，见阶段 6 |
-| ML-035 | 开发中 | [`barh`](https://ww2.mathworks.cn/help/matlab/ref/barh.html) | 横向条形图，2D | 已有横向独立柱、双轴 / log / 反向与拾取测试；分组 / 堆积、类别和导出 / 完整验收仍缺，见阶段 6 |
+| ML-034 | 开发中 | [`bar`](https://ww2.mathworks.cn/help/matlab/ref/bar.html) | 竖向柱状图，2D | [阶段 6](STAGE_6.md)/[阶段 8](STAGE_8.md)：已有独立柱、`BarData::{grouped, stacked}` 分组/堆积（正负分离）、`Axis::categories`、边框与原始柱拾取；导出完整视觉/验收仍缺 |
+| ML-035 | 开发中 | [`barh`](https://ww2.mathworks.cn/help/matlab/ref/barh.html) | 横向条形图，2D | [阶段 6](STAGE_6.md)/[阶段 8](STAGE_8.md)：已有横向独立柱、`BarData::{grouped, stacked}` 分组/堆积、`Axis::categories`、双轴/log/反向与拾取；导出完整验收仍缺 |
 | ML-036 | 未实现 | [`bar3`](https://ww2.mathworks.cn/help/matlab/ref/bar3.html) | 柱状图，3D | 柱体布局、分组 / 堆积模式、遮挡与着色 |
 | ML-037 | 未实现 | [`bar3h`](https://ww2.mathworks.cn/help/matlab/ref/bar3h.html) | 横向条形图，3D | 横向柱体布局与深度关系 |
-| ML-038 | 未实现 | [`pareto`](https://ww2.mathworks.cn/help/matlab/ref/pareto.html) | 帕累托图，复合 2D | 降序柱、累计百分比、双刻度与截取规则 |
+| ML-038 | 开发中 | [`pareto`](https://ww2.mathworks.cn/help/matlab/ref/pareto.html) | 帕累托图，复合 2D | [阶段 8](STAGE_8.md)：`ParetoData`（降序排列、累积百分比与阈值/上限截断）与 `ParetoChart` 双 Y 轴展示；完整交互与验收仍缺 |
 | ML-039 | 开发中 | [`stem`](https://ww2.mathworks.cn/help/matlab/ref/stem.html) | 针状图，2D | [阶段 8](STAGE_8.md)：独立杆 / 原始端点、基线 / 方向 / log / 双轴 / 导出；完整验收未完成 |
 | ML-040 | 未实现 | [`stem3`](https://ww2.mathworks.cn/help/matlab/ref/stem3.html) | 针状图，3D | 三维位置、针杆与基面 |
 
@@ -246,13 +246,13 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 接口 | 图类型 / 定位 | 对照与迁移要求 |
 | --- | --- | --- | --- | --- |
-| LG-001 | 未实现 | [`pie`](https://ww2.mathworks.cn/help/matlab/ref/pie.html) | 传统二维饼图 | 与 piechart 关联；验证分离扇区、标签及小于整圆时的行为 |
+| LG-001 | 开发中 | [`pie`](https://ww2.mathworks.cn/help/matlab/ref/pie.html) | 传统二维饼图 | [阶段 8](STAGE_8.md)：通过 `PieData::with_options`（explode/start_angle）+ `PieChart` 验证分离扇区与标签；小于整圆独立切片规则与完整验收仍缺 |
 | LG-002 | 未实现 | [`pie3`](https://ww2.mathworks.cn/help/matlab/ref/pie3.html) | 三维饼图 | 仍有独立视觉效果；扇区厚度、分离、遮挡与相机，不用二维饼图冒充 |
-| LG-003 | 未实现 | [`hist`](https://ww2.mathworks.cn/help/matlab/ref/hist.html) | 旧直方图，官方不推荐 | 映射 histogram；箱中心与箱边界语义差异须测试 |
+| LG-003 | 开发中 | [`hist`](https://ww2.mathworks.cn/help/matlab/ref/hist.html) | 旧直方图，官方不推荐 | [阶段 8](STAGE_8.md)：`LegacyHistData::{new, with_centers}` 验证等宽计数与中心点最近邻语义；完整统计属性与验收仍缺 |
 | LG-004 | 未实现 | [`polar`](https://ww2.mathworks.cn/help/matlab/ref/polar.html) | 旧极坐标折线，官方不推荐 | 映射 polarplot，说明旧笛卡尔模拟轴与真实极坐标轴差异 |
 | LG-005 | 未实现 | [`compass`](https://ww2.mathworks.cn/help/matlab/ref/compass.html) | 旧罗盘图，官方不推荐 | 对照 compassplot，验证复数 / 分量输入适配 |
 | LG-006 | 未实现 | [`rose`](https://ww2.mathworks.cn/help/matlab/ref/rose.html) | 旧角直方图，官方不推荐 | 对照 polarhistogram，不默认视为分箱与归一化完全等价 |
-| LG-007 | 未实现 | [`plotyy`](https://ww2.mathworks.cn/help/matlab/ref/plotyy.html) | 旧双 Y 轴组合，官方不推荐 | 对照显式双 Y 轴模型；左右刻度、图元归属与联动 |
+| LG-007 | 开发中 | [`plotyy`](https://ww2.mathworks.cn/help/matlab/ref/plotyy.html) | 旧双 Y 轴组合，官方不推荐 | [阶段 8](STAGE_8.md)：`PlotYy::{new, lines}` 封装显式左/右轴、双图例与独立缩放联动；完整句柄属性仍缺 |
 | LG-008 | 开发中 | [`ezplot`](https://ww2.mathworks.cn/help/matlab/ref/ezplot.html) | 旧二维函数图，官方不推荐 | 对照 fplot / fimplicit；显式、参数与隐式曲线 |
 | LG-009 | 未实现 | [`ezplot3`](https://ww2.mathworks.cn/help/matlab/ref/ezplot3.html) | 旧三维参数曲线，官方不推荐 | 对照 fplot3 |
 | LG-010 | 未实现 | [`ezpolar`](https://ww2.mathworks.cn/help/matlab/ref/ezpolar.html) | 旧极坐标函数图，官方不推荐 | 对照 fpolarplot |

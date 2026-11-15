@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片与阶段 8A～8B（阶梯线 / 茎状图 / 二维矢量场 / 面积多边形面片 / 等高线伪彩图像 / 函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与图窗注解）基础切片已实现并持续验证，尚非完整绘图库。**
+**当前状态：阶段 4～7 基础切片与阶段 8A～8C（阶梯线 / 茎状图 / 二维矢量场 / 面积多边形面片 / 等高线伪彩图像 / 函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与图窗注解 / 分组堆积柱、箱线小提琴雨云、气泡蜂群、饼环词云、类别热力、平行坐标及帕累托多面板复合图）基础切片已实现并持续验证，尚非完整绘图库。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -23,6 +23,8 @@ cargo run -p customplot-demo --release --locked -- --polygons
 cargo run -p customplot-demo --release --locked -- --contours
 cargo run -p customplot-demo --release --locked -- --functions
 cargo run -p customplot-demo --release --locked -- --geometry
+cargo run -p customplot-demo --release --locked -- --distributions
+cargo run -p customplot-demo --release --locked -- --multivariate
 ```
 
 - 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
@@ -35,6 +37,8 @@ cargo run -p customplot-demo --release --locked -- --geometry
 - `--contours` 展示 `ScalarField2D` 抽取的 `Contours` / `FilledContours`（含 `from_function` / `ezcontour*` 显式求值预算）、`Pcolor`（`Flat` / `Interp`）与 `Plot::imshow_axes()` + `PlotImage`；高密度等值带为纯三角裁剪提交，无后台 GPU 加速。
 - `--functions` 展示 `FunctionPlot` / `ImplicitCurve`（`fplot` / `fimplicit` / `ezplot` 自适应采样、奇点保护与求值预算）、`AnimatedLine` / `Comet` 时变轨迹及 EX-027 图窗归一化 / 数据双坐标系 `Annotation`。
 - `--geometry` 展示 `TriPlot`（Delaunay）、`Voronoi`（视区 ray 裁剪）、`AlphaShape`（可调 α 孔洞与外部边）、`Streamlines`（RK4 `streamslice`）、`Feather` 基线矢量与 `Plot::spy_axes()` CSR 稀疏模式图。
+- `--distributions` 展示分组 / 堆积 `BarData::{grouped, stacked}`、`LegacyHistData`（`hist`）、`BoxChart` + `SwarmChart`、`ViolinPlot`（含半小提琴）、`Raincloud`、`PieChart`（饼/环）、`WordCloud` 与 `BubbleCloud`。
+- `--multivariate` 展示带 `BubbleLegend` 的 `BubbleChart`、`Histogram2`、`BinScatter`（矩形/六边形）、`CategoricalHeatmap`、`ParallelPlot`、`ParetoChart`、`PlotYy`，并可切换 `StackedPlot`、`ScatterHistogram` 与 `PlotMatrix`。
 - Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
 - 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
 - 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
@@ -85,6 +89,7 @@ cargo bench -p egui-customplot --bench stems_performance --locked
 cargo bench -p egui-customplot --bench quiver_performance --locked
 cargo bench -p egui-customplot --bench polygon_contour_performance --locked
 cargo bench -p egui-customplot --bench stage8b_performance --locked
+cargo bench -p egui-customplot --bench stage8c_performance --locked
 cargo run -p egui-customplot --example export_snapshot --features export --release --locked -- target/exports/example
 ```
 
@@ -110,6 +115,6 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 - [egui 集成、性能与资源占用约束](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)：原生嵌入、多遍布局、按需重绘、CPU / GPU 预算与长期验收要求。
 - 推荐推进顺序：最小闭环 → 绘图能力 → 定制能力 → 数据性能 → 按需 GPU 加速 → 导出与发布。
 
-尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、完整类别 / 堆积 / 三维 / 地理能力；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网和全区 10 万非零 `spy` 的 CPU / 几何成本很高，没有静默 LOD 或帧率承诺。MATLAB 清单已有 46 项“开发中”，没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
+尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、完整类别 / 堆积 / 三维 / 地理能力；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网和全区 10 万非零 `spy` 的 CPU / 几何成本很高，没有静默 LOD 或帧率承诺。MATLAB 清单已有 66 项“开发中”，没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
 
 许可证尚未决定，workspace 包均设为 `publish = false`；本项目没有默认授予开源许可。

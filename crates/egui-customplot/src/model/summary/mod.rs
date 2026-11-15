@@ -7,6 +7,7 @@ use crate::{AxisScale, PlotBounds, PlotDiagnostics, PlotLayer, YAxis};
 
 mod layers;
 mod stage8b;
+mod stage8c;
 
 pub(crate) struct SeriesSummary {
     pub bounds: [PlotBounds; 2],

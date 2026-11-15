@@ -23,6 +23,8 @@ pub(super) struct Demo {
     contours: crate::contours::ContourDemo,
     functions: crate::functions::FunctionsDemo,
     geometry: crate::geometry::GeometryDemo,
+    distributions: crate::distributions::DistributionsDemo,
+    multivariate: crate::multivariate::MultivariateDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -43,6 +45,8 @@ impl Default for Demo {
             contours: crate::contours::ContourDemo::default(),
             functions: crate::functions::FunctionsDemo::default(),
             geometry: crate::geometry::GeometryDemo::default(),
+            distributions: crate::distributions::DistributionsDemo::default(),
+            multivariate: crate::multivariate::MultivariateDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -59,6 +63,8 @@ impl Demo {
         demo.contours.enabled = gallery == Some("--contours");
         demo.functions.enabled = gallery == Some("--functions");
         demo.geometry.enabled = gallery == Some("--geometry");
+        demo.distributions.enabled = gallery == Some("--distributions");
+        demo.multivariate.enabled = gallery == Some("--multivariate");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -84,6 +90,8 @@ impl Demo {
                     self.contours.controls(ui);
                     self.functions.controls(ui);
                     self.geometry.controls(ui);
+                    self.distributions.controls(ui);
+                    self.multivariate.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -161,6 +169,12 @@ impl Demo {
         }
         if self.geometry.enabled {
             return self.geometry.show(ui);
+        }
+        if self.distributions.enabled {
+            return self.distributions.show(ui);
+        }
+        if self.multivariate.enabled {
+            return self.multivariate.show(ui);
         }
         self.views.show(
             ui,

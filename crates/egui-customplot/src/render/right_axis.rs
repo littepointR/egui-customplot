@@ -12,10 +12,16 @@ pub(crate) fn paint_right_axis(
     ticks: &[AxisTick],
     style: &ResolvedPlotStyle<'_>,
 ) {
+    if !axis.visible {
+        return;
+    }
     let painter = ui.painter().with_clip_rect(outer);
     let rect = transform.rect();
     let font = egui::TextStyle::Small.resolve(ui.style());
     for tick in ticks.iter().filter(|t| t.major) {
+        if !axis.tick_labels_visible || tick.label.is_empty() {
+            continue;
+        }
         let y = transform
             .position_from_point([transform.bounds().min()[0], tick.value])
             .y;

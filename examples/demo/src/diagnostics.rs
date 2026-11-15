@@ -71,6 +71,32 @@ pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
             d.flow.unique_bytes
         ));
     }
+    if d.stats.input_bubbles != 0
+        || d.stats.input_boxes != 0
+        || d.stats.input_violins != 0
+        || d.stats.input_slices != 0
+        || d.stats.input_clouds != 0
+        || d.stats.input_bins != 0
+        || d.stats.input_parallel_rows != 0
+    {
+        ui.monospace(format!(
+            "stats: bubbles {}/{}, boxes {}/{}, violins {}/{}, slices {}/{}, clouds {}/{}, bins {}/{}, parallel {}/{}",
+            d.stats.output_bubbles,
+            d.stats.input_bubbles,
+            d.stats.output_boxes,
+            d.stats.input_boxes,
+            d.stats.output_violins,
+            d.stats.input_violins,
+            d.stats.output_slices,
+            d.stats.input_slices,
+            d.stats.output_clouds,
+            d.stats.input_clouds,
+            d.stats.output_bins,
+            d.stats.input_bins,
+            d.stats.output_parallel_segments,
+            d.stats.input_parallel_rows,
+        ));
+    }
     if d.input_quiver_arrows != 0 {
         ui.monospace(format!("vectors: {} | visited: {} | shafts / heads: {} / {} | invalid / domain-invalid: {} / {} | raw pick visits: {} | vector payload: {} B",
             d.input_quiver_arrows, d.visited_quiver_arrows, d.output_quiver_shafts, d.output_quiver_heads,

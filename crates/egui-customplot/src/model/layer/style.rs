@@ -30,6 +30,18 @@ pub(super) fn layer_id(layer: PlotLayer<'_>, index: usize) -> IdSalt {
         PlotLayer::Feather(s) => s.id_salt,
         PlotLayer::Spy(s) => s.id_salt,
         PlotLayer::Comet(s) => s.id_salt,
+        PlotLayer::BubbleChart(s) => s.id_salt,
+        PlotLayer::SwarmChart(s) => s.id_salt,
+        PlotLayer::Histogram2(s) => s.id_salt,
+        PlotLayer::BinScatter(s) => s.id_salt,
+        PlotLayer::BoxChart(s) => s.id_salt,
+        PlotLayer::ViolinPlot(s) => s.id_salt,
+        PlotLayer::Raincloud(s) => s.id_salt,
+        PlotLayer::PieChart(s) => s.id_salt,
+        PlotLayer::WordCloud(s) => s.id_salt,
+        PlotLayer::BubbleCloud(s) => s.id_salt,
+        PlotLayer::CategoricalHeatmap(s) => s.id_salt,
+        PlotLayer::ParallelPlot(s) => s.id_salt,
     };
     id_salt.unwrap_or_else(|| {
         if layer.name().is_empty() {
@@ -117,6 +129,18 @@ impl<'a> PlotLayer<'a> {
             Self::Feather(s) => plot.resolve_series(index, s.style),
             Self::Spy(s) => plot.resolve_series(index, s.style),
             Self::Comet(s) => plot.resolve_series(index, s.style),
+            Self::BubbleChart(s) => plot.resolve_series(index, s.style),
+            Self::SwarmChart(s) => plot.resolve_series(index, s.style),
+            Self::Histogram2(_) | Self::BinScatter(_) | Self::CategoricalHeatmap(_) => {
+                plot.resolve_series(index, SeriesStyle::default())
+            }
+            Self::BoxChart(s) => plot.resolve_series(index, s.style),
+            Self::ViolinPlot(s) => plot.resolve_series(index, s.style),
+            Self::Raincloud(s) => plot.resolve_series(index, s.style),
+            Self::PieChart(s) => plot.resolve_series(index, s.style),
+            Self::WordCloud(s) => plot.resolve_series(index, s.style),
+            Self::BubbleCloud(s) => plot.resolve_series(index, s.style),
+            Self::ParallelPlot(s) => plot.resolve_series(index, s.style),
         }
     }
 }

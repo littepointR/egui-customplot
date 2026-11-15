@@ -15,6 +15,7 @@ pub(super) struct SeenPayloads {
     contours: HashSet<(usize, usize)>,
     images: HashSet<(usize, usize)>,
     stage8b: super::stage8b::SeenStage8bPayloads,
+    stage8c: super::stage8c::SeenStage8cPayloads,
 }
 
 pub(super) fn accumulate_layer(
@@ -212,13 +213,22 @@ pub(super) fn accumulate_layer(
             }
             s.data.extent(scales)
         }
-        other => super::stage8b::accumulate_stage8b_layer(
-            other,
+        PlotLayer::TriPlot(_)
+        | PlotLayer::Voronoi(_)
+        | PlotLayer::AlphaShape(_)
+        | PlotLayer::Spy(_)
+        | PlotLayer::Streamlines(_)
+        | PlotLayer::Feather(_)
+        | PlotLayer::Comet(_) => super::stage8b::accumulate_stage8b_layer(
+            layer,
             scales,
             diagnostics,
             &mut seen.stage8b,
             &mut seen.points,
             &mut seen.quivers,
         ),
+        other => {
+            super::stage8c::accumulate_stage8c_layer(other, scales, diagnostics, &mut seen.stage8c)
+        }
     }
 }
