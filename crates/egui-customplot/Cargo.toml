@@ -1,0 +1,21 @@
+[package]
+name = "egui-customplot"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+repository.workspace = true
+description = "An embeddable scientific plotting prototype for egui"
+
+[dependencies]
+egui.workspace = true
+
+[dev-dependencies]
+egui = { workspace = true, features = ["default_fonts"] }
+
+[[bench]]
+name = "frame_baseline"
+harness = false
+
+[lints]
+workspace = true

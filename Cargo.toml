@@ -1,0 +1,21 @@
+[workspace]
+members = ["crates/egui-customplot", "examples/demo"]
+resolver = "3"
+
+[workspace.package]
+version = "0.1.0-dev"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+repository = "https://github.com/littepointR/egui-customplot"
+
+[workspace.dependencies]
+egui = { version = "0.37.0", default-features = false }
+eframe = { version = "0.37.0", default-features = false, features = ["default_fonts", "glow", "x11", "wayland"] }
+egui-customplot = { path = "crates/egui-customplot" }
+
+[workspace.lints.rust]
+unsafe_code = "forbid"
+
+[workspace.lints.clippy]
+all = "warn"
