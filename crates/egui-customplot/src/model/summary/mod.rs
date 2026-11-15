@@ -6,6 +6,7 @@ use self::layers::{SeenPayloads, accumulate_layer};
 use crate::{AxisScale, PlotBounds, PlotDiagnostics, PlotLayer, YAxis};
 
 mod layers;
+mod stage8b;
 
 pub(crate) struct SeriesSummary {
     pub bounds: [PlotBounds; 2],

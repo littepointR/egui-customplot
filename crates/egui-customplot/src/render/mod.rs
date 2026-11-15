@@ -1,5 +1,6 @@
 //! CPU geometry preparation and ordered egui Painter submission.
 
+mod animation;
 mod annotation;
 mod area;
 mod axes;
@@ -10,6 +11,7 @@ mod contour;
 mod error_bars;
 #[cfg(feature = "export")]
 mod export;
+mod flow;
 mod heatmap;
 mod image;
 mod line;
@@ -25,9 +27,11 @@ mod quiver;
 mod right_axis;
 mod series;
 mod shapes;
+mod spy;
 mod stems;
+mod triangulation;
 
-pub(crate) use annotation::paint_annotations;
+pub(crate) use annotation::{paint_annotations, paint_figure_annotations};
 pub(crate) use axes::{AxesStyle, paint_axes};
 pub use cache::PlotCache;
 pub(crate) use color_bar::paint_color_bar;

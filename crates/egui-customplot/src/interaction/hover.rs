@@ -59,7 +59,10 @@ pub(crate) fn pick_hover(
     };
     let point = super::picking::pick_point(state, layers, transforms, options, diagnostics, style);
     let vector = point.as_ref().and_then(|p| match layers[p.series_index] {
-        PlotLayer::Quiver(quiver) => Some(HoveredVector::from_point(p, quiver)),
+        PlotLayer::Quiver(quiver) => Some(HoveredVector::from_quiver_data(p, quiver.data)),
+        PlotLayer::Feather(feather) => {
+            Some(HoveredVector::from_quiver_data(p, feather.data.quiver()))
+        }
         _ => None,
     });
     let (cell, bar, region) = if point.is_some() {

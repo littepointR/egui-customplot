@@ -3,10 +3,8 @@ use std::time::Instant;
 use egui::{Color32, IdSalt, Pos2};
 
 use crate::{
-    PlotDiagnostics, PlotLayer, PlotPoint, PlotState, Series, YAxis,
-    axis::{SeriesTransforms, valid_extent},
-    data::QueryStats,
-    model::{AreaSource, ResolvedPlotStyle, ResolvedSeriesStyle},
+    PlotDiagnostics, PlotLayer, PlotPoint, PlotState, Series, YAxis, axis::SeriesTransforms,
+    data::QueryStats, model::ResolvedPlotStyle, model::ResolvedSeriesStyle,
 };
 
 #[derive(Clone, Debug)]
@@ -45,111 +43,32 @@ pub(super) fn pick_point(
         if !state.series_visible(s.id(series_index)) {
             continue;
         }
-        if let PlotLayer::Quiver(quiver) = *s {
-            let hit = super::quiver::pick_quiver(
-                quiver,
-                transforms.for_axis(quiver.y_axis),
+        let resolved = s.resolved_style(series_index, style);
+        if let Some(hit) = super::point_aux::pick_aux_point(
+            *s,
+            transforms,
+            position,
+            radius,
+            resolved,
+            diagnostics,
+        )
+        .or_else(|| {
+            super::point_stage8b::pick_stage8b_point(
+                *s,
+                transforms,
                 position,
                 radius,
-                s.resolved_style(series_index, style),
+                resolved,
                 diagnostics,
-            );
+            )
+        }) {
             if let Some((point_index, point, distance)) = hit
                 && closest
                     .as_ref()
                     .is_none_or(|p| distance < p.screen_distance)
             {
                 closest = Some(HoveredPoint {
-                    y_axis: transforms.effective_axis(quiver.y_axis),
-                    series_id: s.id(series_index),
-                    series_index,
-                    point_index,
-                    point,
-                    screen_distance: distance,
-                });
-            }
-            continue;
-        }
-        if let PlotLayer::ErrorBars(bars) = *s {
-            let transform = transforms.for_axis(bars.y_axis);
-            let stroke = s.resolved_style(series_index, style).stroke;
-            if !stroke.width.is_finite() || stroke.is_empty() {
-                continue;
-            }
-            for (point_index, &bar) in bars.data.bars().iter().enumerate() {
-                diagnostics.visited_pick_points += 1;
-                let Some((lo, hi)) = bar.extent() else {
-                    continue;
-                };
-                if !bar.has_error() || !valid_extent(lo, hi, transform) {
-                    continue;
-                }
-                let screen = transform.position_from_point(bar.point);
-                if !transform.rect().contains(screen) {
-                    continue;
-                }
-                let distance = screen.distance(position);
-                if distance <= radius
-                    && closest
-                        .as_ref()
-                        .is_none_or(|p| distance < p.screen_distance)
-                {
-                    closest = Some(HoveredPoint {
-                        y_axis: transforms.effective_axis(bars.y_axis),
-                        series_id: s.id(series_index),
-                        series_index,
-                        point_index,
-                        point: bar.point,
-                        screen_distance: distance,
-                    });
-                }
-            }
-            continue;
-        }
-        if let PlotLayer::Area(area) = *s
-            && let AreaSource::Band(band) = area.source
-        {
-            let hit = super::point_aux::pick_area_band(
-                area,
-                band,
-                transforms.for_axis(area.y_axis),
-                position,
-                radius,
-                s.resolved_style(series_index, style),
-                diagnostics,
-            );
-            if let Some((point_index, point, distance)) = hit
-                && closest
-                    .as_ref()
-                    .is_none_or(|p| distance < p.screen_distance)
-            {
-                closest = Some(HoveredPoint {
-                    y_axis: transforms.effective_axis(area.y_axis),
-                    series_id: s.id(series_index),
-                    series_index,
-                    point_index,
-                    point,
-                    screen_distance: distance,
-                });
-            }
-            continue;
-        }
-        if let PlotLayer::Contours(contours) = *s {
-            let hit = super::point_aux::pick_contours(
-                contours,
-                transforms.for_axis(contours.y_axis),
-                position,
-                radius,
-                s.resolved_style(series_index, style),
-                diagnostics,
-            );
-            if let Some((point_index, point, distance)) = hit
-                && closest
-                    .as_ref()
-                    .is_none_or(|p| distance < p.screen_distance)
-            {
-                closest = Some(HoveredPoint {
-                    y_axis: transforms.effective_axis(contours.y_axis),
+                    y_axis: transforms.effective_axis(s.y_axis()),
                     series_id: s.id(series_index),
                     series_index,
                     point_index,
@@ -171,7 +90,6 @@ pub(super) fn pick_point(
         {
             continue;
         }
-        let resolved = s.resolved_style(series_index, style);
         let ranges = if let Some(index) = data.line_index() {
             // A one-point guard conservatively covers f32 projection rounding;
             // the final raw-point distance filter still uses the exact radius.

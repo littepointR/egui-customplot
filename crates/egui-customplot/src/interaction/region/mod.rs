@@ -20,6 +20,7 @@ pub enum RegionKind {
     FilledContour,
     PcolorCell,
     ImagePixel,
+    AlphaShape,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -273,6 +274,24 @@ pub(crate) fn pick_region(
                         )
                     })
                 })
+            }
+            PlotLayer::AlphaShape(alpha) => {
+                diagnostics.geometry.pick_queries += 1;
+                let transient = crate::Patch::new(alpha.data.patch())
+                    .color(resolved.stroke.color)
+                    .border(alpha.border);
+                hit::pick_patch(transient, p_norm, transform, resolved.stroke.color).map(
+                    |(idx, _)| {
+                        base_region(
+                            layer_id,
+                            layer_index,
+                            y_axis,
+                            RegionKind::AlphaShape,
+                            idx,
+                            point,
+                        )
+                    },
+                )
             }
             _ => None,
         };

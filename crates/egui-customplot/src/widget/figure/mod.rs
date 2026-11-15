@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use egui::{AsIdSalt, IdSalt, Response, Ui, UiBuilder, Vec2};
 
-use crate::{FigureError, PlotStyle, PlotTheme, layout::FigureLayout};
+use crate::{Annotation, FigureError, PlotStyle, PlotTheme, layout::FigureLayout};
 pub use cell::FigureCell;
 
 /// An immediate-mode grid container. Samples and each PlotState stay with the
@@ -17,12 +17,15 @@ pub struct Figure {
     spacing: Vec2,
     style: PlotStyle,
     theme: Option<Arc<PlotTheme>>,
+    annotations: Arc<[Annotation]>,
 }
 
 pub struct FigureResponse<R> {
     pub response: Response,
     pub inner: Vec<R>,
     pub cell_rects: Vec<egui::Rect>,
+    pub output_annotations: usize,
+    pub annotation_rejections: usize,
 }
 
 impl Figure {
@@ -34,6 +37,7 @@ impl Figure {
             spacing: egui::vec2(8.0, 8.0),
             style: PlotStyle::default(),
             theme: None,
+            annotations: Arc::from([]),
         }
     }
 
@@ -65,6 +69,12 @@ impl Figure {
     /// A Plot's own theme, if specified, takes precedence over this default.
     pub fn theme(mut self, theme: impl Into<Arc<PlotTheme>>) -> Self {
         self.theme = Some(theme.into());
+        self
+    }
+
+    /// Figure-level normalized `[0, 1]^2` `EX-027` annotations spanning all cells.
+    pub fn annotations(mut self, annotations: impl Into<Arc<[Annotation]>>) -> Self {
+        self.annotations = annotations.into();
         self
     }
 
@@ -117,10 +127,23 @@ impl Figure {
             );
             inner.push(show(&mut cell));
         }
+        let (output_annotations, annotation_rejections) = if self.annotations.is_empty() {
+            (0, 0)
+        } else {
+            let style = crate::model::resolve_plot_style(
+                ui,
+                self.theme.as_deref(),
+                PlotStyle::default(),
+                self.style,
+            );
+            crate::render::paint_figure_annotations(ui, &self.annotations, rect, &style)
+        };
         Ok(FigureResponse {
             response,
             inner,
             cell_rects,
+            output_annotations,
+            annotation_rejections,
         })
     }
 }

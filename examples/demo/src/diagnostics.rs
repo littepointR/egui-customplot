@@ -40,6 +40,37 @@ pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
             d.images.unique_bytes
         ));
     }
+    if d.geometry.input_edges != 0
+        || d.geometry.input_triangles != 0
+        || d.geometry.input_spy_nonzeros != 0
+    {
+        ui.monospace(format!(
+            "geometry: {} tris, {} edges, {} spy nnz | visited: {} | paths / markers / meshes: {} / {} / {} | payload: {} B",
+            d.geometry.input_triangles,
+            d.geometry.input_edges,
+            d.geometry.input_spy_nonzeros,
+            d.geometry.visited_items,
+            d.geometry.output_paths,
+            d.geometry.output_markers,
+            d.geometry.output_meshes,
+            d.geometry.unique_bytes
+        ));
+    }
+    if d.flow.input_streamlines != 0
+        || d.flow.input_feather_vectors != 0
+        || d.flow.input_comet_points != 0
+    {
+        ui.monospace(format!(
+            "flow: {} lines, {} feather, {} comet pts | visited: {} | paths / heads: {} / {} | payload: {} B",
+            d.flow.input_streamlines,
+            d.flow.input_feather_vectors,
+            d.flow.input_comet_points,
+            d.flow.visited_items,
+            d.flow.output_paths,
+            d.flow.output_heads,
+            d.flow.unique_bytes
+        ));
+    }
     if d.input_quiver_arrows != 0 {
         ui.monospace(format!("vectors: {} | visited: {} | shafts / heads: {} / {} | invalid / domain-invalid: {} / {} | raw pick visits: {} | vector payload: {} B",
             d.input_quiver_arrows, d.visited_quiver_arrows, d.output_quiver_shafts, d.output_quiver_heads,

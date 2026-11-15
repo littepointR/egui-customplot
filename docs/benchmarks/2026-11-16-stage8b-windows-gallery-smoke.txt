@@ -1,0 +1,16 @@
+date=2026-11-16T02:22:37.1142802+08:00
+os=Microsoft Windows NT 10.0.26300.0
+executable=D:\littepoint\Documents\WorkingSpace\things\egui-customplot\target\release\customplot-demo.exe
+sha256=276C08F1C459AF3BA5DABBE8F5F8751C901A7EB1A389484A1C21B05A25B5EB29
+Window lifecycle smoke only; not visual correctness, GPU timing or FPS.
+gallery=default; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--scalar; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--statistical; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--stairs; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--stems; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--quiver; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--polygons; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--contours; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--functions; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+gallery=--geometry; input_idle=True; title=egui-customplot | Stage 8; responsive=true; close_requested=True; exit_code=0
+completed=true

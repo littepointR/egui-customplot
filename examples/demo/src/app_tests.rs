@@ -209,6 +209,8 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--quiver"),
         Some("--polygons"),
         Some("--contours"),
+        Some("--functions"),
+        Some("--geometry"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
@@ -259,3 +261,9 @@ mod polygons_tests;
 
 #[path = "contours_tests.rs"]
 mod contours_tests;
+
+#[path = "functions_tests.rs"]
+mod functions_tests;
+
+#[path = "geometry_tests.rs"]
+mod geometry_tests;

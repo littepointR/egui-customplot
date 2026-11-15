@@ -3,7 +3,7 @@ use std::sync::Arc;
 use super::{FunctionContourError, ScalarField2D, polygon::domain_index};
 use crate::{AxisScale, PlotBounds, PlotPoint};
 
-mod extract;
+pub(crate) mod extract;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ContourLevels {
@@ -51,20 +51,18 @@ pub struct ContourData {
 }
 
 impl ContourData {
-    pub fn from_field(field: &ScalarField2D, levels: ContourLevels) -> Result<Self, ContourError> {
-        let levels = extract::resolve_line_levels(field, levels)?;
-        let lines = extract::extract_lines(field, &levels);
+    pub(crate) fn from_raw_lines(levels: Vec<f64>, lines: Vec<ContourLine>) -> Self {
         let mut extents = [None; 4];
         let mut domain_invalid = [0; 4];
         let mut total_bytes = levels.len() * 8;
         for line in &lines {
             total_bytes += line.points.len() * std::mem::size_of::<PlotPoint>();
-            for domain in 0..4 {
+            for (domain, extent) in extents.iter_mut().enumerate() {
                 let scales = super::polygon::domain_scales(domain);
                 let mut valid_any = false;
                 for &p in &line.points {
                     if scales[0].forward(p[0]).is_some() && scales[1].forward(p[1]).is_some() {
-                        merge_point(&mut extents[domain], p);
+                        merge_point(extent, p);
                         valid_any = true;
                     }
                 }
@@ -73,13 +71,19 @@ impl ContourData {
                 }
             }
         }
-        Ok(Self {
+        Self {
             levels: Arc::from(levels),
             lines: Arc::from(lines),
             extents,
             domain_invalid,
             total_bytes,
-        })
+        }
+    }
+
+    pub fn from_field(field: &ScalarField2D, levels: ContourLevels) -> Result<Self, ContourError> {
+        let levels = extract::resolve_line_levels(field, levels)?;
+        let lines = extract::extract_lines(field, &levels);
+        Ok(Self::from_raw_lines(levels, lines))
     }
 
     pub fn from_function(

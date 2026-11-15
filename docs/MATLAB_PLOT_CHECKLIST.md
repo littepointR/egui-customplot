@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：19 项 ML、11 项 EX 与 2 项 LG 共 32 项“开发中”，其余 101 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线 / 茎状图 / 二维矢量场 / 面积多边形等高线与图像见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：27 项 ML、16 项 EX 与 3 项 LG 共 46 项“开发中”，其余 87 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线 / 茎状图 / 二维矢量场 / 面积多边形等高线图像与函数 / 几何 / 流线 / 稀疏 / 动画 / 图窗注解见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -44,9 +44,9 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-007 | 开发中 | [`loglog`](https://ww2.mathworks.cn/help/matlab/ref/loglog.html) | 双对数折线，2D | 已有双 log 轴、非正值断段、导航 / 拾取与测试；导出和完整验收仍缺 |
 | ML-008 | 开发中 | [`semilogx`](https://ww2.mathworks.cn/help/matlab/ref/semilogx.html) | X 对数折线，2D | 已有 X log / Y linear 及正反变换；导出和完整验收仍缺 |
 | ML-009 | 开发中 | [`semilogy`](https://ww2.mathworks.cn/help/matlab/ref/semilogy.html) | Y 对数折线，2D | 已有 X linear / Y log 及正反变换；导出和完整验收仍缺 |
-| ML-010 | 未实现 | [`fplot`](https://ww2.mathworks.cn/help/matlab/ref/fplot.html) | 显式 / 参数函数曲线，2D | 自适应采样、参数曲线、不连续点与预算限制 |
+| ML-010 | 开发中 | [`fplot`](https://ww2.mathworks.cn/help/matlab/ref/fplot.html) | 显式 / 参数函数曲线，2D | 自适应采样、参数曲线、不连续点与预算限制 |
 | ML-011 | 未实现 | [`fplot3`](https://ww2.mathworks.cn/help/matlab/ref/fplot3.html) | 参数函数曲线，3D | 三分量回调、参数区间、采样误差 |
-| ML-012 | 未实现 | [`fimplicit`](https://ww2.mathworks.cn/help/matlab/ref/fimplicit.html) | 隐式曲线，2D | F(x,y)=0、多连通分支与奇异区域 |
+| ML-012 | 开发中 | [`fimplicit`](https://ww2.mathworks.cn/help/matlab/ref/fimplicit.html) | 隐式曲线，2D | F(x,y)=0、多连通分支与奇异区域 |
 
 ### A2. 散点图和气泡图：8 项
 
@@ -59,7 +59,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-017 | 未实现 | [`swarmchart`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart.html) | 蜂群图，2D | 分类分组、避让布局、稳定可复现 |
 | ML-018 | 未实现 | [`swarmchart3`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart3.html) | 蜂群图，3D | 三维分组 / 抖动策略与原数据对应关系 |
 | ML-019 | 未实现 | [`binscatter`](https://ww2.mathworks.cn/help/matlab/ref/binscatter.html) | 分箱散点密度图，2D | 二维分箱、计数映射、箱边界与色条 |
-| ML-020 | 未实现 | [`spy`](https://ww2.mathworks.cn/help/matlab/ref/spy.html) | 稀疏矩阵非零模式图，2D | 行列方向、非零定位、大型稀疏输入 |
+| ML-020 | 开发中 | [`spy`](https://ww2.mathworks.cn/help/matlab/ref/spy.html) | 稀疏矩阵非零模式图，2D | 行列方向、非零定位、大型稀疏输入 |
 
 ### A3. 数据分布与多变量图：13 项
 
@@ -131,7 +131,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | --- | --- | --- | --- | --- |
 | ML-056 | 开发中 | [`quiver`](https://ww2.mathworks.cn/help/matlab/ref/quiver.html) | 箭头向量场，2D | [阶段 8](STAGE_8.md)：显式位移 / 真实端点、逻辑点箭头 / log / 拾取 / 导出；自动缩放与完整验收未完成 |
 | ML-057 | 未实现 | [`quiver3`](https://ww2.mathworks.cn/help/matlab/ref/quiver3.html) | 箭头向量场，3D | 三维方向、尺度、遮挡 |
-| ML-058 | 未实现 | [`feather`](https://ww2.mathworks.cn/help/matlab/ref/feather.html) | 羽状图，2D | 沿基线排列向量、分量与复数输入适配 |
+| ML-058 | 开发中 | [`feather`](https://ww2.mathworks.cn/help/matlab/ref/feather.html) | 羽状图，2D | 沿基线排列向量、分量与复数输入适配 |
 
 流线与流切片在 A10 记录，不重复计数。
 
@@ -156,8 +156,8 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-071 | 未实现 | [`streamline`](https://ww2.mathworks.cn/help/matlab/ref/streamline.html) | 流线，2D / 3D | 起始点、积分方向 / 步长、停止条件与回流 |
-| ML-072 | 未实现 | [`streamslice`](https://ww2.mathworks.cn/help/matlab/ref/streamslice.html) | 流切片，2D / 3D | 平面内向量投影、密度、方向指示 |
+| ML-071 | 开发中 | [`streamline`](https://ww2.mathworks.cn/help/matlab/ref/streamline.html) | 流线，2D / 3D | 起始点、积分方向 / 步长、停止条件与回流 |
+| ML-072 | 开发中 | [`streamslice`](https://ww2.mathworks.cn/help/matlab/ref/streamslice.html) | 流切片，2D / 3D | 平面内向量投影、密度、方向指示 |
 | ML-073 | 未实现 | [`streamparticles`](https://ww2.mathworks.cn/help/matlab/ref/streamparticles.html) | 流粒子动画，时变 3D | 粒子沿流线运动、速度与时间控制 |
 | ML-074 | 未实现 | [`streamribbon`](https://ww2.mathworks.cn/help/matlab/ref/streamribbon.html) | 流带，3D | 带宽、扭转 / 旋度、法线 |
 | ML-075 | 未实现 | [`streamtube`](https://ww2.mathworks.cn/help/matlab/ref/streamtube.html) | 流管，3D | 管径 / 散度映射、网格质量 |
@@ -170,8 +170,8 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-078 | 未实现 | [`animatedline`](https://ww2.mathworks.cn/help/matlab/ref/animatedline.html) | 增量动画曲线，2D / 3D | 批量追加、有界历史、暂停 / 清空与资源复用 |
-| ML-079 | 未实现 | [`comet`](https://ww2.mathworks.cn/help/matlab/ref/comet.html) | 彗星轨迹，时变 2D | 头部、尾迹长度、播放速度与时间一致性 |
+| ML-078 | 开发中 | [`animatedline`](https://ww2.mathworks.cn/help/matlab/ref/animatedline.html) | 增量动画曲线，2D / 3D | 批量追加、有界历史、暂停 / 清空与资源复用 |
+| ML-079 | 开发中 | [`comet`](https://ww2.mathworks.cn/help/matlab/ref/comet.html) | 彗星轨迹，时变 2D | 头部、尾迹长度、播放速度与时间一致性 |
 | ML-080 | 未实现 | [`comet3`](https://ww2.mathworks.cn/help/matlab/ref/comet3.html) | 彗星轨迹，时变 3D | 三维轨迹、尾迹和相机交互 |
 
 ### A12. 图像：2 项
@@ -199,13 +199,13 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | EX-008 | 未实现 | [`sphere`](https://ww2.mathworks.cn/help/matlab/ref/sphere.html) | 球面 | 无输出绘制用法、网格分辨率与极点 |
 | EX-009 | 未实现 | [`cylinder`](https://ww2.mathworks.cn/help/matlab/ref/cylinder.html) | 圆柱 / 旋转曲面 | 无输出绘制用法、半径轮廓及接缝 |
 | EX-010 | 未实现 | [`ellipsoid`](https://ww2.mathworks.cn/help/matlab/ref/ellipsoid.html) | 椭球面 | 中心、三轴半径、网格分辨率 |
-| EX-011 | 未实现 | [`triplot`](https://ww2.mathworks.cn/help/matlab/ref/triplot.html) | 二维三角剖分线图 | 顶点 / 索引输入、边去重与裁剪 |
-| EX-012 | 未实现 | [`trimesh`](https://ww2.mathworks.cn/help/matlab/ref/trimesh.html) | 三角网格线框，2D / 3D | 非规则网格、着色与隐藏线 |
+| EX-011 | 开发中 | [`triplot`](https://ww2.mathworks.cn/help/matlab/ref/triplot.html) | 二维三角剖分线图 | 顶点 / 索引输入、边去重与裁剪 |
+| EX-012 | 开发中 | [`trimesh`](https://ww2.mathworks.cn/help/matlab/ref/trimesh.html) | 三角网格线框，2D / 3D | 非规则网格、着色与隐藏线 |
 | EX-013 | 未实现 | [`trisurf`](https://ww2.mathworks.cn/help/matlab/ref/trisurf.html) | 三角曲面，3D | 连接关系、法线、面色与拾取 |
 | EX-014 | 未实现 | [`tetramesh`](https://ww2.mathworks.cn/help/matlab/ref/tetramesh.html) | 四面体网格，3D | 单元面、内部面 / 透明策略与索引 |
-| EX-015 | 未实现 | [`voronoi`](https://ww2.mathworks.cn/help/matlab/ref/voronoi.html) | 二维 Voronoi 图 | 有界边、视区裁剪、重复 / 退化点策略 |
+| EX-015 | 开发中 | [`voronoi`](https://ww2.mathworks.cn/help/matlab/ref/voronoi.html) | 二维 Voronoi 图 | 有界边、视区裁剪、重复 / 退化点策略 |
 | EX-016 | 开发中 | [`plot(polyshape)`](https://ww2.mathworks.cn/help/matlab/ref/polyshape.plot.html) | 多区域 / 带孔多边形 | [阶段 8](STAGE_8.md)：`PolyRegion::{new, hole}`、`PolyShapeData`（Eberly 孔洞桥接 + 四域耳切）与 `PolyShape`，孔洞不阻断穿透且矢量 SVG / PNG 一致；布尔并交差运算仍缺 |
-| EX-017 | 未实现 | [`plot(alphaShape)`](https://ww2.mathworks.cn/help/matlab/ref/alphashape.plot.html) | 二维 / 三维 alpha 形状 | 边界与区域渲染；几何生成算法单独说明 |
+| EX-017 | 开发中 | [`plot(alphaShape)`](https://ww2.mathworks.cn/help/matlab/ref/alphashape.plot.html) | 二维 / 三维 alpha 形状 | 边界与区域渲染；几何生成算法单独说明 |
 
 ### B2. 图网络与树：5 项
 
@@ -230,7 +230,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 绘制能力 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | EX-026 | 开发中 | [`text`](https://ww2.mathworks.cn/help/matlab/ref/text.html) | 2D / 3D 数据文本 | 已有二维坐标锚定、对齐、继承文字色和父裁剪；旋转 / 字体独立配置、三维、导出及完整验收仍缺，见阶段 3 |
-| EX-027 | 未实现 | [`annotation`](https://ww2.mathworks.cn/help/matlab/ref/annotation.html) | 图窗注解图元 | line、arrow、doublearrow、textarrow、textbox、rectangle、ellipse 七种；图窗 / 数据坐标分离 |
+| EX-027 | 开发中 | [`annotation`](https://ww2.mathworks.cn/help/matlab/ref/annotation.html) | 图窗注解图元 | line、arrow、doublearrow、textarrow、textbox、rectangle、ellipse 七种；图窗 / 数据坐标分离 |
 | EX-028 | 开发中 | [`xline`](https://ww2.mathworks.cn/help/matlab/ref/xline.html) | 竖直常量参考线 | 已有多条线、标签、对数 / 反向坐标和裁剪；图例、导出及完整验收仍缺 |
 | EX-029 | 开发中 | [`yline`](https://ww2.mathworks.cn/help/matlab/ref/yline.html) | 水平常量参考线 | 已有多条线、标签、对数 / 反向坐标和裁剪；图例、导出及完整验收仍缺 |
 | EX-030 | 开发中 | [`xregion`](https://ww2.mathworks.cn/help/matlab/ref/xregion.html) | X 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
@@ -253,7 +253,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | LG-005 | 未实现 | [`compass`](https://ww2.mathworks.cn/help/matlab/ref/compass.html) | 旧罗盘图，官方不推荐 | 对照 compassplot，验证复数 / 分量输入适配 |
 | LG-006 | 未实现 | [`rose`](https://ww2.mathworks.cn/help/matlab/ref/rose.html) | 旧角直方图，官方不推荐 | 对照 polarhistogram，不默认视为分箱与归一化完全等价 |
 | LG-007 | 未实现 | [`plotyy`](https://ww2.mathworks.cn/help/matlab/ref/plotyy.html) | 旧双 Y 轴组合，官方不推荐 | 对照显式双 Y 轴模型；左右刻度、图元归属与联动 |
-| LG-008 | 未实现 | [`ezplot`](https://ww2.mathworks.cn/help/matlab/ref/ezplot.html) | 旧二维函数图，官方不推荐 | 对照 fplot / fimplicit；显式、参数与隐式曲线 |
+| LG-008 | 开发中 | [`ezplot`](https://ww2.mathworks.cn/help/matlab/ref/ezplot.html) | 旧二维函数图，官方不推荐 | 对照 fplot / fimplicit；显式、参数与隐式曲线 |
 | LG-009 | 未实现 | [`ezplot3`](https://ww2.mathworks.cn/help/matlab/ref/ezplot3.html) | 旧三维参数曲线，官方不推荐 | 对照 fplot3 |
 | LG-010 | 未实现 | [`ezpolar`](https://ww2.mathworks.cn/help/matlab/ref/ezpolar.html) | 旧极坐标函数图，官方不推荐 | 对照 fpolarplot |
 | LG-011 | 开发中 | [`ezcontour`](https://ww2.mathworks.cn/help/matlab/ref/ezcontour.html) | 旧函数等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`ContourData::ezcontour` 默认 `[-2π, 2π]^2` 定义域与 `max_evaluations` 预算限制（非字符串表达式解释器） |

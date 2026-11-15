@@ -1,7 +1,7 @@
 use egui::{IdSalt, Pos2};
 
 use crate::{
-    HoveredPoint, PlotDiagnostics, PlotPoint, PlotTransform, Quiver, QuiverArrow, YAxis,
+    HoveredPoint, PlotPoint, PlotTransform, QuiverArrow, QuiverData, YAxis,
     axis::project_vector_segment, model::ResolvedSeriesStyle,
 };
 
@@ -38,8 +38,8 @@ impl HoveredVector {
             self.anchor,
         )
     }
-    pub(super) fn from_point(point: &HoveredPoint, quiver: Quiver<'_>) -> Self {
-        let arrow = quiver.data.arrows()[point.point_index];
+    pub(super) fn from_quiver_data(point: &HoveredPoint, data: &QuiverData) -> Self {
+        let arrow = data.arrows()[point.point_index];
         Self {
             layer_id: point.series_id,
             layer_index: point.series_index,
@@ -58,22 +58,22 @@ impl HoveredVector {
 }
 
 /// No shaft/wing/intersection picking, no reduced data or hidden point index.
-/// Return (raw index, anchor, distance); the shared picker owns layer tie rules.
-pub(super) fn pick_quiver(
-    quiver: Quiver<'_>,
+/// Returns `(best_hit, visited_count)` so Quiver and Feather track their domain counters cleanly.
+pub(super) fn pick_quiver_data(
+    data: &QuiverData,
     transform: PlotTransform,
     position: Pos2,
     radius: f32,
     style: ResolvedSeriesStyle,
-    diagnostics: &mut PlotDiagnostics,
-) -> Option<(usize, PlotPoint, f32)> {
+) -> (Option<(usize, PlotPoint, f32)>, usize) {
     if !style.stroke.width.is_finite() || style.stroke.is_empty() || !style.pattern.is_valid() {
-        return None;
+        return (None, 0);
     }
+    let mut visited = 0usize;
     let mut closest = None;
     let mut limit = radius;
-    for (index, &arrow) in quiver.data.arrows().iter().enumerate() {
-        diagnostics.visited_pick_quiver_arrows += 1;
+    for (index, &arrow) in data.arrows().iter().enumerate() {
+        visited += 1;
         let Some(end) = arrow.endpoint() else {
             continue;
         };
@@ -97,5 +97,5 @@ pub(super) fn pick_quiver(
             }
         }
     }
-    closest
+    (closest, visited)
 }

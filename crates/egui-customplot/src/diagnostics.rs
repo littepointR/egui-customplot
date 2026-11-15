@@ -43,12 +43,43 @@ pub struct ImageDiagnostics {
     pub pick_queries: usize,
 }
 
+/// Per-show-pass counters for triangulation, Voronoi, alphaShape and spy layers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct GeometryDiagnostics {
+    pub input_edges: usize,
+    pub input_triangles: usize,
+    pub input_spy_nonzeros: usize,
+    pub domain_invalid_items: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub output_paths: usize,
+    pub output_meshes: usize,
+    pub output_markers: usize,
+    pub pick_queries: usize,
+}
+
+/// Per-show-pass counters for streamline, streamslice, feather and comet layers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct FlowDiagnostics {
+    pub input_streamlines: usize,
+    pub input_feather_vectors: usize,
+    pub input_comet_points: usize,
+    pub domain_invalid_items: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub output_paths: usize,
+    pub output_heads: usize,
+    pub pick_queries: usize,
+}
+
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
     pub patches: PatchDiagnostics,
     pub contours: ContourDiagnostics,
     pub images: ImageDiagnostics,
+    pub geometry: GeometryDiagnostics,
+    pub flow: FlowDiagnostics,
     pub input_quiver_arrows: usize,
     /// Nonfinite origins/vectors or overflowed true endpoints.
     pub invalid_quiver_arrows: usize,

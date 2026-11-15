@@ -1,6 +1,6 @@
 # 阶段 8：二维类型补全切片
 
-日期：2026-11-16。**阶梯线、茎状图、二维矢量场与 Stage 8A（面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像）基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
+日期：2026-11-16。**阶梯线、茎状图、二维矢量场、Stage 8A（面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像）与 Stage 8B（函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与七类图窗注解）基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
 
 ## 阶梯线（ML-003）
 
@@ -172,6 +172,40 @@ use egui_customplot::{AreaBandData, AreaStackMode, ContourData, ContourLevels, C
 | `image_256x256_rgba` | 256×256 `ImageData::rgba8`（65,536 像素） | 2.6010 | 3.9874 | **6.3668** | 6,815,744 | 266,256 |
 
 - **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、呈现等待、FPS 或进程峰值内存。`area_100k_full`（37.1 ms）与 `contourf_256x256_12levels`（57.4 ms）因提交十万至三十余万级精确三角，已超出 16.7 ms 交互预算；在后续阶段引入多边形简化 / 等值带抽取合并或可选 GPU 路径前，不宣称大规模全视区 `area` / `contourf` 的实时帧率。
+
+## Stage 8B：函数曲线、三角剖分 / Voronoi / AlphaShape、二维流线、稀疏矩阵、动画与图窗注解
+
+本次切片落地 14 项 MATLAB 二维与图窗能力：`ML-010`（`fplot`）、`ML-012`（`fimplicit`）、`LG-008`（`ezplot`）、`EX-011`（`triplot`）、`EX-012`（`trimesh` 二维）、`EX-015`（`voronoi`）、`EX-017`（`plot(alphaShape)` 二维）、`ML-058`（`feather`）、`ML-071`（`streamline` 二维）、`ML-072`（`streamslice` 二维）、`ML-020`（`spy`）、`ML-078`（`animatedline` 二维）、`ML-079`（`comet` 二维）与 `EX-027`（`annotation` 七种图元及 `Figure::annotations`）。各图元模型、宿主预处理数据与共享层组装继续遵循 `data / model / axis / layout / interaction / render / widget` 分域边界：
+
+- **自适应函数与奇点守卫（`fplot` / `fimplicit` / `ezplot`）：** `FunctionCurveData` 为显式与参数曲线提供递归曲率自适应采样、分段 `NaN` 断段拆分与显式 `max_evaluations` 预算上限；`ImplicitCurveData` 在四叉树细分后执行三角形角点割线残差极点守卫，抑制 `1/(x-y)` 等奇异符号翻转穿透为伪等值线；`ezplot_explicit` / `ezplot_parametric` / `ezplot_implicit` 默认对应 `[-2π, 2π]`，并保持同一评估上限语义。
+- **二维几何与区域/点拾取边界（`triplot` / `trimesh` / `voronoi` / `alphaShape`）：** `TriMesh2D` 使用 Bowyer-Watson 二维 Delaunay 剖分并按无向边 `(u < v)` 去重，支持 `TriPlot` 线框与顶点标量 Gouraud 网格渲染（复用 `Patch` 在 SVG 下触发内嵌 PNG 栅格回退）；`VoronoiData` 裁剪无限射线至显式边界并按点距离拾取站址；`AlphaShapeData` 按圆盘半径滤除三角并导出带孔边界环，`AlphaShape` 经 `HoveredRegion` 跳过空洞仅在实体区域命中。
+- **二维流线与基线向量（`streamline` / `streamslice` / `feather`）：** `VectorField2D` 提供均匀规则场双线性采样，`StreamlineData::from_seeds` 与 `streamslice` 执行定步长四阶 Runge-Kutta（RK4）积分、`max_steps` 停止统计及流向箭头放置；`FeatherData`（支持分量、`from_complex` 与 `from_polar`）复用 `quiver` 两锚点向量拾取返回 `HoveredVector`。
+- **CSR 稀疏模式与动画播放（`spy` / `animatedline` / `comet`）：** `SpyData` 存储 1-based 行列 CSR 结构并在 `visit_window` 按可见行列范围二分剔除；`Plot::spy_axes()` 配置向下递增矩阵 Y 轴与 `1:1` 等比例（注意窄 Y 窗口下 `fit_aspect` 仍会按矩形宽高比扩展短轴）。`AnimatedLine2D` 使用固定容量有界环形缓存并按批次 ID 幂等追加；`CometPlayback` 仅保存非拥有播放游标，经原始点层参与拾取与缩放。
+- **EX-027 七类图窗与数据坐标系注解：** `Annotation` 与 `AnnotationCoord`（`Data` / `Normalized`）统一表达 `line`、`arrow`、`doublearrow`、`textarrow`、`textbox`、`rectangle` 与 `ellipse` 七类图元；既可挂接单个 `Plot::annotations`，也可经 `Figure::annotations` 绘制在整张图窗归一化 `[0,1]^2` 空间且不污染各子图自动范围，导出 PNG 与混合 SVG 时保持裁剪与字体 atlas 一致。
+
+### Stage 8B 正确性与生命周期证据
+
+- 新增库单元 3 项（Bowyer-Watson 空外接圆与去重、Voronoi 共线/重复站址、Stage 8B 边界）、集成 15 项：`tests/functions.rs`（4 项）、`tests/triangulation_voronoi.rs`（3 项）、`tests/flow_spy.rs`（3 项）、`tests/animation_annotations.rs`（3 项）、`tests/export_stage8b.rs`（2 项，含无字体 `roxmltree` / `resvg` 像素验证 AlphaShape 孔洞透空与七类 `Annotation` 导出），以及 demo `--functions` / `--geometry` 多遍幂等测试 2 项。
+- 统一 `--all-features` **246 项通过**（库单元 38、集成 190、demo 16、rustdoc 2，0 失败 / 0 忽略），`fmt`、默认 workspace 测试、无默认 feature 检查、默认与 `--all-features` 严格 Clippy、Release demo 构建全部通过，见 [Stage 8B 最终 7 项检查记录](benchmarks/2026-11-16-stage8b-windows-final-checks.txt)。
+- [十预设 Windows 原生窗口生命周期记录](benchmarks/2026-11-16-stage8b-windows-gallery-smoke.txt)（`default`、`--scalar`、`--statistical`、`--stairs`、`--stems`、`--quiver`、`--polygons`、`--contours`、`--functions`、`--geometry`）全部启动、空闲响应并正常关闭（退出码 0），Release `customplot-demo.exe` SHA256 核对一致为 `276C08F1C459AF3BA5DABBE8F5F8751C901A7EB1A389484A1C21B05A25B5EB29`。生命周期脚本不代表人工视觉对比、GPU 性能或跨平台实机验收。
+
+### Stage 8B CPU 基准测量
+
+`stage8b_performance`（binary SHA256 `3D62529571CFF3C5DEB44E5A4C13460C1B358A785C6E791F2FC8FD94D65DAA6B`）对 7 项预处理测 5 次中位耗时（p50），并对 7 个渲染 + tessellation 场景各预热 5 帧并采集 30 秒，固定 1920×1080 逻辑绘图区、DPI=1、`show_grid=false`、`show_hover=false`，共享 i9-14900KF / Windows 10.0.26300 / Rust 1.100.0 环境；退出码 0、stderr 为空。[环境记录](benchmarks/2026-11-16-stage8b-windows-cpu-environment.txt)、[原始 CSV](benchmarks/2026-11-16-stage8b-windows-cpu.csv)、[stderr](benchmarks/2026-11-16-stage8b-windows-cpu.stderr.txt) 独立保存。
+
+- **预处理中位耗时（5 次运行 p50 ms）：** `fplot_chirp` = **0.0604 ms**（2,069 点）；`fimplicit_cassini` = **1.0866 ms**（29 条分支）；`delaunay_5k` = **80.1738 ms**（14,942 边）；`voronoi_5k` = **82.3768 ms**（14,880 边）；`alphashape_5k` = **81.8513 ms**（9,801 面片）；`streamslice_128x128` = **0.9826 ms**（32 流线 / 96 箭头）；`spy_100k_nnz` = **0.5018 ms**（100,000 非零）。
+
+| 场景 | 输入规模 | CPU UI p95 ms | Tess p95 ms | 合计 p95 ms | 几何 Capacity B | 样本 Payload B | 访问图元数 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `fplot_adaptive_chirp` | 2,069 点 chirp 曲线 | 0.0423 | 0.0361 | **0.0791** | 19,904 | 33,104 | 2,068 |
+| `fimplicit_cassini_branches` | 29 条 Cassini 隐式分支 | 0.0598 | 0.1582 | **0.2053** | 27,584 | 39,928 | 2,495 |
+| `triplot_voronoi_5k_sites` | 5,000 站址（29,822 边） | 5.2645 | 7.9262 | **12.8987** | 9,914,336 | 875,012 | 34,822 |
+| `alphashape_5k_sites` | 5,000 站址（9,801 面片） | 0.8135 | 0.1897 | **0.9883** | 786,432 | 400,008 | 10,000 |
+| `streamslice_128x128` | 128×128 场（32 线 / 96 箭头） | 0.1243 | 0.2531 | **0.3734** | 66,304 | 95,296 | 5,828 |
+| `spy_100k_nnz_full` | 10k×10k（100,000 非零全区） | 12.4801 | 7.3542 | **19.4777** | 37,748,736 | 440,004 | 100,000 |
+| `spy_100k_nnz_narrow_2pct` | 10k×10k 2% 局部窗口（CSR 剔除） | 0.0998 | 0.0407 | **0.1437** | 1,179,648 | 440,004 | 2,010 |
+
+- **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、交换链呈现、FPS 或进程峰值内存。CSR 行列窗口二分剔除将 `spy_100k_nnz_narrow_2pct` 访问图元数从 `100,000` 降至 `2,010`（合计 p95 由 `19.4777 ms` 降至 `0.1437 ms`），但全区 10 万非零散点标记（`19.4777 ms` p95 / ~36 MiB 几何 capacity）仍超过 16.7 ms 交互预算；5,000 站址 Bowyer-Watson 预处理约 80–82 ms 属宿主单线程同步开销，大规模动态重构或全区百万非零 `spy` 在未引入增量/合并绘制或 GPU 实例化前不宣称实时帧率。
 
 ## 剩余验收
 

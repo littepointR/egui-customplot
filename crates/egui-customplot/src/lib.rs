@@ -40,25 +40,32 @@ mod widget;
 
 pub use axis::{Axis, AxisScale, AxisTick, BoundsError, PlotBounds, PlotTransform, YAxis};
 pub use data::{
-    AppendReport, AreaBandData, AreaError, AreaStackMode, Bar, BarData, BarOrientation,
-    ContourBand, ContourData, ContourError, ContourLevels, ContourLine, DataRect, ErrorBar,
-    ErrorBarData, FilledContourData, FunctionContourError, GridData, GridError, HistogramData,
-    HistogramError, HistogramNormalization, ImageData, ImageError, LineIndexError, PatchData,
-    PatchError, PlotData, PlotPoint, PlotStream, PolyRegion, PolyShapeData, PolygonData,
-    QuiverArrow, QuiverData, RectData, ScalarField2D, StreamError,
+    AlphaShapeData, AnimatedLine2D, AppendReport, AreaBandData, AreaError, AreaStackMode, Bar,
+    BarData, BarOrientation, CometPlayback, ContourBand, ContourData, ContourError, ContourLevels,
+    ContourLine, DataRect, ErrorBar, ErrorBarData, FeatherData, FilledContourData, FlowError,
+    FunctionContourError, FunctionCurveData, FunctionPlotError, FunctionPlotOptions, GridData,
+    GridError, HistogramData, HistogramError, HistogramNormalization, ImageData, ImageError,
+    ImplicitCurveData, ImplicitOptions, LineIndexError, PatchData, PatchError, PlotData, PlotPoint,
+    PlotStream, PolyRegion, PolyShapeData, PolygonData, QuiverArrow, QuiverData, RectData,
+    ScalarField2D, SpyData, SpyError, StreamError, StreamOptions, StreamlineData, TriMesh2D,
+    TriMeshError, VectorField2D, VoronoiData,
 };
-pub use diagnostics::{ContourDiagnostics, ImageDiagnostics, PatchDiagnostics, PlotDiagnostics};
+pub use diagnostics::{
+    ContourDiagnostics, FlowDiagnostics, GeometryDiagnostics, ImageDiagnostics, PatchDiagnostics,
+    PlotDiagnostics,
+};
 pub use interaction::{
     AxisLink, HoverInfo, HoveredBar, HoveredCell, HoveredPoint, HoveredRegion, HoveredVector,
     LinkError, LinkReport, PlotState, RegionKind, VectorAnchor,
 };
 pub use layout::{FigureError, LegendEntry};
 pub use model::{
-    Annotation, Area, Bars, ColorMap, ColorScale, ColorScaleError, Contours, ErrorBars, Fill,
-    FilledContours, Heatmap, Line, LineInterpolation, LinePattern, LineSampling, MarkerShape,
+    AlphaShape, AnimatedLine, Annotation, AnnotationCoord, Area, Bars, ColorMap, ColorScale,
+    ColorScaleError, Comet, Contours, ErrorBars, Feather, Fill, FilledContours, FunctionPlot,
+    Heatmap, ImplicitCurve, Line, LineInterpolation, LinePattern, LineSampling, MarkerShape,
     MarkerStyle, Patch, PatchColoring, Pcolor, PcolorShading, PlotImage, PlotLayer, PlotStyle,
-    PlotTheme, PolyShape, Quiver, Rectangles, Scatter, Series, SeriesError, SeriesStyle,
-    StemOrientation, Stems,
+    PlotTheme, PolyShape, Quiver, Rectangles, Scatter, Series, SeriesError, SeriesStyle, Spy,
+    StemOrientation, Stems, Streamlines, TriPlot, Voronoi,
 };
 pub use render::PlotCache;
 #[cfg(feature = "export")]

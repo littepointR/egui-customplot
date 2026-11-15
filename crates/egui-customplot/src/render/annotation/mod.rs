@@ -1,6 +1,10 @@
 use egui::{Align2, Color32, Painter, Rect, Stroke, Ui};
 
-use crate::{Annotation, PlotDiagnostics, PlotTransform, model::ResolvedPlotStyle};
+use crate::{
+    Annotation, AnnotationCoord, PlotDiagnostics, PlotTransform, model::ResolvedPlotStyle,
+};
+
+mod primitives;
 
 pub(crate) fn paint_annotations(
     ui: &Ui,
@@ -9,10 +13,11 @@ pub(crate) fn paint_annotations(
     style: &ResolvedPlotStyle<'_>,
     diagnostics: &mut PlotDiagnostics,
 ) {
-    let painter = ui.painter().with_clip_rect(transform.rect());
+    let rect = transform.rect();
+    let painter = ui.painter().with_clip_rect(rect);
     let font = egui::TextStyle::Small.resolve(ui.style());
     for annotation in annotations {
-        let painted = match annotation {
+        let res = match annotation {
             Annotation::Text {
                 point,
                 text,
@@ -60,21 +65,74 @@ pub(crate) fn paint_annotations(
             Annotation::XRegion { range, fill } | Annotation::YRegion { range, fill } => {
                 let axis = usize::from(matches!(annotation, Annotation::YRegion { .. }));
                 match region_rect(transform, axis, *range) {
-                    Ok(Some(rect)) if *fill != Color32::TRANSPARENT => {
-                        painter.rect_filled(rect, 0.0, *fill);
+                    Ok(Some(r)) if *fill != Color32::TRANSPARENT => {
+                        painter.rect_filled(r, 0.0, *fill);
                         Ok(true)
                     }
                     Ok(_) => Ok(false),
                     Err(()) => Err(()),
                 }
             }
+            other => primitives::paint_ex027(&painter, rect, Some(transform), other, style, &font),
         };
-        match painted {
+        match res {
             Ok(true) => diagnostics.output_annotations += 1,
             Ok(false) => {}
             Err(()) => diagnostics.annotation_rejections += 1,
         }
     }
+}
+
+/// Paints `AnnotationCoord::Normalized` EX-027 overlays onto an arbitrary Figure rect.
+pub(crate) fn paint_figure_annotations(
+    ui: &Ui,
+    annotations: &[Annotation],
+    rect: Rect,
+    style: &ResolvedPlotStyle<'_>,
+) -> (usize, usize) {
+    let painter = ui.painter().with_clip_rect(rect);
+    let font = egui::TextStyle::Small.resolve(ui.style());
+    let mut output = 0usize;
+    let mut rejected = 0usize;
+    for annotation in annotations {
+        let res = match annotation {
+            Annotation::Line {
+                coord: AnnotationCoord::Normalized,
+                ..
+            }
+            | Annotation::Arrow {
+                coord: AnnotationCoord::Normalized,
+                ..
+            }
+            | Annotation::DoubleArrow {
+                coord: AnnotationCoord::Normalized,
+                ..
+            }
+            | Annotation::TextArrow {
+                coord: AnnotationCoord::Normalized,
+                ..
+            }
+            | Annotation::TextBox {
+                coord: AnnotationCoord::Normalized,
+                ..
+            }
+            | Annotation::Rectangle {
+                coord: AnnotationCoord::Normalized,
+                ..
+            }
+            | Annotation::Ellipse {
+                coord: AnnotationCoord::Normalized,
+                ..
+            } => primitives::paint_ex027(&painter, rect, None, annotation, style, &font),
+            _ => Err(()),
+        };
+        match res {
+            Ok(true) => output += 1,
+            Ok(false) => {}
+            Err(()) => rejected += 1,
+        }
+    }
+    (output, rejected)
 }
 
 fn inside_bounds(point: [f64; 2], transform: PlotTransform) -> bool {
@@ -95,8 +153,6 @@ fn region_rect(transform: PlotTransform, axis: usize, range: [f64; 2]) -> Result
     if max[axis] <= min[axis] {
         return Ok(None);
     }
-    // Intersect before mapping, so infinite and nonpositive log endpoints do
-    // not produce invalid screen coordinates.
     Ok(Some(Rect::from_two_pos(
         transform.position_from_point(min),
         transform.position_from_point(max),

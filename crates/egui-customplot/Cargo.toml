@@ -48,6 +48,10 @@ harness = false
 name = "polygon_contour_performance"
 harness = false
 
+[[bench]]
+name = "stage8b_performance"
+harness = false
+
 [[example]]
 name = "export_snapshot"
 required-features = ["export"]

@@ -8,6 +8,8 @@ mod controls;
 mod data;
 mod diagnostics;
 mod export;
+mod functions;
+mod geometry;
 mod performance;
 mod polygons;
 mod quiver;

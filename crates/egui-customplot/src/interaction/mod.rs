@@ -7,6 +7,7 @@ mod link;
 mod navigation;
 mod picking;
 mod point_aux;
+mod point_stage8b;
 mod quiver;
 mod region;
 mod secondary;

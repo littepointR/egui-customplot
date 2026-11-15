@@ -25,6 +25,11 @@ crates/egui-customplot/
       polyshape.rs            # 带孔多区域多边形与四域预处理
       field2d.rs / contour/   # 二维节点标量场、函数采样预算与 Marching Squares 等值提取
       image.rs                # RGBA8 / RGB8 / 索引 / 灰度图像及像素坐标
+      function/               # fplot 自适应采样 / fimplicit 极点守卫 / ezplot 预算
+      delaunay/               # Bowyer-Watson TriMesh2D、裁剪 Voronoi 与 AlphaShapeData
+      flow/                   # 二维规则向量场、RK4 streamline/streamslice 与 FeatherData
+      spy.rs                  # 1-based CSR 稀疏矩阵模式存储与窗口剔除
+      animation.rs            # 有界环形 AnimatedLine2D 与可重放 CometPlayback 游标
     model/
       line.rs                 # 折线的借用描述与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -35,8 +40,8 @@ crates/egui-customplot/
       series.rs               # 混合序列、稳定 ID、默认色
       style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
       theme.rs                # 科学浅色 / 监控深色，可共享 palette
-      annotation.rs           # 不参与自动范围的基础注解描述
-      layer.rs                # 兼容既有 Series 的有序异构 PlotLayer
+      annotation.rs           # 不参与自动范围的基础注解与 Data/Normalized EX-027 图元描述
+      layer/                  # 兼容既有 Series 的有序异构 PlotLayer 与统一样式解析
       summary/                # 合并预处理范围、身份与跨图元 payload 指针去重
       heatmap.rs / color_scale.rs # 数值单元描述与显式共享色域
       bars.rs / error_bars.rs  # 柱 / 误差棒样式描述，不保存视图
@@ -45,6 +50,8 @@ crates/egui-customplot/
       area.rs / polygon.rs / polyshape.rs # 面积、多边形与带孔区域图层模型
       patch.rs / shapes.rs / contour.rs   # 通用面片、矩形椭圆与等高线 / 填充等高线模型
       pcolor.rs / image.rs    # Pcolor 伪彩色网格（Flat / Interp）与图像图层模型
+      function.rs / triangulation.rs # fplot / fimplicit 与 TriPlot / Voronoi / AlphaShape 图层模型
+      flow.rs / spy.rs / animation.rs # Feather / Streamlines、Spy、AnimatedLine / Comet 图层模型
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -62,12 +69,12 @@ crates/egui-customplot/
     interaction/
       state.rs                # 显式视图、隐藏状态、帧快照、一次性切换
       navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
-      picking.rs / point_aux.rs # 原始点拾取及 AreaBand / 等高线顶点拾取
+      picking.rs / point_aux.rs / point_stage8b.rs # 原始点及 AreaBand/等高线/三角/Voronoi/Spy/动画点拾取
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
       link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
       cell.rs / bar.rs        # 原始单元 / 柱拾取
-      quiver.rs               # 原始向量两锚点拾取、记录提示，复用点层距离仲裁
-      region/                 # 面积 / 多边形 / 面片 / 矩形 / 填充等高线 / 伪彩 / 图像命中仲裁
+      quiver.rs               # 原始向量（Quiver / Feather）两锚点拾取、记录提示，复用点层距离仲裁
+      region/                 # 面积 / 多边形 / 面片 / 矩形 / 填充等高线 / 伪彩 / 图像 / AlphaShape 命中仲裁
       hover.rs                # 填充层遮挡及原始点最近距离仲裁
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
@@ -79,13 +86,14 @@ crates/egui-customplot/
       axes.rs                 # 网格、刻度文字、标题、边框绘制
       series.rs               # 按序提交数据图元、统计几何成本
       overlay.rs              # 十字线和拾取高亮（含多边形/区域高亮）
-      annotation.rs           # 文字 / 参考线 / 区域的域验证、求交与提交
+      annotation/             # 轴内文字/参考线/区域及 Figure Normalized EX-027 七类注解提交
       heatmap.rs / color_bar.rs # 精确 cell 分块 mesh、共享色条
       bars.rs / error_bars.rs # 保序柱及独立误差 stem / cap
       stems.rs                # 独立杆 / 基线和原始端点 markers
       quiver.rs               # 独立向量杆、真实端点实线 V 形箭头
       area.rs / polygon.rs / patch.rs / shapes.rs # 面积、多边形/孔洞、面片与椭圆绘制
       contour.rs / pcolor.rs / image.rs # 等值线/填充等高线、伪彩色节点与像素网格绘制
+      triangulation.rs / flow.rs / spy.rs / animation.rs # 三角网/Voronoi/AlphaShape、流线/羽状、CSR Spy 与动画绘制
       right_axis.rs           # 右 Y 刻度与标签
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
@@ -93,10 +101,10 @@ crates/egui-customplot/
         vector.rs / svg.rs    # 原生矢量与内嵌字形 / AA PNG patch、裁剪层序
         options.rs / writer.rs # 分辨率 / DPI / 局部预算和有界编码输出
     widget/
-      mod.rs                  # Plot 公开配置 builder
+      mod.rs                  # Plot 公开配置 builder（含 imshow_axes / spy_axes）
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
       response.rs             # 宿主可读取的本遍返回值
-      figure/                 # Figure 与 cell 原生 Ui 接入，样本仍归宿主
+      figure/                 # Figure（含图窗级 annotations）与 cell 原生 Ui 接入，样本仍归宿主
       color_bar.rs / hover.rs # 色条与悬停的阶段组装
   tests/
     support/                  # 无窗口 egui 测试共用驱动
@@ -122,6 +130,9 @@ crates/egui-customplot/
     area.rs / polygons_patches.rs # 堆积面积、凹多边形/孔洞、面片与椭圆回归
     contours.rs / pcolor_image.rs # 标量场、等高线/填充、伪彩与图像回归
     export_polygons_contours.rs   # 孔洞穿透像素、Gouraud 栅格回退与纯路径导出
+    functions.rs / triangulation_voronoi.rs # 自适应函数/奇点保护、三角剖分/Voronoi/AlphaShape 回归
+    flow_spy.rs / animation_annotations.rs  # RK4 流线/Feather、CSR Spy、动画与 EX-027 注解回归
+    export_stage8b.rs             # Stage 8B 孔洞像素与多图元/图窗注解 SVG/PNG 导出
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -130,6 +141,7 @@ crates/egui-customplot/
     stems_performance.rs      # 精确杆 + markers 全区 / 窄区 CPU 与局部容量
     quiver_performance.rs     # 显式向量全区 / 窄区 / 原始拾取 CPU 与局部容量
     polygon_contour_performance.rs # 面积/面片/等高线/填充等高线/pcolor/图像 CPU
+    stage8b_performance.rs    # 函数曲线/三角剖分/Voronoi/AlphaShape/流切片/100k Spy CPU
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -141,6 +153,8 @@ examples/demo/src/
   quiver.rs                   # 显式旋转矢量场及右 log Y gallery
   polygons.rs                 # 堆积面积、凹多边形 / 带孔 polyshape / Gouraud 面片 / 圆角椭圆
   contours.rs                 # 等高线 / contourf / pcolor / imshow_axes 图像 gallery
+  functions.rs                # fplot / fimplicit / ezplot、animatedline / comet 与 EX-027 注解 gallery
+  geometry.rs                 # Delaunay / Voronoi / alphaShape、streamslice / feather 与 CSR spy gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

@@ -1,10 +1,12 @@
 use egui::IdSalt;
 
-use super::{ResolvedPlotStyle, ResolvedSeriesStyle, SeriesStyle};
 use crate::{
-    Area, Bars, Contours, ErrorBars, Fill, FilledContours, Heatmap, Line, Patch, Pcolor, PlotData,
-    PlotImage, PolyShape, Quiver, Rectangles, Scatter, Series, Stems, YAxis,
+    AlphaShape, Area, Bars, Comet, Contours, ErrorBars, Feather, Fill, FilledContours, Heatmap,
+    Line, Patch, Pcolor, PlotData, PlotImage, PolyShape, Quiver, Rectangles, Scatter, Series, Spy,
+    Stems, Streamlines, TriPlot, Voronoi, YAxis,
 };
+
+mod style;
 
 /// Ordered heterogeneous layers. This extends the plotting API without changing
 /// the existing point-series enum or Series::data() contract.
@@ -26,6 +28,13 @@ pub enum PlotLayer<'a> {
     FilledContours(FilledContours<'a>),
     Pcolor(Pcolor<'a>),
     Image(PlotImage<'a>),
+    TriPlot(TriPlot<'a>),
+    Voronoi(Voronoi<'a>),
+    AlphaShape(AlphaShape<'a>),
+    Streamlines(Streamlines<'a>),
+    Feather(Feather<'a>),
+    Spy(Spy<'a>),
+    Comet(Comet<'a>),
 }
 
 impl<'a> From<Series<'a>> for PlotLayer<'a> {
@@ -68,58 +77,84 @@ impl<'a> From<Quiver<'a>> for PlotLayer<'a> {
         Self::Quiver(value)
     }
 }
-
 impl<'a> From<Area<'a>> for PlotLayer<'a> {
     fn from(value: Area<'a>) -> Self {
         Self::Area(value)
     }
 }
-
 impl<'a> From<Fill<'a>> for PlotLayer<'a> {
     fn from(value: Fill<'a>) -> Self {
         Self::Fill(value)
     }
 }
-
 impl<'a> From<Patch<'a>> for PlotLayer<'a> {
     fn from(value: Patch<'a>) -> Self {
         Self::Patch(value)
     }
 }
-
 impl<'a> From<Rectangles<'a>> for PlotLayer<'a> {
     fn from(value: Rectangles<'a>) -> Self {
         Self::Rectangles(value)
     }
 }
-
 impl<'a> From<PolyShape<'a>> for PlotLayer<'a> {
     fn from(value: PolyShape<'a>) -> Self {
         Self::PolyShape(value)
     }
 }
-
 impl<'a> From<Contours<'a>> for PlotLayer<'a> {
     fn from(value: Contours<'a>) -> Self {
         Self::Contours(value)
     }
 }
-
 impl<'a> From<FilledContours<'a>> for PlotLayer<'a> {
     fn from(value: FilledContours<'a>) -> Self {
         Self::FilledContours(value)
     }
 }
-
 impl<'a> From<Pcolor<'a>> for PlotLayer<'a> {
     fn from(value: Pcolor<'a>) -> Self {
         Self::Pcolor(value)
     }
 }
-
 impl<'a> From<PlotImage<'a>> for PlotLayer<'a> {
     fn from(value: PlotImage<'a>) -> Self {
         Self::Image(value)
+    }
+}
+impl<'a> From<TriPlot<'a>> for PlotLayer<'a> {
+    fn from(value: TriPlot<'a>) -> Self {
+        Self::TriPlot(value)
+    }
+}
+impl<'a> From<Voronoi<'a>> for PlotLayer<'a> {
+    fn from(value: Voronoi<'a>) -> Self {
+        Self::Voronoi(value)
+    }
+}
+impl<'a> From<AlphaShape<'a>> for PlotLayer<'a> {
+    fn from(value: AlphaShape<'a>) -> Self {
+        Self::AlphaShape(value)
+    }
+}
+impl<'a> From<Streamlines<'a>> for PlotLayer<'a> {
+    fn from(value: Streamlines<'a>) -> Self {
+        Self::Streamlines(value)
+    }
+}
+impl<'a> From<Feather<'a>> for PlotLayer<'a> {
+    fn from(value: Feather<'a>) -> Self {
+        Self::Feather(value)
+    }
+}
+impl<'a> From<Spy<'a>> for PlotLayer<'a> {
+    fn from(value: Spy<'a>) -> Self {
+        Self::Spy(value)
+    }
+}
+impl<'a> From<Comet<'a>> for PlotLayer<'a> {
+    fn from(value: Comet<'a>) -> Self {
+        Self::Comet(value)
     }
 }
 
@@ -141,8 +176,16 @@ impl<'a> PlotLayer<'a> {
             Self::FilledContours(s) => s.name,
             Self::Pcolor(s) => s.name,
             Self::Image(s) => s.name,
+            Self::TriPlot(s) => s.name,
+            Self::Voronoi(s) => s.name,
+            Self::AlphaShape(s) => s.name,
+            Self::Streamlines(s) => s.name,
+            Self::Feather(s) => s.name,
+            Self::Spy(s) => s.name,
+            Self::Comet(s) => s.name,
         }
     }
+
     pub fn y_axis(self) -> YAxis {
         match self {
             Self::Series(s) => s.y_axis(),
@@ -160,96 +203,18 @@ impl<'a> PlotLayer<'a> {
             Self::FilledContours(s) => s.y_axis,
             Self::Pcolor(s) => s.y_axis,
             Self::Image(s) => s.y_axis,
+            Self::TriPlot(s) => s.y_axis,
+            Self::Voronoi(s) => s.y_axis,
+            Self::AlphaShape(s) => s.y_axis,
+            Self::Streamlines(s) => s.y_axis,
+            Self::Feather(s) => s.y_axis,
+            Self::Spy(s) => s.y_axis,
+            Self::Comet(s) => s.y_axis,
         }
     }
+
     pub(crate) fn id(self, index: usize) -> IdSalt {
-        let id_salt = match self {
-            Self::Series(s) => return s.id(index),
-            Self::Heatmap(s) => s.id_salt,
-            Self::Bars(s) => s.id_salt,
-            Self::ErrorBars(s) => s.id_salt,
-            Self::Stems(s) => s.id_salt,
-            Self::Quiver(s) => s.id_salt,
-            Self::Area(s) => s.id_salt,
-            Self::Fill(s) => s.id_salt,
-            Self::Patch(s) => s.id_salt,
-            Self::Rectangles(s) => s.id_salt,
-            Self::PolyShape(s) => s.id_salt,
-            Self::Contours(s) => s.id_salt,
-            Self::FilledContours(s) => s.id_salt,
-            Self::Pcolor(s) => s.id_salt,
-            Self::Image(s) => s.id_salt,
-        };
-        id_salt.unwrap_or_else(|| {
-            if self.name().is_empty() {
-                IdSalt::new(("series-index", index))
-            } else {
-                IdSalt::new(("series-name", self.name()))
-            }
-        })
-    }
-    pub(crate) fn resolved_style(
-        self,
-        index: usize,
-        plot: &ResolvedPlotStyle<'_>,
-    ) -> ResolvedSeriesStyle {
-        match self {
-            Self::Series(s) => s.resolved_style(index, plot),
-            Self::Heatmap(s) => plot.resolve_series(
-                index,
-                SeriesStyle {
-                    color: Some(s.colors.map().sample(0.5)),
-                    ..Default::default()
-                },
-            ),
-            Self::Bars(s) => plot.resolve_series(index, s.style),
-            Self::ErrorBars(s) => plot.resolve_series(index, s.style),
-            Self::Stems(s) => plot.resolve_series(index, s.style),
-            Self::Quiver(s) => plot.resolve_series(index, s.style),
-            Self::Area(s) => plot.resolve_series(index, s.style),
-            Self::Fill(s) => plot.resolve_series(index, s.style),
-            Self::Patch(s) => {
-                let mut style = s.style;
-                if style.color.is_none() {
-                    style.color = match s.coloring {
-                        crate::PatchColoring::Uniform => None,
-                        crate::PatchColoring::FaceColors(c)
-                        | crate::PatchColoring::VertexColors(c) => c.first().copied(),
-                        crate::PatchColoring::FaceScalars { scale, .. }
-                        | crate::PatchColoring::VertexScalars { scale, .. } => {
-                            Some(scale.map().sample(0.5))
-                        }
-                    };
-                }
-                plot.resolve_series(index, style)
-            }
-            Self::Rectangles(s) => plot.resolve_series(index, s.style),
-            Self::PolyShape(s) => plot.resolve_series(index, s.style),
-            Self::Contours(s) => {
-                let mut style = s.style;
-                if style.color.is_none()
-                    && let Some(scale) = s.color_scale
-                {
-                    style.color = Some(scale.map().sample(0.5));
-                }
-                plot.resolve_series(index, style)
-            }
-            Self::FilledContours(s) => plot.resolve_series(
-                index,
-                SeriesStyle {
-                    color: Some(s.colors.map().sample(0.5)),
-                    ..Default::default()
-                },
-            ),
-            Self::Pcolor(s) => plot.resolve_series(
-                index,
-                SeriesStyle {
-                    color: Some(s.colors.map().sample(0.5)),
-                    ..Default::default()
-                },
-            ),
-            Self::Image(_) => plot.resolve_series(index, SeriesStyle::default()),
-        }
+        style::layer_id(self, index)
     }
 
     pub(crate) fn point_data(self) -> Option<&'a PlotData> {

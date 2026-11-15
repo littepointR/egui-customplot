@@ -14,6 +14,7 @@ pub(super) struct SeenPayloads {
     patches: HashSet<(usize, usize)>,
     contours: HashSet<(usize, usize)>,
     images: HashSet<(usize, usize)>,
+    stage8b: super::stage8b::SeenStage8bPayloads,
 }
 
 pub(super) fn accumulate_layer(
@@ -211,5 +212,13 @@ pub(super) fn accumulate_layer(
             }
             s.data.extent(scales)
         }
+        other => super::stage8b::accumulate_stage8b_layer(
+            other,
+            scales,
+            diagnostics,
+            &mut seen.stage8b,
+            &mut seen.points,
+            &mut seen.quivers,
+        ),
     }
 }

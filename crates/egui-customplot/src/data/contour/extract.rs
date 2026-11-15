@@ -6,9 +6,9 @@ use crate::{AxisScale, PlotPoint, ScalarField2D};
 const MAX_LEVELS: usize = 256;
 
 #[derive(Clone, Copy)]
-struct Node {
-    p: PlotPoint,
-    z: f64,
+pub(crate) struct Node {
+    pub p: PlotPoint,
+    pub z: f64,
 }
 
 pub(super) fn resolve_line_levels(
@@ -191,7 +191,7 @@ fn visit_subtriangles(field: &ScalarField2D, mut emit: impl FnMut([Node; 3])) {
     }
 }
 
-fn tri_isoline(tri: [Node; 3], level: f64) -> Option<[PlotPoint; 2]> {
+pub(crate) fn tri_isoline(tri: [Node; 3], level: f64) -> Option<[PlotPoint; 2]> {
     let above = tri.map(|n| n.z >= level);
     let count = usize::from(above[0]) + usize::from(above[1]) + usize::from(above[2]);
     if count == 0 || count == 3 {
@@ -261,7 +261,7 @@ fn pt_key(p: PlotPoint) -> Key {
     )
 }
 
-fn chain_segments(segs: Vec<[PlotPoint; 2]>) -> Vec<Vec<PlotPoint>> {
+pub(crate) fn chain_segments(segs: Vec<[PlotPoint; 2]>) -> Vec<Vec<PlotPoint>> {
     if segs.is_empty() {
         return Vec::new();
     }

@@ -142,6 +142,61 @@ pub(crate) fn paint_series(
                 super::image::paint_image(&painter, image, transform, diagnostics);
                 continue;
             }
+            PlotLayer::TriPlot(tri) => {
+                super::triangulation::paint_triplot(
+                    &painter,
+                    tri,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Voronoi(vor) => {
+                super::triangulation::paint_voronoi(
+                    &painter,
+                    vor,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::AlphaShape(alpha) => {
+                super::triangulation::paint_alphashape(
+                    &painter,
+                    alpha,
+                    transform,
+                    resolved.stroke.color,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Streamlines(stream) => {
+                super::flow::paint_streamlines(&painter, stream, transform, resolved, diagnostics);
+                continue;
+            }
+            PlotLayer::Feather(feather) => {
+                super::flow::paint_feather(&painter, feather, transform, resolved, diagnostics);
+                continue;
+            }
+            PlotLayer::Spy(spy) => {
+                super::spy::paint_spy(
+                    &painter,
+                    spy,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Comet(comet) => {
+                super::animation::paint_comet(&painter, comet, transform, resolved, diagnostics);
+                continue;
+            }
             PlotLayer::Series(s) => s,
         };
         let color = resolved.stroke.color;

@@ -173,4 +173,12 @@ impl Plot {
         self.data_aspect = Some(1.0);
         self
     }
+
+    /// Configure sparsity matrix display axes (`spy` / `ML-020`): top-down reversed Y axis
+    /// (row 1 at top) and 1:1 data aspect ratio.
+    pub fn spy_axes(mut self) -> Self {
+        self.axes[1].reversed = true;
+        self.data_aspect = Some(1.0);
+        self
+    }
 }
