@@ -50,9 +50,9 @@ pub use interaction::{
 };
 pub use layout::{FigureError, LegendEntry};
 pub use model::{
-    Annotation, Bars, ColorMap, ColorScale, ColorScaleError, ErrorBars, Heatmap, Line, LinePattern,
-    LineSampling, MarkerShape, MarkerStyle, PlotLayer, PlotStyle, PlotTheme, Scatter, Series,
-    SeriesError, SeriesStyle,
+    Annotation, Bars, ColorMap, ColorScale, ColorScaleError, ErrorBars, Heatmap, Line,
+    LineInterpolation, LinePattern, LineSampling, MarkerShape, MarkerStyle, PlotLayer, PlotStyle,
+    PlotTheme, Scatter, Series, SeriesError, SeriesStyle,
 };
 pub use render::PlotCache;
 #[cfg(feature = "export")]

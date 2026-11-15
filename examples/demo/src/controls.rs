@@ -1,5 +1,5 @@
 use eframe::egui;
-use egui_customplot::{Axis, AxisScale, MarkerShape, Plot};
+use egui_customplot::{Axis, AxisScale, LineInterpolation, MarkerShape, Plot};
 
 use crate::{appearance::Appearance, data::Scene};
 
@@ -16,6 +16,7 @@ pub(super) struct Options {
     pub hover: bool,
     pub markers: bool,
     pub dashed: bool,
+    pub interpolation: LineInterpolation,
     pub equal_units: bool,
     pub observations: bool,
     pub log_axes: [bool; 2],
@@ -42,6 +43,7 @@ impl Default for Options {
             hover: true,
             markers: false,
             dashed: false,
+            interpolation: LineInterpolation::Linear,
             equal_units: false,
             observations: true,
             log_axes: [false; 2],
@@ -128,6 +130,24 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     );
     ui.checkbox(&mut options.markers, "Markers on every line sample");
     ui.checkbox(&mut options.dashed, "Dashed signal stroke");
+    egui::ComboBox::from_id_salt("interpolation")
+        .selected_text(format!("{:?}", options.interpolation))
+        .show_ui(ui, |ui| {
+            for interpolation in [
+                LineInterpolation::Linear,
+                LineInterpolation::StepAfter,
+                LineInterpolation::StepBefore,
+            ] {
+                ui.selectable_value(
+                    &mut options.interpolation,
+                    interpolation,
+                    format!("{interpolation:?}"),
+                );
+            }
+        });
+    if options.interpolation != LineInterpolation::Linear {
+        ui.small("StepAfter: hold then jump; StepBefore: jump then hold. Raw markers / hover; MinMax can change jump times.");
+    }
     ui.checkbox(&mut options.equal_units, "Equal X/Y units (log: decades)");
     if options.markers && options.count >= 100_000 {
         ui.colored_label(

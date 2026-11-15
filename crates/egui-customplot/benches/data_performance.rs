@@ -5,8 +5,8 @@ use std::{
 };
 
 use egui_customplot::{
-    Line, LineSampling, Plot, PlotBounds, PlotCache, PlotData, PlotDiagnostics, PlotState,
-    PlotStream,
+    Line, LineInterpolation, LineSampling, Plot, PlotBounds, PlotCache, PlotData, PlotDiagnostics,
+    PlotState, PlotStream,
 };
 
 fn percentile(samples: &mut [f64], q: f64) -> f64 {
@@ -26,13 +26,19 @@ fn input(events: Vec<egui::Event>) -> egui::RawInput {
 }
 
 fn main() {
+    let interpolation = match std::env::var("CUSTOMPLOT_BENCH_INTERPOLATION").as_deref() {
+        Err(std::env::VarError::NotPresent) | Ok("linear") => LineInterpolation::Linear,
+        Ok("after") => LineInterpolation::StepAfter,
+        Ok("before") => LineInterpolation::StepBefore,
+        other => panic!("invalid CUSTOMPLOT_BENCH_INTERPOLATION: {other:?}"),
+    };
     let seconds = std::env::var("CUSTOMPLOT_BENCH_SECONDS")
         .ok()
         .and_then(|s| s.parse::<f64>().ok())
         .filter(|s| s.is_finite() && *s > 0.0)
         .unwrap_or(30.0);
     println!(
-        "# stage4 CPU data benchmark; profile=bench; egui=0.37.0; canvas=2024x1124; plot=1920x1080; dpi=1; warmup_frames=5; seconds_per_scene={seconds}"
+        "# CPU data benchmark; interpolation={interpolation:?}; profile=bench; egui=0.37.0; canvas=2024x1124; plot=1920x1080; dpi=1; warmup_frames=5; seconds_per_scene={seconds}"
     );
     println!(
         "# No GPU/FPS/process-memory conclusions; cache budget=8MiB; index budget=64MiB; input=ordered sine+spikes+3 NaN breaks; no markers"
@@ -74,13 +80,13 @@ fn main() {
             "cached_full",
             "indexed_hover",
         ] {
-            measure(&data, scene, seconds);
+            measure(&data, scene, seconds, interpolation);
         }
     }
     stream_measure(seconds);
 }
 
-fn measure(data: &PlotData, scene: &str, seconds: f64) {
+fn measure(data: &PlotData, scene: &str, seconds: f64, interpolation: LineInterpolation) {
     let ctx = egui::Context::default();
     let mut state = PlotState::default();
     let mut cache = PlotCache::new(8 * 1024 * 1024);
@@ -120,7 +126,9 @@ fn measure(data: &PlotData, scene: &str, seconds: f64) {
             let plot = Plot::new("benchmark")
                 .height(1124.0)
                 .show_hover(scene == "indexed_hover");
-            let lines = [Line::new(data).sampling(sampling)];
+            let lines = [Line::new(data)
+                .sampling(sampling)
+                .interpolation(interpolation)];
             let response = if scene == "cached_full" {
                 plot.show_cached(ui, &mut state, &lines, &mut cache)
             } else {

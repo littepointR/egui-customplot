@@ -1,6 +1,7 @@
 param(
     [string]$Executable = 'target/release/customplot-demo.exe',
-    [Parameter(Mandatory = $true)][string]$Output
+    [Parameter(Mandatory = $true)][string]$Output,
+    [string[]]$Galleries = @('default', '--scalar', '--statistical')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -13,7 +14,7 @@ $binary = (Resolve-Path -LiteralPath $Executable).Path
     "sha256=$((Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash)",
     'Window lifecycle smoke only; not visual correctness, GPU timing or FPS.'
 ) | Set-Content -LiteralPath $Output
-foreach ($gallery in @('default', '--scalar', '--statistical')) {
+foreach ($gallery in $Galleries) {
     $arguments = @{ FilePath = $binary; PassThru = $true }
     if ($gallery -ne 'default') { $arguments.ArgumentList = @($gallery) }
     $process = Start-Process @arguments

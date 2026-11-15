@@ -18,6 +18,22 @@ pub(super) struct DemoData {
 }
 
 impl DemoData {
+    pub fn stairs() -> Self {
+        let mut data = Self::new(Scene::Signal, 8, true);
+        data.signal = PlotData::new(vec![
+            [0.0, 1.0],
+            [0.7, 3.0],
+            [2.0, -1.0],
+            [5.0, 2.0],
+            [f64::NAN; 2],
+            [8.0, -0.5],
+            [8.5, 1.0],
+            [12.0, 0.0],
+        ]);
+        data.reference = PlotData::new(vec![[0.0, 0.5], [3.0, 0.8], [7.0, 1.5], [12.0, 1.0]]);
+        data
+    }
+
     pub fn new(scene: Scene, count: usize, gaps: bool) -> Self {
         let count = count.max(2);
         let x_at = |t: f64| match scene {

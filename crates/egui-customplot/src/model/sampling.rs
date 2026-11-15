@@ -9,5 +9,6 @@ pub enum LineSampling {
     /// Opt-in approximation: first/last and Y extrema in each physical screen
     /// column, in original order, never joining domain breaks. Column count is
     /// capped at 16,384 per run. Not an exact substitute for every segment.
+    /// With step interpolation it can also change jump times and hold durations.
     MinMax,
 }

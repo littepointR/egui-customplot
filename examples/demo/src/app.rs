@@ -41,6 +41,13 @@ impl Demo {
         let mut demo = Self::default();
         demo.scalar.enabled = gallery == Some("--scalar");
         demo.statistical.enabled = gallery == Some("--statistical");
+        if gallery == Some("--stairs") {
+            demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
+            demo.options.count = 8;
+            demo.options.markers = true;
+            demo.options.observations = false;
+            demo.data = DemoData::stairs();
+        }
         demo
     }
 
@@ -88,7 +95,7 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 7");
+            ui.heading("egui-customplot / Stage 8: 2D types");
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();

@@ -1,6 +1,6 @@
 use egui::Pos2;
 
-use crate::{PlotPoint, PlotTransform};
+use crate::{LineInterpolation, PlotPoint, PlotTransform};
 
 #[derive(Clone, Default)]
 pub(super) struct PreparedLine {
@@ -10,13 +10,18 @@ pub(super) struct PreparedLine {
 }
 
 /// Reference O(N) path. Clip in f64 normalized coordinates before casting to f32.
-pub(super) fn prepare_line(points: &[PlotPoint], transform: PlotTransform) -> PreparedLine {
-    prepare_line_iter(points.iter().copied(), transform)
+pub(super) fn prepare_line(
+    points: &[PlotPoint],
+    transform: PlotTransform,
+    interpolation: LineInterpolation,
+) -> PreparedLine {
+    prepare_line_iter(points.iter().copied(), transform, interpolation)
 }
 
 pub(super) fn prepare_line_iter(
     points: impl IntoIterator<Item = PlotPoint>,
     transform: PlotTransform,
+    interpolation: LineInterpolation,
 ) -> PreparedLine {
     let mut prepared = PreparedLine::default();
     let mut path = Vec::new();
@@ -42,20 +47,47 @@ pub(super) fn prepare_line_iter(
             flush(&mut path, &mut prepared.paths);
             continue;
         }
-        if let Some((a, b)) = clip_segment(a, b) {
-            let a = transform.position_from_normalized(a);
-            let b = transform.position_from_normalized(b);
-            if path.last() != Some(&a) {
-                flush(&mut path, &mut prepared.paths);
-                path.push(a);
+        match interpolation {
+            LineInterpolation::Linear => {
+                append_segment(a, b, transform, &mut path, &mut prepared.paths)
             }
-            path.push(b);
-        } else {
-            flush(&mut path, &mut prepared.paths);
+            LineInterpolation::StepAfter | LineInterpolation::StepBefore => {
+                // Axis transforms are separable: combining normalized components
+                // is exactly the data-space corner, without midpoint/overflow.
+                // Validate BOTH raw endpoints first; never fabricate a plateau
+                // next to a NaN, Inf or nonpositive log sample.
+                let corner = if interpolation == LineInterpolation::StepAfter {
+                    [b[0], a[1]]
+                } else {
+                    [a[0], b[1]]
+                };
+                append_segment(a, corner, transform, &mut path, &mut prepared.paths);
+                append_segment(corner, b, transform, &mut path, &mut prepared.paths);
+            }
         }
     }
     flush(&mut path, &mut prepared.paths);
     prepared
+}
+
+fn append_segment(
+    a: PlotPoint,
+    b: PlotPoint,
+    transform: PlotTransform,
+    path: &mut Vec<Pos2>,
+    paths: &mut Vec<Vec<Pos2>>,
+) {
+    if let Some((a, b)) = clip_segment(a, b) {
+        let a = transform.position_from_normalized(a);
+        let b = transform.position_from_normalized(b);
+        if path.last() != Some(&a) {
+            flush(path, paths);
+            path.push(a);
+        }
+        path.push(b);
+    } else {
+        flush(path, paths);
+    }
 }
 
 fn flush(path: &mut Vec<Pos2>, paths: &mut Vec<Vec<Pos2>>) {
@@ -116,7 +148,11 @@ mod tests {
 
     #[test]
     fn clips_crossing_segment_with_both_endpoints_outside() {
-        let p = prepare_line(&[[-1.0, 0.5], [2.0, 0.5]], transform());
+        let p = prepare_line(
+            &[[-1.0, 0.5], [2.0, 0.5]],
+            transform(),
+            LineInterpolation::Linear,
+        );
         assert_eq!(
             p.paths,
             vec![vec![egui::pos2(0.0, 50.0), egui::pos2(100.0, 50.0)]]
@@ -129,6 +165,7 @@ mod tests {
             let p = prepare_line(
                 &[[0.0; 2], [0.5; 2], gap, [0.5, 0.0], [1.0, 0.0]],
                 transform(),
+                LineInterpolation::Linear,
             );
             assert_eq!(p.paths.len(), 2);
             assert_eq!(p.visited_segments, 4);
@@ -141,7 +178,11 @@ mod tests {
     #[test]
     fn empty_singleton_and_invisible_lines_emit_no_paths() {
         for points in [vec![], vec![[0.0; 2]], vec![[-2.0; 2], [-1.0; 2]]] {
-            assert!(prepare_line(&points, transform()).paths.is_empty());
+            assert!(
+                prepare_line(&points, transform(), LineInterpolation::Linear)
+                    .paths
+                    .is_empty()
+            );
         }
     }
 
@@ -155,7 +196,11 @@ mod tests {
         )
         .unwrap();
         for gap in [[0.0, 10.0], [10.0, -1.0], [f64::NAN; 2]] {
-            let p = prepare_line(&[[1.0; 2], [10.0; 2], gap, [10.0, 1.0], [100.0, 1.0]], t);
+            let p = prepare_line(
+                &[[1.0; 2], [10.0; 2], gap, [10.0, 1.0], [100.0, 1.0]],
+                t,
+                LineInterpolation::Linear,
+            );
             assert_eq!(p.paths.len(), 2);
             assert_eq!(p.visited_segments, 4);
             assert_eq!(p.numeric_rejections, 0);

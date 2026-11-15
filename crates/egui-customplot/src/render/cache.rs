@@ -1,7 +1,7 @@
 use std::{collections::VecDeque, mem::size_of};
 
 use super::line::PreparedLine;
-use crate::{AxisScale, Line, LineSampling, PlotTransform};
+use crate::{AxisScale, Line, LineInterpolation, LineSampling, PlotTransform};
 
 const MAX_ENTRIES: usize = 64;
 
@@ -34,6 +34,7 @@ pub(super) struct Key {
     scales: [AxisScale; 2],
     reversed: [bool; 2],
     sampling: LineSampling,
+    interpolation: LineInterpolation,
     indexed: bool,
 }
 
@@ -55,6 +56,7 @@ impl Key {
             scales: transform.scales(),
             reversed: transform.reversed(),
             sampling: line.sampling,
+            interpolation: line.interpolation,
             indexed: line.data.line_index().is_some(),
         }
     }

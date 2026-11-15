@@ -21,6 +21,7 @@ crates/egui-customplot/
     model/
       line.rs                 # 折线的借用描述与 builder
       line_pattern.rs         # 线型语义与参数合法性
+      interpolation.rs        # 线性 / 前阶 / 后阶连接语义，原始数据不变
       sampling.rs             # Exact / Visible / 显式近似 MinMax 语义
       scatter.rs              # 散点描述与逐点样式校验
       marker.rs               # 标记形状与尺寸
@@ -53,7 +54,7 @@ crates/egui-customplot/
       cell.rs / bar.rs        # 原始单元 / 柱拾取
       hover.rs                # 填充层遮挡及原始点最近距离仲裁
     render/
-      line.rs                 # f64 线段裁剪与路径准备
+      line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
       cache.rs                # 宿主持有的有界 pre-style 折线几何 LRU
       markers.rs              # 标记批量 mesh 与物理像素羽化
@@ -93,6 +94,8 @@ crates/egui-customplot/
     indexed_picking.rs        # 索引 / 原始点拾取对照及舍入边界
     line_cache.rs             # 数据 / 变换失效、预算、释放与样式复用
     stream.rs                 # 环形顺序、覆盖、快照与批次幂等
+    stairs.rs / stairs_lifecycle.rs # 原始点 / 派生拐点、精确对照与缓存 / 导航
+    export_stairs.rs           # 真实 SVG 路径与两后端像素
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -130,6 +133,7 @@ docs/                         # 规范、阶段证据、原始基准
 9. `PlotLayer` 不改变旧 Series / data 契约。数值网格、柱、误差棒在 `data` 构造时缓存范围；`summary` 只合并摘要，不能每遍为自动范围偷偷扫描原始记录。绘制和拾取各自的工作量继续计数。
 10. `Figure` 不保存 cell 样本 / 状态；`AxisLink` 在全部成员每遍显示后同步，`secondary` 重放同一导航动作。填充层与点层的拾取仲裁属于 interaction，不回流到 widget。
 11. 导出是显式 displayed-geometry 快照，不自动恢复原始数据或另建 Context；编码后端属于 render/export。库返回 bytes，宿主在最终布局遍之外处理文件副作用；文字的 atlas 捕获不消费上传增量。
+12. 阶梯插值在选点后、裁剪前展开，先验证完整原始点对；不改写样本 / 范围 / 拾取。插值进入 pre-style 缓存键；MinMax 阶梯不能宣称精确保持跳变时刻。
 
 图例在数据之后提交，保持图层次序；切换后请求重绘，数据在下一布局遍 / 重绘使用新显隐状态。多遍返回值是本遍快照，不是可重复向外发布的事件队列。
 

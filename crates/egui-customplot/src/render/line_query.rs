@@ -41,11 +41,11 @@ fn prepare_uncached_line(
     diagnostics: &mut PlotDiagnostics,
 ) -> PreparedLine {
     if line.sampling == LineSampling::Exact {
-        return prepare_line(line.data.points(), transform);
+        return prepare_line(line.data.points(), transform, line.interpolation);
     }
     let Some(index) = line.data.line_index() else {
         diagnostics.lod_fallback_series += 1;
-        return prepare_line(line.data.points(), transform);
+        return prepare_line(line.data.points(), transform, line.interpolation);
     };
     let start = Instant::now();
     let query = index.query(
@@ -64,7 +64,11 @@ fn prepare_uncached_line(
     diagnostics.query_capacity_bytes += query.capacity_bytes;
     let mut prepared = PreparedLine::default();
     for path in query.paths {
-        let part = prepare_line_iter(path.into_iter().map(|i| line.data.points()[i]), transform);
+        let part = prepare_line_iter(
+            path.into_iter().map(|i| line.data.points()[i]),
+            transform,
+            line.interpolation,
+        );
         prepared.paths.extend(part.paths);
         prepared.visited_segments += part.visited_segments;
         prepared.numeric_rejections += part.numeric_rejections;

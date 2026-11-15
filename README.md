@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片已实现并持续验证，尚非完整绘图库。**
+**当前状态：阶段 4～7 基础切片与阶段 8 阶梯线已实现并持续验证，尚非完整绘图库。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -16,11 +16,13 @@
 cargo run -p customplot-demo --release --locked
 cargo run -p customplot-demo --release --locked -- --scalar
 cargo run -p customplot-demo --release --locked -- --statistical
+cargo run -p customplot-demo --release --locked -- --stairs
 ```
 
 - 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
 - Demo 提供信号 / 正值幂律场景，可切换 1 千～1000 万点、NaN 断段、散点、7 种标记、实线 / 虚线、对数 / 反向 / 等比例轴、Figure 双视图、可选 X 联动和右 Y 轴。
 - `--scalar` 展示数值网格 / 共享色条 / 折线叠加，`--statistical` 展示显式分箱与正负柱 / 非对称 XY 误差棒；两者也可在控制面板打开。
+- `--stairs` 展示固定非等距阶梯信号；`Line::interpolation(LineInterpolation::StepAfter)` 保持后跳变，`StepBefore` 先跳变后保持，默认 Linear。原始点用于 markers / hover；MinMax 可能改变阶跃时刻和保持时长。
 - Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
 - 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
 - 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
@@ -74,8 +76,11 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 
 ## 交付记录与长期对照
 
+`data_performance` 可用 `CUSTOMPLOT_BENCH_INTERPOLATION=linear|after|before` 选择连接方式；采样和测量边界不变，stream 行仍不绘图。
+
 - [源码职责、目录和扩展规则](docs/ARCHITECTURE.md)：按 data / model / axis / layout / interaction / render / widget 分域，带架构回归检查。
 - [全量实施进度](docs/PROGRESS.md)
+- [阶段 8 阶梯线及二维类型补全](docs/STAGE_8.md)
 - [阶段 7 显示快照、PNG / 混合 SVG 与字体 / 分辨率边界](docs/STAGE_7.md)
 - [阶段 6 多面板、双轴、数值网格、柱 / 误差棒与直方图](docs/STAGE_6.md)
 - [阶段 5 GPU 暂缓决策、证据与重新评估条件](docs/STAGE_5.md)
@@ -89,6 +94,6 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 - [egui 集成、性能与资源占用约束](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)：原生嵌入、多遍布局、按需重绘、CPU / GPU 预算与长期验收要求。
 - 推荐推进顺序：最小闭环 → 绘图能力 → 定制能力 → 数据性能 → 按需 GPU 加速 → 导出与发布。
 
-尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、完整类别 / 堆积 / 三维 / 地理能力；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图的 CPU / 几何成本很高，没有静默 LOD 或帧率承诺。MATLAB 清单已有 15 项“开发中”，没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
+尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、完整类别 / 堆积 / 三维 / 地理能力；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图的 CPU / 几何成本很高，没有静默 LOD 或帧率承诺。MATLAB 清单已有 16 项“开发中”，没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
 
 许可证尚未决定，workspace 包均设为 `publish = false`；本项目没有默认授予开源许可。

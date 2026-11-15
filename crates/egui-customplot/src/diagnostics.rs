@@ -39,6 +39,7 @@ pub struct PlotDiagnostics {
     pub non_finite_points: usize,
     /// Finite samples outside the configured coordinate domains, e.g. log x<=0.
     pub domain_invalid_points: usize,
+    /// Selected sample pairs inspected, before step expansion; zero on cache hits.
     pub visited_segments: usize,
     pub visited_marker_points: usize,
     pub visited_pick_points: usize,

@@ -1,6 +1,6 @@
 use egui::{AsIdSalt, Color32, IdSalt, Stroke};
 
-use super::{LinePattern, LineSampling, MarkerStyle, SeriesStyle};
+use super::{LineInterpolation, LinePattern, LineSampling, MarkerStyle, SeriesStyle};
 use crate::{PlotData, YAxis};
 
 /// A borrowed series description; samples remain in the application model.
@@ -11,6 +11,7 @@ pub struct Line<'a> {
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) style: SeriesStyle,
     pub(crate) sampling: LineSampling,
+    pub(crate) interpolation: LineInterpolation,
     pub(crate) y_axis: YAxis,
 }
 
@@ -22,6 +23,7 @@ impl<'a> Line<'a> {
             id_salt: None,
             style: SeriesStyle::default(),
             sampling: LineSampling::Exact,
+            interpolation: LineInterpolation::Linear,
             y_axis: YAxis::Left,
         }
     }
@@ -74,6 +76,13 @@ impl<'a> Line<'a> {
     /// reference path is used and `lod_fallback_series` reports that fallback.
     pub fn sampling(mut self, sampling: LineSampling) -> Self {
         self.sampling = sampling;
+        self
+    }
+    /// Steps are built after sample selection and before clipping. Invalid or
+    /// log-domain-invalid samples break the entire pair, including its plateau.
+    /// MinMax remains approximate: it can change step transition times/durations.
+    pub fn interpolation(mut self, interpolation: LineInterpolation) -> Self {
+        self.interpolation = interpolation;
         self
     }
 }

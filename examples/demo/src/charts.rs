@@ -136,6 +136,7 @@ fn series<'a>(
         .id_salt("signal")
         .name("Signal")
         .sampling(settings.sampling)
+        .interpolation(options.interpolation)
         .width(options.width);
     if options.appearance.override_signal {
         line = line.color(options.color);
@@ -159,6 +160,7 @@ fn series<'a>(
                 .id_salt("reference")
                 .name("Reference")
                 .sampling(settings.sampling)
+                .interpolation(options.interpolation)
                 .into(),
         );
         if options.observations {
@@ -181,6 +183,7 @@ fn series<'a>(
                     .name("Pressure (right Y)")
                     .y_axis(YAxis::Right)
                     .sampling(settings.sampling)
+                    .interpolation(options.interpolation)
                     .into(),
             );
         }

@@ -12,7 +12,7 @@
 | 5 GPU 决策 | 已记录暂缓决策，完整验收未完成 | [STAGE_5](STAGE_5.md)：保留 Painter，明确热力图全区 CPU 风险和重新评估条件；尚无同条件 wgpu / GPU / 呈现证据 |
 | 6 丰富二维能力 | 基础切片验证通过，完整验收未完成 | [STAGE_6](STAGE_6.md)：Figure / AxisLink / 双 Y、数值 Heatmap / ColorBar、Bars / ErrorBars、显式分箱 HistogramData、专项与 demo 多遍测试；显示快照导出见阶段 7，分组 / 堆积 / 类别和完整视觉 / 资源验收仍缺 |
 | 7 导出交付 | 显示快照切片验证通过，完整验收未完成 | [STAGE_7](STAGE_7.md)：可选 export feature、PNG / 混合 SVG、宿主字体 atlas、裁剪 / 透明度 / 分辨率 / DPI、局部限制与 demo 防重复写盘；真实像素 / XML / 无外部字体 resvg 及 Windows 窗口生命周期回归通过，独立印刷布局 / 全矢量字体及平台完整验收仍缺 |
-| 8 二维类型补全 | 未完成 | 统计、多变量、函数、极坐标、几何、网络 |
+| 8 二维类型补全 | 阶梯线切片验证通过，完整验收未完成 | [STAGE_8](STAGE_8.md)：Linear / StepAfter / StepBefore、裁剪 / log / 反向 / 双轴、采样 / 原始拾取 / 缓存 / 导出与 demo；统计、多变量、函数、极坐标、几何、网络继续推进 |
 | 9 三维与体数据 | 未完成 | 三维轴、相机、深度、曲面、体、流 |
 | 10 地理绘图 | 未完成 | 投影、地图资源策略及四类本体地理图 |
 | 11 全量核销 | 未完成 | ML / EX / LG 与适用 CAP / EGUI / PERF 逐项证据 |
@@ -29,4 +29,6 @@
 
 上述 148 / 159 项为历史批次。阶段 7 最终统一批次 **161 项通过**（库单元 32、集成 118、demo 9、rustdoc 2）；fmt、无默认 feature 库检查、严格 all-targets / all-features Clippy、Release demo 构建同批通过。最新阶段 7 binary 的三个 Windows gallery 启动 / 响应 / 正常关闭均通过，见 [新窗口记录](benchmarks/2026-11-15-stage7-windows-gallery-smoke.txt)；不代表跨平台视觉、GPU 或性能验收。
 
-下一阶段继续补阶段 8 阶梯线等二维类型，同时保留阶段 4 增量 / 总预算及阶段 6 / 7 完整交付缺口。133 项对照持续保留；工具箱、跨平台实机和许可证等开放边界不以本地 CPU 检查冒充已解决。
+阶段 8 阶梯线统一批次 **173 项通过**（库单元 32、集成 129、demo 10、rustdoc 2），fmt / 最小库 / 严格 Clippy / Release demo 通过；四个 Windows gallery 生命周期通过，见 STAGE_8。StepAfter 正式 CPU 基准仍在运行，尚无本切片的已验收性能结论。
+
+下一阶段继续补阶段 8 茎状图等二维类型，同时保留阶段 4 增量 / 总预算及阶段 6 / 7 完整交付缺口。133 项对照持续保留；工具箱、跨平台实机和许可证等开放边界不以本地 CPU 检查冒充已解决。
