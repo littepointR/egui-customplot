@@ -80,14 +80,14 @@ crates/egui-customplot/
     layout/         # 标签、图例、绘图区和子图布局
     interaction/    # 导航、拾取、选区与事件
     render/         # 绘制命令、Painter、后续可选 wgpu
-    widget.rs       # egui 集成
+    widget/         # 公开 builder、返回值、egui 生命周期组装
   tests/
   benches/
 examples/demo/      # 可运行的参考案例与性能场景
 docs/
 ```
 
-模块只随实际功能创建。第一阶段主要落地 `model`、`axis`、`render` 和最小 widget；未来只有编译依赖或复用需求足够明确时才继续拆包。
+模块只随实际功能创建。当前已按上述七个职责域拆分，并建立文件规模回归检查；实际文件职责、依赖和扩展规则见 [源码组织](ARCHITECTURE.md)。未来只有编译依赖或复用需求足够明确时才继续拆包，不重新退回平铺大文件。
 
 ### 2.3 egui 集成与资源约束
 

@@ -4,6 +4,8 @@
 
 这是首个代码切片，不是完整 0.1、MATLAB `plot` 兼容实现或长期性能验收结论。
 
+本文保留阶段 1 的历史能力、数字和限制，不代表当前源码。后续目录迁移后的链接已更新；最新实现见 [阶段 2 记录](STAGE_2.md) 与 [进度](PROGRESS.md)。
+
 ## 已实现
 
 | 模块 | 本轮能力 |
@@ -30,9 +32,9 @@
 
 ## 验证证据
 
-- [数学、范围测试](../crates/egui-customplot/src/axis.rs)：无效范围、f64 大原点往返、缩放锚点、平移方向。
-- [数据测试](../crates/egui-customplot/src/model.rs)：空 / 常量 / 非有限值、有效范围缓存、共享数据不复制。
-- [几何测试](../crates/egui-customplot/src/render.rs)：两端都在视区外的穿越线、NaN / Inf / 屏外折返不错误连线、空图 / 单点。
+- [数学、范围测试](../crates/egui-customplot/src/axis/transform.rs)：无效范围、f64 大原点往返、缩放锚点、平移方向。
+- [数据测试](../crates/egui-customplot/src/data/points.rs)：空 / 常量 / 非有限值、有效范围缓存、共享数据不复制。
+- [几何测试](../crates/egui-customplot/src/render/line.rs)：两端都在视区外的穿越线、NaN / Inf / 屏外折返不错误连线、空图 / 单点。
 - [egui 集成测试](../crates/egui-customplot/tests/egui_integration.rs)：单遍 / 双遍缩放与拖动等价、最终布局改变后的锚点、稳定 ID、独立视图、共享字节去重、禁用 / 图外输入、父容器裁剪、屏外跳过、聚焦复位、静止重绘、父 ScrollArea 滚轮、100 次数据释放与水平滚动容器。
 - 含 rustdoc 示例共 **21 项本地测试**；`fmt`、严格 Clippy、workspace 测试和 Release demo 构建作为交付检查。自动测试不替代人工视觉回归和跨平台实机测试。
 - Windows Release demo 启动冒烟检查：创建了标题为 `egui-customplot | Stage 1` 的窗口，进程响应正常，关闭后退出码 0。**没有据此声称验证了所有视觉效果或交互手感。**

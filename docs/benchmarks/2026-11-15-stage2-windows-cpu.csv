@@ -1,0 +1,7 @@
+# customplot CPU baseline; profile=bench; egui=0.37; canvas=2024x1124; plot=1920x1080; pixels_per_point=1
+# data construction_ms=0.998; sample_bytes=1600000; seconds_per_scene=30
+scene,frames,build_p50_ms,build_p95_ms,build_p99_ms,tess_p50_ms,tess_p95_ms,tess_p99_ms,total_p50_ms,total_p95_ms,total_p99_ms,visited_segments,output_points,geometry_capacity_bytes,mesh_vertices
+empty_egui,13353099,0.0020,0.0021,0.0025,0.0001,0.0002,0.0002,0.0021,0.0022,0.0026,0,0,0,0
+empty_plot,3532076,0.0062,0.0064,0.0097,0.0019,0.0020,0.0028,0.0081,0.0084,0.0130,0,0,0,192
+100k_static,6473,1.3985,1.5497,1.6642,2.8220,3.1743,3.3693,4.2443,4.6186,4.8509,99999,100000,1048576,400204
+100k_pan,6824,1.3466,1.4878,1.6371,2.6596,3.0586,3.3461,4.0218,4.4594,4.8508,99999,90793,1048576,363356

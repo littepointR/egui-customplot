@@ -1,7 +1,7 @@
 //! Native egui plotting, with persistent data and explicitly owned view state.
 //!
-//! This prototype implements linear 2D polylines only. Data is scanned once on
-//! construction for bounds, but rendering still visits every segment each pass:
+//! Supports mixed lines/markers/scatter, linear/log axes, legends and raw-point
+//! hover. Data is scanned once for bounds, but rendering still visits all samples:
 //! there is no LOD, geometry cache, GPU callback, or performance guarantee yet.
 //!
 //! ```
@@ -15,10 +15,18 @@
 //! ```
 
 mod axis;
+mod data;
+mod diagnostics;
+mod interaction;
+mod layout;
 mod model;
 mod render;
 mod widget;
 
-pub use axis::{BoundsError, PlotBounds, PlotTransform};
-pub use model::{Line, PlotData, PlotPoint};
-pub use widget::{Plot, PlotDiagnostics, PlotResponse, PlotState};
+pub use axis::{Axis, AxisScale, AxisTick, BoundsError, PlotBounds, PlotTransform};
+pub use data::{PlotData, PlotPoint};
+pub use diagnostics::PlotDiagnostics;
+pub use interaction::{HoveredPoint, PlotState};
+pub use layout::LegendEntry;
+pub use model::{Line, LinePattern, MarkerShape, MarkerStyle, Scatter, Series, SeriesError};
+pub use widget::{Plot, PlotResponse};

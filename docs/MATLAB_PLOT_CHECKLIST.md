@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：ML-001 `plot` 为“开发中”，其余 132 项未实现；没有图类型通过完整交付门槛。** 首轮仅实现二维折线基础切片，证据和限制见 [首轮记录](STAGE_1.md)。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：ML-001 / 007 / 008 / 009 / 013 共 5 项“开发中”，其余 128 项未实现；没有图类型通过完整交付门槛。** 基础二维实现和限制见 [阶段 2](STAGE_2.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -35,15 +35,15 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-001 | 开发中 | [`plot`](https://ww2.mathworks.cn/help/matlab/ref/plot.html) | 二维折线 / 标记图，2D | 已有折线 / 多序列叠加 / 断段；标记、复数适配及完整验收尚缺，见首轮记录 |
+| ML-001 | 开发中 | [`plot`](https://ww2.mathworks.cn/help/matlab/ref/plot.html) | 二维折线 / 标记图，2D | 已有折线 / 标记 / 混合叠加 / 断段 / 基础线型；复数适配、导出与完整验收仍缺，见阶段 2 |
 | ML-002 | 未实现 | [`plot3`](https://ww2.mathworks.cn/help/matlab/ref/plot3.html) | 三维折线，3D | XYZ 轨迹、深度遮挡、相机与拾取 |
 | ML-003 | 未实现 | [`stairs`](https://ww2.mathworks.cn/help/matlab/ref/stairs.html) | 阶梯图，2D | 阶跃边界、端点、非等距 X |
 | ML-004 | 未实现 | [`errorbar`](https://ww2.mathworks.cn/help/matlab/ref/errorbar.html) | 误差棒图，2D | 水平 / 垂直、对称 / 非对称误差、端帽 |
 | ML-005 | 未实现 | [`area`](https://ww2.mathworks.cn/help/matlab/ref/area.html) | 面积图 / 堆积面积图，2D | 基线、堆积、正负值与透明叠加 |
 | ML-006 | 未实现 | [`stackedplot`](https://ww2.mathworks.cn/help/matlab/ref/stackedplot.html) | 共用 X 轴的纵向堆叠图，复合 2D | 各行独立 Y 轴、共享 X、时间数据与联动 |
-| ML-007 | 未实现 | [`loglog`](https://ww2.mathworks.cn/help/matlab/ref/loglog.html) | 双对数折线，2D | 双轴对数刻度、非正值策略、导航 |
-| ML-008 | 未实现 | [`semilogx`](https://ww2.mathworks.cn/help/matlab/ref/semilogx.html) | X 对数折线，2D | X 对数 / Y 线性及逆变换 |
-| ML-009 | 未实现 | [`semilogy`](https://ww2.mathworks.cn/help/matlab/ref/semilogy.html) | Y 对数折线，2D | X 线性 / Y 对数及逆变换 |
+| ML-007 | 开发中 | [`loglog`](https://ww2.mathworks.cn/help/matlab/ref/loglog.html) | 双对数折线，2D | 已有双 log 轴、非正值断段、导航 / 拾取与测试；导出和完整验收仍缺 |
+| ML-008 | 开发中 | [`semilogx`](https://ww2.mathworks.cn/help/matlab/ref/semilogx.html) | X 对数折线，2D | 已有 X log / Y linear 及正反变换；导出和完整验收仍缺 |
+| ML-009 | 开发中 | [`semilogy`](https://ww2.mathworks.cn/help/matlab/ref/semilogy.html) | Y 对数折线，2D | 已有 X linear / Y log 及正反变换；导出和完整验收仍缺 |
 | ML-010 | 未实现 | [`fplot`](https://ww2.mathworks.cn/help/matlab/ref/fplot.html) | 显式 / 参数函数曲线，2D | 自适应采样、参数曲线、不连续点与预算限制 |
 | ML-011 | 未实现 | [`fplot3`](https://ww2.mathworks.cn/help/matlab/ref/fplot3.html) | 参数函数曲线，3D | 三分量回调、参数区间、采样误差 |
 | ML-012 | 未实现 | [`fimplicit`](https://ww2.mathworks.cn/help/matlab/ref/fimplicit.html) | 隐式曲线，2D | F(x,y)=0、多连通分支与奇异区域 |
@@ -52,7 +52,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-013 | 未实现 | [`scatter`](https://ww2.mathworks.cn/help/matlab/ref/scatter.html) | 散点图，2D | 逐点颜色 / 大小、空心 / 实心标记、拾取 |
+| ML-013 | 开发中 | [`scatter`](https://ww2.mathworks.cn/help/matlab/ref/scatter.html) | 散点图，2D | 已有逐点颜色 / 半径、7 种实心标记与拾取；空心样式、大小语义适配、导出及完整验收仍缺 |
 | ML-014 | 未实现 | [`scatter3`](https://ww2.mathworks.cn/help/matlab/ref/scatter3.html) | 散点图，3D | 深度排序 / 测试、三维拾取 |
 | ML-015 | 未实现 | [`bubblechart`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart.html) | 气泡图，2D | 气泡大小映射、大小范围与气泡图例 |
 | ML-016 | 未实现 | [`bubblechart3`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart3.html) | 气泡图，3D | 大小映射、深度与透明遮挡 |
@@ -295,7 +295,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 ## E. 跨图类型交付项：不计入 133 项
 
-以下项目为各图类型共用的能力矩阵，尚未整项验收；首轮已实现其中的线性范围、平移 / 缩放 / 复位和基础样式等局部能力，见 [首轮记录](STAGE_1.md)。每种图需要标注适用 / 不适用，并引用相应测试。
+以下项目为各图类型共用的能力矩阵，尚未整项验收；线性 / 对数 / 反向 / 等比例、刻度、混合序列、图例与拾取已有局部实现，见 [阶段 2](STAGE_2.md)。每种图需要标注适用 / 不适用，并引用相应测试。
 
 | 编号 | 能力 | MATLAB 对照 / 验收范围 |
 | --- | --- | --- |

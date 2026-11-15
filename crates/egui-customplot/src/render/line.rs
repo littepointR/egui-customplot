@@ -3,19 +3,19 @@ use egui::Pos2;
 use crate::{PlotPoint, PlotTransform};
 
 #[derive(Default)]
-pub(crate) struct PreparedLine {
+pub(super) struct PreparedLine {
     pub paths: Vec<Vec<Pos2>>,
     pub visited_segments: usize,
     pub numeric_rejections: usize,
 }
 
 /// Reference O(N) path. Clip in f64 normalized coordinates before casting to f32.
-pub(crate) fn prepare_line(points: &[PlotPoint], transform: PlotTransform) -> PreparedLine {
+pub(super) fn prepare_line(points: &[PlotPoint], transform: PlotTransform) -> PreparedLine {
     let mut prepared = PreparedLine::default();
     let mut path = Vec::new();
     for pair in points.windows(2) {
         prepared.visited_segments += 1;
-        if pair.iter().flatten().any(|x| !x.is_finite()) {
+        if !transform.is_valid_point(pair[0]) || !transform.is_valid_point(pair[1]) {
             flush(&mut path, &mut prepared.paths);
             continue;
         }
@@ -91,7 +91,7 @@ fn clip_segment(a: PlotPoint, b: PlotPoint) -> Option<(PlotPoint, PlotPoint)> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::PlotBounds;
+    use crate::{AxisScale, PlotBounds};
 
     fn transform() -> PlotTransform {
         PlotTransform::new(
@@ -129,6 +129,23 @@ mod tests {
     fn empty_singleton_and_invisible_lines_emit_no_paths() {
         for points in [vec![], vec![[0.0; 2]], vec![[-2.0; 2], [-1.0; 2]]] {
             assert!(prepare_line(&points, transform()).paths.is_empty());
+        }
+    }
+
+    #[test]
+    fn nonpositive_log_samples_break_paths_instead_of_connecting_neighbors() {
+        let t = PlotTransform::with_axes(
+            PlotBounds::new([1.0; 2], [100.0; 2]).unwrap(),
+            transform().rect(),
+            [AxisScale::Log10; 2],
+            [false; 2],
+        )
+        .unwrap();
+        for gap in [[0.0, 10.0], [10.0, -1.0], [f64::NAN; 2]] {
+            let p = prepare_line(&[[1.0; 2], [10.0; 2], gap, [10.0, 1.0], [100.0, 1.0]], t);
+            assert_eq!(p.paths.len(), 2);
+            assert_eq!(p.visited_segments, 4);
+            assert_eq!(p.numeric_rejections, 0);
         }
     }
 }
