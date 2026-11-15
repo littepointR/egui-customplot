@@ -4,6 +4,7 @@ mod aspect;
 mod bounds;
 mod grid;
 mod linked;
+mod polygon;
 mod rect;
 mod scale;
 mod segment;
@@ -12,8 +13,11 @@ mod transform;
 mod y_axis;
 
 pub use bounds::{BoundsError, PlotBounds};
-pub(crate) use grid::{grid_cell_at, grid_cell_rect, visible_grid};
+pub(crate) use grid::{edge_cell_at, grid_cell_at, grid_cell_rect, visible_edges, visible_grid};
 pub(crate) use linked::apply_axis_ranges;
+pub(crate) use polygon::{
+    ClipVertex, clip_normalized_triangle, point_in_ring_transformed, project_boundary_segment,
+};
 pub(crate) use rect::{clipped_axis_segment, clipped_data_rect, rect_edges, valid_extent};
 pub use scale::AxisScale;
 pub(crate) use segment::{clip_normalized_segment, project_vector_segment};

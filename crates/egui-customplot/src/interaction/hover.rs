@@ -1,3 +1,4 @@
+use super::region::{HoveredRegion, RegionKind, pick_region};
 use crate::{
     HoveredBar, HoveredCell, HoveredPoint, HoveredVector, PlotDiagnostics, PlotLayer, PlotState,
     axis::SeriesTransforms, model::ResolvedPlotStyle,
@@ -10,10 +11,11 @@ pub(crate) struct HoverPick {
     pub cell: Option<HoveredCell>,
     pub bar: Option<HoveredBar>,
     pub vector: Option<HoveredVector>,
+    pub region: Option<HoveredRegion>,
 }
 
-/// Filled heatmap cells occlude earlier point layers. Among eligible point
-/// layers retain the established closest-distance / first-submission tie rule.
+/// Filled layers (heatmap cells, bars, patches/areas/images) occlude earlier layers
+/// strictly below them; `Area`'s upper stroke shares its own layer index.
 pub(crate) fn pick_hover(
     state: &PlotState,
     layers: &[PlotLayer<'_>],
@@ -26,18 +28,30 @@ pub(crate) fn pick_hover(
     let start = Instant::now();
     let mut cell = super::pick_cell(state, layers, transforms, position, diagnostics);
     let mut bar = super::bar::pick_bar(state, layers, transforms, position, diagnostics, style);
-    if let (Some(c), Some(b)) = (&cell, &bar) {
-        if c.layer_index > b.layer_index {
-            bar = None;
-        } else {
-            cell = None;
-        }
-    }
-    let first_layer = cell
+    let mut region = pick_region(state, layers, transforms, position, diagnostics, style);
+    let top_layer = cell
         .as_ref()
         .map(|c| c.layer_index)
-        .or(bar.as_ref().map(|b| b.layer_index))
-        .map_or(0, |i| i + 1);
+        .into_iter()
+        .chain(bar.as_ref().map(|b| b.layer_index))
+        .chain(region.as_ref().map(|r| r.layer_index))
+        .max();
+    if let Some(top) = top_layer {
+        if cell.as_ref().is_some_and(|c| c.layer_index != top) {
+            cell = None;
+        }
+        if bar.as_ref().is_some_and(|b| b.layer_index != top) {
+            bar = None;
+        }
+        if region.as_ref().is_some_and(|r| r.layer_index != top) {
+            region = None;
+        }
+    }
+    let first_layer = match top_layer {
+        Some(top) if region.as_ref().is_some_and(|r| r.kind == RegionKind::Area) => top,
+        Some(top) => top + 1,
+        None => 0,
+    };
     let options = super::picking::PickOptions {
         position,
         radius,
@@ -48,13 +62,17 @@ pub(crate) fn pick_hover(
         PlotLayer::Quiver(quiver) => Some(HoveredVector::from_point(p, quiver)),
         _ => None,
     });
-    let cell = if point.is_some() { None } else { cell };
-    let bar = if point.is_some() { None } else { bar };
+    let (cell, bar, region) = if point.is_some() {
+        (None, None, None)
+    } else {
+        (cell, bar, region)
+    };
     diagnostics.pick_duration = start.elapsed();
     HoverPick {
         point,
         cell,
         bar,
         vector,
+        region,
     }
 }

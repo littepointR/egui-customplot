@@ -1,8 +1,54 @@
 use std::time::Duration;
 
+/// Per-show-pass counters for area, fill, patch, rectangle and polyshape layers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PatchDiagnostics {
+    pub input_items: usize,
+    pub invalid_items: usize,
+    pub domain_invalid_items: usize,
+    pub invalid_area_baselines: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub output_meshes: usize,
+    pub output_triangles: usize,
+    pub output_strokes: usize,
+    pub pick_queries: usize,
+}
+
+/// Per-show-pass counters for contour line, filled contour band and label layers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ContourDiagnostics {
+    pub input_lines: usize,
+    pub input_bands: usize,
+    pub domain_invalid_items: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub output_paths: usize,
+    pub output_meshes: usize,
+    pub output_labels: usize,
+    pub pick_queries: usize,
+}
+
+/// Per-show-pass counters for pcolor fields and raster image layers.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct ImageDiagnostics {
+    pub input_cells: usize,
+    pub non_finite_cells: usize,
+    pub color_invalid_cells: usize,
+    pub domain_invalid_cells: usize,
+    pub unique_bytes: usize,
+    pub visited_cells: usize,
+    pub output_cells: usize,
+    pub output_meshes: usize,
+    pub pick_queries: usize,
+}
+
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
+    pub patches: PatchDiagnostics,
+    pub contours: ContourDiagnostics,
+    pub images: ImageDiagnostics,
     pub input_quiver_arrows: usize,
     /// Nonfinite origins/vectors or overflowed true endpoints.
     pub invalid_quiver_arrows: usize,

@@ -19,6 +19,8 @@ pub(super) struct Demo {
     statistical: crate::statistical::StatisticalDemo,
     stems: crate::stems::StemDemo,
     quiver: crate::quiver::QuiverDemo,
+    polygons: crate::polygons::PolygonDemo,
+    contours: crate::contours::ContourDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -35,6 +37,8 @@ impl Default for Demo {
             statistical: crate::statistical::StatisticalDemo::default(),
             stems: crate::stems::StemDemo::default(),
             quiver: crate::quiver::QuiverDemo::default(),
+            polygons: crate::polygons::PolygonDemo::default(),
+            contours: crate::contours::ContourDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -47,6 +51,8 @@ impl Demo {
         demo.statistical.enabled = gallery == Some("--statistical");
         demo.stems.enabled = gallery == Some("--stems");
         demo.quiver.enabled = gallery == Some("--quiver");
+        demo.polygons.enabled = gallery == Some("--polygons");
+        demo.contours.enabled = gallery == Some("--contours");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -68,6 +74,8 @@ impl Demo {
                     self.statistical.controls(ui);
                     self.stems.controls(ui);
                     self.quiver.controls(ui);
+                    self.polygons.controls(ui);
+                    self.contours.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -133,6 +141,12 @@ impl Demo {
         }
         if self.quiver.enabled {
             return self.quiver.show(ui);
+        }
+        if self.polygons.enabled {
+            return self.polygons.show(ui);
+        }
+        if self.contours.enabled {
+            return self.contours.show(ui);
         }
         self.views.show(
             ui,

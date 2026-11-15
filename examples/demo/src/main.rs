@@ -3,11 +3,13 @@
 mod app;
 mod appearance;
 mod charts;
+mod contours;
 mod controls;
 mod data;
 mod diagnostics;
 mod export;
 mod performance;
+mod polygons;
 mod quiver;
 mod scalar;
 mod statistical;

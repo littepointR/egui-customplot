@@ -1,6 +1,6 @@
 # 阶段 8：二维类型补全切片
 
-日期：2026-11-15。**阶梯线、茎状图与二维矢量场基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
+日期：2026-11-16。**阶梯线、茎状图、二维矢量场与 Stage 8A（面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像）基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
 
 ## 阶梯线（ML-003）
 
@@ -130,6 +130,48 @@ let arrows = Quiver::new(&field).head_size(10.0, 8.0);
 | 100,000 | 74.7509 | 2.2253 | 82.0513 | 3.7368 | 4,000,000 |
 
 合计逐帧计算 UI 构建 + egui tessellation 后取分位数，不把两个独立 p95 相加；不含呈现等待 / GPU、mesh 销毁、原始数据构造或统计样本 Vec 增长。各场景独立计时且共享机器负载变化，1 万记录含拾取合计低于无拾取场景不能解释为拾取加速。三档原始 payload 分别为 32,000 / 320,000 / 3,200,000 B；窄区仍逐条访问全部记录，只把输出杆 / 头部降为 20 / 200 / 2,000。10 万全区的 CPU 成本明显超出候选 16.7 ms 交互预算；没有向量索引、批处理或 LOD，不承诺密集全区实时性。路径点 Vec capacity 不含顶层 Vec、egui shapes / meshes、所有临时分配、进程峰值或 GPU，不能据此声称总占用或零泄漏。
+
+## 面积、多边形、面片、等高线、伪彩与图像（Stage 8A：ML-005 / 051 / 052 / 055 / 063 / 081，EX-001 / 002 / 004 / 005 / 016 / 025，LG-011 / 012）
+
+```rust
+use egui_customplot::{AreaBandData, AreaStackMode, ContourData, ContourLevels, Contours, ScalarField2D};
+// 面积堆叠 / 多边形 / 面片 / 等高线 / Pcolor / 图像均由宿主持有不可变 Arc payload，通过 show_layers 提交
+```
+
+- **可扩展分域诊断与资源去重：** `PlotDiagnostics` 新增 `patches: PatchDiagnostics`、`contours: ContourDiagnostics`、`images: ImageDiagnostics`，并在 `model::summary` 中跨混合图层按真实 Arc 数据指针去重 `unique_bytes`，避免多图元叠加时重复累计共享样本字节。
+- **面积与底层几何（ML-005 / EX-001 / EX-002 / EX-004 / EX-005 / EX-016）：**
+  - `Area` 同时支持单曲线（复用 `PlotData` 与显式 `LineIndex` 区间筛选）与 `AreaBandData::{from_band, stack}`（`Cumulative` / `PosNegSplit`；对非单调 X 轴显式回退全范围扫描而非二分错位）。NaN 断段与 log 值轴非法基线明示递增 `invalid_area_baselines`。
+  - `Line::primitive` 提供无隐式重置范围的数据空间折线图元；`PolygonData` / `Fill` 与 `PolyRegion` / `PolyShapeData` / `PolyShape` 基于 f64 耳切三角化与 Eberly 孔洞桥接预计算四坐标域三角索引；`PatchData` / `Patch` 支持 `Uniform` / `FaceColors` / `FaceScalars` 与 Gouraud `VertexColors` / `VertexScalars`；`DataRect` / `Rectangles` 支持圆角曲率与椭圆细分及精确圆角命中判定。
+  - 所有几何在 `[0, 1]^2` 归一化空间按 Sutherland-Hodgman 算法裁剪三角，再通过 `MeshBatch`（16,384 三角分批）提交给 `Painter`。
+- **等高线、伪彩与图像（ML-051 / ML-052 / ML-055 / ML-063 / ML-081 / EX-025 / LG-011 / LG-012）：**
+  - `ScalarField2D` 持有矩形网格节点值，提供 `sample_function` / `ez_sample`（强制检查 `max_evaluations` 预算）。
+  - `ContourData`（四三角中心分裂 Marching Squares，避免 2×2 鞍点二义性）与 `FilledContourData`（半平面三角裁剪）在宿主侧预处理一次；`Contours` 支持 `ColorScale`、虚线与最长可读片段居中标签，`FilledContours` 支持可选 `border_lines`。
+  - `Pcolor` 复用 `ScalarField2D`，提供 `PcolorShading::{Flat, Interp}`（Gouraud 双三角），沿矩形可见节点二分裁剪；`ImageData::{rgba8, rgb8, from_pixel_centers, indexed, grayscale}` 与 `PlotImage` / `Plot::imshow_axes()`（top-down Y 反转 + 1:1 `data_aspect`）支持透明像素跳过。
+- **拾取与混合导出边界：** `PlotResponse::hovered_region`（`HoveredRegion`）遵循顶层遮挡优先级，正确跳过 `PolyShape` 孔洞、`PlotImage` 透明像素及包含无效顶点的 `Patch` 面；`Area` 上边界与 `Contours` 等高线继续走原始点/顶点精确拾取。纯色平铺三角导出为原生 SVG `<path>`，Gouraud 渐变 `Patch` / `PcolorShading::Interp` 在 SVG 中自动触发内嵌 PNG `<image>` 栅格回退，无外部 `<text>` 依赖。
+
+### Stage 8A 正确性与生命周期证据
+
+- 新增库单元 3 项（三角化与 Eberly 孔洞桥接）、集成 16 项：`tests/area.rs`（4 项）、`tests/polygons_patches.rs`（5 项）、`tests/contours.rs`（3 项）、`tests/pcolor_image.rs`（2 项）、`tests/export_polygons_contours.rs`（2 项，含 resvg 无字体像素校验孔洞与 SVG path/raster 分流），以及 demo `--polygons` / `--contours` 测试 2 项。
+- 统一 all-features **226 项通过**（库单元 35、集成 175、demo 14、rustdoc 2），`fmt`、默认 workspace 测试、无默认 feature 检查、默认与 `--all-features` 严格 Clippy、Release demo 构建全部通过，见 [最终 7 项检查记录](benchmarks/2026-11-16-stage8a-windows-final-checks.txt)。
+- [scripts/smoke-demo.ps1](../../scripts/smoke-demo.ps1) 已修复 Windows IME 浮窗 (`UAC_InputIndicatorOverlayWnd`) 干扰 `.NET MainWindowHandle` 的问题（首轮未修前中止留档 [gallery-smoke](benchmarks/2026-11-16-stage8a-windows-gallery-smoke.txt)）；修正后八预设原生窗口（`default`、`--scalar`、`--statistical`、`--stairs`、`--stems`、`--quiver`、`--polygons`、`--contours`）均响应且正常退出，见 [retry1 窗口记录](benchmarks/2026-11-16-stage8a-windows-gallery-smoke-retry1.txt)，Release `customplot-demo.exe` SHA256 核对一致为 `8601BD85105E86D6556719B384B295164040A8FA722C9AFC7EC13ACD43EBF885`。
+
+### Stage 8A CPU 基准测量
+
+`polygon_contour_performance`（binary SHA256 `1A638594F10B3087CBB804518210F0BA7E5D49F6B43A0BFAA2C42D3CE9823A8E`）对 7 个场景各预热 5 帧并采集 30 秒，固定 1920×1080 逻辑绘图区、DPI=1、`show_grid=false`、`show_hover=false`，共享 i9-14900KF / Windows 10.0.26300 / Rust 1.100.0 环境；退出码 0、stderr 仅 cargo 编译输出。[环境记录](benchmarks/2026-11-16-stage8a-windows-cpu-environment.txt)、[原始 CSV](benchmarks/2026-11-16-stage8a-windows-cpu.csv)、[stderr](benchmarks/2026-11-16-stage8a-windows-cpu.stderr.txt) 独立保存。
+
+- **预处理中位耗时（256×256 场、12 等级）：** `ContourData::from_field` p50 = **9.5039 ms**（106 条等高线）；`FilledContourData::from_field` p50 = **34.2380 ms**（13 个带、333,078 个预切分三角）。
+
+| 场景 | 输入规模 | CPU UI p95 ms | Tess p95 ms | 合计 p95 ms | 几何 Capacity B | 样本 Payload B |
+| --- | --- | ---: | ---: | ---: | ---: | ---: |
+| `area_100k_full` | 100,000 点（199,998 三角） | 19.1648 | 16.6086 | **37.1281** | 20,316,160 | 1,600,000 |
+| `area_100k_narrow_2pct` | 100,000 点索引窄视区（4,004 三角） | 1.2321 | 0.0677 | **1.3064** | 409,600 | 1,600,000 |
+| `patch_10k_faces_full` | 10,000 四边面片（20,000 Gouraud 三角） | 2.6928 | 0.4265 | **3.0793** | 1,966,080 | 563,224 |
+| `contour_256x256_12levels` | 256×256 场 106 等高线（212 路径） | 0.6372 | 2.1595 | **2.7624** | 422,912 | 585,616 |
+| `contourf_256x256_12levels` | 256×256 场 13 等值带（333,078 三角） | 37.8326 | 20.4669 | **57.3684** | 31,850,496 | 18,817,136 |
+| `pcolor_256x256_flat` | 256×256 `Pcolor::Flat`（65,025 cell） | 2.7496 | 3.2586 | **5.9008** | 6,815,744 | 528,384 |
+| `image_256x256_rgba` | 256×256 `ImageData::rgba8`（65,536 像素） | 2.6010 | 3.9874 | **6.3668** | 6,815,744 | 266,256 |
+
+- **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、呈现等待、FPS 或进程峰值内存。`area_100k_full`（37.1 ms）与 `contourf_256x256_12levels`（57.4 ms）因提交十万至三十余万级精确三角，已超出 16.7 ms 交互预算；在后续阶段引入多边形简化 / 等值带抽取合并或可选 GPU 路径前，不宣称大规模全视区 `area` / `contourf` 的实时帧率。
 
 ## 剩余验收
 

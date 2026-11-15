@@ -44,6 +44,10 @@ harness = false
 name = "quiver_performance"
 harness = false
 
+[[bench]]
+name = "polygon_contour_performance"
+harness = false
+
 [[example]]
 name = "export_snapshot"
 required-features = ["export"]

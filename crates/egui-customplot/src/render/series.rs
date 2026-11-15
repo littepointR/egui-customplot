@@ -66,6 +66,82 @@ pub(crate) fn paint_series(
                 super::quiver::paint_quiver(&painter, quiver, transform, resolved, diagnostics);
                 continue;
             }
+            PlotLayer::Area(area) => {
+                super::area::paint_area(
+                    &painter,
+                    area,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                    cache.as_deref_mut(),
+                );
+                continue;
+            }
+            PlotLayer::Fill(fill) => {
+                super::polygon::paint_fill(
+                    &painter,
+                    fill,
+                    transform,
+                    resolved.stroke.color,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Patch(patch) => {
+                super::patch::paint_patch(
+                    &painter,
+                    patch,
+                    transform,
+                    resolved.stroke.color,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Rectangles(rects) => {
+                super::shapes::paint_rectangles(
+                    &painter,
+                    rects,
+                    transform,
+                    resolved.stroke.color,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::PolyShape(poly) => {
+                super::polygon::paint_polyshape(
+                    &painter,
+                    poly,
+                    transform,
+                    resolved.stroke.color,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Contours(contours) => {
+                super::contour::paint_contours(
+                    ui,
+                    &painter,
+                    contours,
+                    transform,
+                    resolved,
+                    style,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::FilledContours(fc) => {
+                super::contour::paint_filled_contours(&painter, fc, transform, diagnostics);
+                continue;
+            }
+            PlotLayer::Pcolor(pcolor) => {
+                super::pcolor::paint_pcolor(&painter, pcolor, transform, diagnostics);
+                continue;
+            }
+            PlotLayer::Image(image) => {
+                super::image::paint_image(&painter, image, transform, diagnostics);
+                continue;
+            }
             PlotLayer::Series(s) => s,
         };
         let color = resolved.stroke.color;

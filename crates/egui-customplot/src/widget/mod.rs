@@ -166,4 +166,11 @@ impl Plot {
         }
         self
     }
+    /// Configure image display axes (`imshow` / `EX-025`): top-down reversed Y axis
+    /// and 1:1 data aspect ratio while keeping any user axis labels/scales.
+    pub fn imshow_axes(mut self) -> Self {
+        self.axes[1].reversed = true;
+        self.data_aspect = Some(1.0);
+        self
+    }
 }

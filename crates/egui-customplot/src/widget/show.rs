@@ -209,11 +209,11 @@ impl Plot {
         if let Some(cache) = cache {
             diagnostics.line_cache_bytes = cache.retained_bytes();
         }
-        let (hovered_point, hovered_cell, hovered_bar, hovered_vector, hover_text) =
+        let (hovered_point, hovered_cell, hovered_bar, hovered_region, hovered_vector, hover_text) =
             if self.show_hover && ui.is_enabled() && !diagnostics.painting_skipped {
                 navigation
                     .hover_pos
-                    .map_or((None, None, None, None, None), |position| {
+                    .map_or((None, None, None, None, None, None), |position| {
                         let (picked, text) = super::hover::show_hover(
                             ui,
                             state,
@@ -231,12 +231,13 @@ impl Plot {
                             picked.point,
                             picked.cell,
                             picked.bar,
+                            picked.region,
                             picked.vector,
                             Some(text),
                         )
                     })
             } else {
-                (None, None, None, None, None)
+                (None, None, None, None, None, None)
             };
         PlotResponse {
             outer_rect: outer,
@@ -250,6 +251,7 @@ impl Plot {
             hovered_point,
             hovered_cell,
             hovered_bar,
+            hovered_region,
             hovered_vector,
             hover_text,
             legend_entries,

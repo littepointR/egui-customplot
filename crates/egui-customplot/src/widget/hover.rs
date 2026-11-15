@@ -3,7 +3,7 @@ use crate::{
     axis::SeriesTransforms,
     interaction::{HoverPick, pick_hover, show_tooltip},
     model::ResolvedPlotStyle,
-    render::{paint_bar_hover, paint_cell_hover, paint_hover},
+    render::{paint_bar_hover, paint_cell_hover, paint_hover, paint_region_hover},
 };
 use egui::{Pos2, Response, Ui};
 
@@ -36,7 +36,8 @@ pub(super) fn show_hover(
         .as_ref()
         .map(|p| p.y_axis)
         .or(picked.cell.as_ref().map(|c| c.y_axis))
-        .or(picked.bar.as_ref().map(|b| b.y_axis));
+        .or(picked.bar.as_ref().map(|b| b.y_axis))
+        .or(picked.region.as_ref().map(|r| r.y_axis));
     let transform = axis.map_or(hover.transforms.left, |a| hover.transforms.for_axis(a));
     paint_hover(
         ui,
@@ -52,12 +53,16 @@ pub(super) fn show_hover(
     if let Some(bar) = &picked.bar {
         paint_bar_hover(ui, transform, bar, style);
     }
+    if let Some(region) = &picked.region {
+        paint_region_hover(ui, transform, region, style);
+    }
     let index = picked
         .point
         .as_ref()
         .map(|p| p.series_index)
         .or(picked.cell.as_ref().map(|c| c.layer_index))
-        .or(picked.bar.as_ref().map(|b| b.layer_index));
+        .or(picked.bar.as_ref().map(|b| b.layer_index))
+        .or(picked.region.as_ref().map(|r| r.layer_index));
     let name = index.map_or("", |i| layers[i].name());
     let bar_point = picked.bar.as_ref().map(|b| b.as_point());
     let info = HoverInfo {
@@ -71,11 +76,12 @@ pub(super) fn show_hover(
                 vector.default_text(name)
             } else if let Some(bar) = &picked.bar {
                 bar.default_text(name)
+            } else if let Some(cell) = &picked.cell {
+                cell.default_text(name)
+            } else if let Some(region) = &picked.region {
+                region.default_text(name)
             } else {
-                picked
-                    .cell
-                    .as_ref()
-                    .map_or_else(|| info.default_text(), |c| c.default_text(name))
+                info.default_text()
             }
         },
         |format| format(info),

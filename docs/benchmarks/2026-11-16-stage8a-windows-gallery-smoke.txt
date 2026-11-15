@@ -1,0 +1,5 @@
+date=2026-11-16T01:40:36.6718925+08:00
+os=Microsoft Windows NT 10.0.26300.0
+executable=D:\littepoint\Documents\WorkingSpace\things\egui-customplot\target\release\customplot-demo.exe
+sha256=8601BD85105E86D6556719B384B295164040A8FA722C9AFC7EC13ACD43EBF885
+Window lifecycle smoke only; not visual correctness, GPU timing or FPS.

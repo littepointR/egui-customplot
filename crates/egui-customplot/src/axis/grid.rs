@@ -10,6 +10,23 @@ pub(crate) fn visible_grid(
     transform: PlotTransform,
     clip: Rect,
 ) -> [Range<usize>; 2] {
+    visible_edges(
+        [data.x_edges(), data.y_edges()],
+        [
+            data.domain_start(0, transform.scales()[0]),
+            data.domain_start(1, transform.scales()[1]),
+        ],
+        transform,
+        clip,
+    )
+}
+
+pub(crate) fn visible_edges(
+    axes: [&[f64]; 2],
+    domain_starts: [usize; 2],
+    transform: PlotTransform,
+    clip: Rect,
+) -> [Range<usize>; 2] {
     let clip = clip.intersect(transform.rect());
     if !clip.is_positive() {
         return [0..0, 0..0];
@@ -17,12 +34,8 @@ pub(crate) fn visible_grid(
     let a = transform.point_from_position(clip.min);
     let b = transform.point_from_position(clip.max);
     std::array::from_fn(|axis| {
-        let edges = if axis == 0 {
-            data.x_edges()
-        } else {
-            data.y_edges()
-        };
-        let domain_start = data.domain_start(axis, transform.scales()[axis]);
+        let edges = axes[axis];
+        let domain_start = domain_starts[axis];
         let lo = a[axis].min(b[axis]);
         let hi = a[axis].max(b[axis]);
         let start = edges
@@ -43,17 +56,30 @@ pub(crate) fn grid_cell_at(
     transform: PlotTransform,
     position: Pos2,
 ) -> Option<[usize; 2]> {
+    edge_cell_at(
+        [data.x_edges(), data.y_edges()],
+        [
+            data.domain_start(0, transform.scales()[0]),
+            data.domain_start(1, transform.scales()[1]),
+        ],
+        transform,
+        position,
+    )
+}
+
+pub(crate) fn edge_cell_at(
+    axes: [&[f64]; 2],
+    domain_starts: [usize; 2],
+    transform: PlotTransform,
+    position: Pos2,
+) -> Option<[usize; 2]> {
     if !transform.rect().contains(position) {
         return None;
     }
     let point = transform.point_from_position(position);
     let mut indices = [0; 2];
     for axis in 0..2 {
-        let edges = if axis == 0 {
-            data.x_edges()
-        } else {
-            data.y_edges()
-        };
+        let edges = axes[axis];
         if !point[axis].is_finite()
             || point[axis] < edges[0]
             || point[axis] > edges[edges.len() - 1]
@@ -64,7 +90,7 @@ pub(crate) fn grid_cell_at(
             .partition_point(|e| *e <= point[axis])
             .saturating_sub(1)
             .min(edges.len() - 2);
-        if cell < data.domain_start(axis, transform.scales()[axis]) {
+        if cell < domain_starts[axis] {
             return None;
         }
         indices[axis] = cell;

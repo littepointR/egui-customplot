@@ -1,7 +1,7 @@
 use egui::{Pos2, Stroke, Ui};
 
 use crate::{
-    HoveredBar, HoveredCell, HoveredPoint, PlotTransform,
+    HoveredBar, HoveredCell, HoveredPoint, HoveredRegion, PlotTransform,
     axis::{clipped_data_rect, grid_cell_rect},
     model::ResolvedPlotStyle,
 };
@@ -31,6 +31,22 @@ pub(crate) fn paint_cell_hover(
     style: &ResolvedPlotStyle<'_>,
 ) {
     if let Some(rect) = grid_cell_rect(cell.bounds, transform) {
+        ui.painter().with_clip_rect(transform.rect()).rect_stroke(
+            rect,
+            0.0,
+            Stroke::new(1.5, style.text_color),
+            egui::StrokeKind::Inside,
+        );
+    }
+}
+
+pub(crate) fn paint_region_hover(
+    ui: &Ui,
+    transform: PlotTransform,
+    region: &HoveredRegion,
+    style: &ResolvedPlotStyle<'_>,
+) {
+    if let Some(rect) = region.screen_rect {
         ui.painter().with_clip_rect(transform.rect()).rect_stroke(
             rect,
             0.0,

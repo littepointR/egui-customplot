@@ -6,7 +6,7 @@ use crate::{
     PlotDiagnostics, PlotLayer, PlotPoint, PlotState, Series, YAxis,
     axis::{SeriesTransforms, valid_extent},
     data::QueryStats,
-    model::{ResolvedPlotStyle, ResolvedSeriesStyle},
+    model::{AreaSource, ResolvedPlotStyle, ResolvedSeriesStyle},
 };
 
 #[derive(Clone, Debug)]
@@ -106,10 +106,68 @@ pub(super) fn pick_point(
             }
             continue;
         }
+        if let PlotLayer::Area(area) = *s
+            && let AreaSource::Band(band) = area.source
+        {
+            let hit = super::point_aux::pick_area_band(
+                area,
+                band,
+                transforms.for_axis(area.y_axis),
+                position,
+                radius,
+                s.resolved_style(series_index, style),
+                diagnostics,
+            );
+            if let Some((point_index, point, distance)) = hit
+                && closest
+                    .as_ref()
+                    .is_none_or(|p| distance < p.screen_distance)
+            {
+                closest = Some(HoveredPoint {
+                    y_axis: transforms.effective_axis(area.y_axis),
+                    series_id: s.id(series_index),
+                    series_index,
+                    point_index,
+                    point,
+                    screen_distance: distance,
+                });
+            }
+            continue;
+        }
+        if let PlotLayer::Contours(contours) = *s {
+            let hit = super::point_aux::pick_contours(
+                contours,
+                transforms.for_axis(contours.y_axis),
+                position,
+                radius,
+                s.resolved_style(series_index, style),
+                diagnostics,
+            );
+            if let Some((point_index, point, distance)) = hit
+                && closest
+                    .as_ref()
+                    .is_none_or(|p| distance < p.screen_distance)
+            {
+                closest = Some(HoveredPoint {
+                    y_axis: transforms.effective_axis(contours.y_axis),
+                    series_id: s.id(series_index),
+                    series_index,
+                    point_index,
+                    point,
+                    screen_distance: distance,
+                });
+            }
+            continue;
+        }
         let Some(data) = s.point_data() else { continue };
         let transform = transforms.for_axis(s.y_axis());
         if let PlotLayer::Stems(stems) = *s
             && !stems.baseline_valid(transform.scales())
+        {
+            continue;
+        }
+        if let PlotLayer::Area(area) = *s
+            && (!area.show_stroke || !area.baseline_valid(transform.scales()))
         {
             continue;
         }
@@ -178,6 +236,13 @@ fn point_visible(layer: PlotLayer<'_>, index: usize, resolved: ResolvedSeriesSty
             resolved.stroke.width = 0.0; // Only an enabled marker can show a zero rod.
         }
         return line_point_visible(resolved);
+    }
+    if let PlotLayer::Area(area) = layer {
+        return area.show_stroke
+            && line_point_visible(ResolvedSeriesStyle {
+                line_markers: false,
+                ..resolved
+            });
     }
     let PlotLayer::Series(series) = layer else {
         return false;

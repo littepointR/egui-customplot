@@ -27,6 +27,11 @@ impl<'a> Line<'a> {
             y_axis: YAxis::Left,
         }
     }
+
+    /// Non-clearing low-level line primitive (`EX-001` parity).
+    pub fn primitive(data: &'a PlotData) -> Self {
+        Self::new(data)
+    }
     pub fn name(mut self, name: &'a str) -> Self {
         self.name = name;
         self

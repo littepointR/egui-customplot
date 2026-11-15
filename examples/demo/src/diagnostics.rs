@@ -2,6 +2,44 @@ use eframe::egui;
 use egui_customplot::PlotDiagnostics;
 
 pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
+    if d.patches.input_items != 0 {
+        ui.monospace(format!(
+            "patches/areas: {} | visited: {} | tris / strokes / meshes: {} / {} / {} | invalid / domain-invalid / baselines: {} / {} / {} | payload: {} B",
+            d.patches.input_items,
+            d.patches.visited_items,
+            d.patches.output_triangles,
+            d.patches.output_strokes,
+            d.patches.output_meshes,
+            d.patches.invalid_items,
+            d.patches.domain_invalid_items,
+            d.patches.invalid_area_baselines,
+            d.patches.unique_bytes
+        ));
+    }
+    if d.contours.input_lines != 0 || d.contours.input_bands != 0 {
+        ui.monospace(format!(
+            "contours: {} lines, {} bands | visited: {} | paths / labels / meshes: {} / {} / {} | payload: {} B",
+            d.contours.input_lines,
+            d.contours.input_bands,
+            d.contours.visited_items,
+            d.contours.output_paths,
+            d.contours.output_labels,
+            d.contours.output_meshes,
+            d.contours.unique_bytes
+        ));
+    }
+    if d.images.input_cells != 0 {
+        ui.monospace(format!(
+            "image/pcolor cells: {} | visited / painted: {} / {} | nonfinite / domain-invalid: {} / {} | meshes: {} | payload: {} B",
+            d.images.input_cells,
+            d.images.visited_cells,
+            d.images.output_cells,
+            d.images.non_finite_cells,
+            d.images.domain_invalid_cells,
+            d.images.output_meshes,
+            d.images.unique_bytes
+        ));
+    }
     if d.input_quiver_arrows != 0 {
         ui.monospace(format!("vectors: {} | visited: {} | shafts / heads: {} / {} | invalid / domain-invalid: {} / {} | raw pick visits: {} | vector payload: {} B",
             d.input_quiver_arrows, d.visited_quiver_arrows, d.output_quiver_shafts, d.output_quiver_heads,

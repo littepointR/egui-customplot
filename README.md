@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片与阶段 8 阶梯线 / 茎状图 / 二维矢量场已实现并持续验证，尚非完整绘图库。**
+**当前状态：阶段 4～7 基础切片与阶段 8A 阶梯线 / 茎状图 / 二维矢量场 / 面积多边形面片等高线伪彩与图像基础切片已实现并持续验证，尚非完整绘图库。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -19,6 +19,8 @@ cargo run -p customplot-demo --release --locked -- --statistical
 cargo run -p customplot-demo --release --locked -- --stairs
 cargo run -p customplot-demo --release --locked -- --stems
 cargo run -p customplot-demo --release --locked -- --quiver
+cargo run -p customplot-demo --release --locked -- --polygons
+cargo run -p customplot-demo --release --locked -- --contours
 ```
 
 - 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
@@ -27,6 +29,8 @@ cargo run -p customplot-demo --release --locked -- --quiver
 - `--stairs` 展示固定非等距阶梯信号；`Line::interpolation(LineInterpolation::StepAfter)` 保持后跳变，`StepBefore` 先跳变后保持，默认 Linear。原始点用于 markers / hover；MinMax 可能改变阶跃时刻和保持时长。
 - `--stems` 展示独立正负杆 / 基线 / 原始端点与右 log Y 面板；`Stems` 可复用 `PlotData`，通过 `show_layers` 提交。方向不交换原始 XY，log 值轴需正基线；没有杆 LOD / 缓存，密集 markers / 全区杆成本很高。
 - `--quiver` 展示旋转矢量场与右 log Y 面板；`QuiverData` 保存原点 + 显式位移，无隐式自动缩放。箭头只放在真实端点；原点 / 端点拾取返回原始记录，极端数值可能明示拒绝；无向量 LOD / 索引 / 缓存。
+- `--polygons` 展示堆积 `AreaBandData`（`Cumulative` / `PosNegSplit`）、`Line::primitive`、凹多边形 `Fill`、带孔 `PolyShape`、Uniform/Face/Gouraud `Patch` 与圆角/椭圆 `Rectangles`；Gouraud 面片导出 SVG 时使用内嵌 PNG 栅格回退。
+- `--contours` 展示 `ScalarField2D` 抽取的 `Contours` / `FilledContours`（含 `from_function` / `ezcontour*` 显式求值预算）、`Pcolor`（`Flat` / `Interp`）与 `Plot::imshow_axes()` + `PlotImage`；高密度等值带为纯三角裁剪提交，无后台 GPU 加速。
 - Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
 - 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
 - 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
@@ -75,6 +79,7 @@ cargo bench -p egui-customplot --bench data_performance --locked
 cargo bench -p egui-customplot --bench heatmap_performance --locked
 cargo bench -p egui-customplot --bench stems_performance --locked
 cargo bench -p egui-customplot --bench quiver_performance --locked
+cargo bench -p egui-customplot --bench polygon_contour_performance --locked
 cargo run -p egui-customplot --example export_snapshot --features export --release --locked -- target/exports/example
 ```
 
