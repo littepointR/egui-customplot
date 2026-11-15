@@ -17,6 +17,7 @@ crates/egui-customplot/
       extents.rs              # 独立图元四坐标域固定范围缓存
       bars.rs                 # 原始柱记录、两方向范围摘要
       error_bars.rs           # 非对称误差偏移、整项范围 / 域摘要
+      quiver.rs               # Arc 原点 / 位移记录、真实端点及四域范围摘要
       histogram.rs            # 显式分箱计数、归一化和 BarData 发布
     model/
       line.rs                 # 折线的借用描述与 builder
@@ -34,6 +35,7 @@ crates/egui-customplot/
       heatmap.rs / color_scale.rs # 数值单元描述与显式共享色域
       bars.rs / error_bars.rs  # 柱 / 误差棒样式描述，不保存视图
       stems.rs                # 借用点样本的杆、方向 / 基线与 O(1) 范围
+      quiver.rs               # 无隐式缩放的矢量场、逻辑点箭头及样式
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -41,6 +43,7 @@ crates/egui-customplot/
       aspect.rs               # 等比例约束，只扩展变换空间范围
       ticks.rs                # 坐标轴配置、主次刻度、数字格式
       grid.rs / rect.rs       # 单元可见查询、定位、f64 矩形 / 轴向线段裁剪
+      segment.rs              # 共用归一化线段裁剪、向量投影 / 精度拒绝边界
       y_axis.rs / linked.rs   # 左右归属、共享范围与变换组装
     layout/
       plot.rs                 # 宿主空间分配、标题 / 轴标签留白
@@ -53,6 +56,7 @@ crates/egui-customplot/
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
       link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
       cell.rs / bar.rs        # 原始单元 / 柱拾取
+      quiver.rs               # 原始向量两锚点拾取、记录提示，复用点层距离仲裁
       hover.rs                # 填充层遮挡及原始点最近距离仲裁
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
@@ -67,6 +71,7 @@ crates/egui-customplot/
       heatmap.rs / color_bar.rs # 精确 cell 分块 mesh、共享色条
       bars.rs / error_bars.rs # 保序柱及独立误差 stem / cap
       stems.rs                # 独立杆 / 基线和原始端点 markers
+      quiver.rs               # 独立向量杆、真实端点实线 V 形箭头
       right_axis.rs           # 右 Y 刻度与标签
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
@@ -99,12 +104,14 @@ crates/egui-customplot/
     stairs.rs / stairs_lifecycle.rs # 原始点 / 派生拐点、精确对照与缓存 / 导航
     export_stairs.rs           # 真实 SVG 路径与两后端像素
     stems*.rs / export_stems.rs # 精确杆、原始拾取 / 资源 / 多遍及导出像素
+    quiver*.rs / export_quiver.rs # 向量 / 端点、域 / 裁剪、拾取 / 多遍 / DPI / 导出
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
     stream_stress.rs          # 有界宿主队列、过载丢弃及长期资源压力
     heatmap_performance.rs    # 精确全区 / 窄区网格 CPU 与容量分账
     stems_performance.rs      # 精确杆 + markers 全区 / 窄区 CPU 与局部容量
+    quiver_performance.rs     # 显式向量全区 / 窄区 / 原始拾取 CPU 与局部容量
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -113,6 +120,7 @@ examples/demo/src/
   scalar.rs                   # 数值网格与显式共享色条
   statistical.rs              # 显式直方预处理、正负柱与误差棒
   stems.rs                    # 独立正负杆 / 基线、原始端点与右 log Y gallery
+  quiver.rs                   # 显式旋转矢量场及右 log Y gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据
@@ -140,6 +148,7 @@ docs/                         # 规范、阶段证据、原始基准
 11. 导出是显式 displayed-geometry 快照，不自动恢复原始数据或另建 Context；编码后端属于 render/export。库返回 bytes，宿主在最终布局遍之外处理文件副作用；文字的 atlas 捕获不消费上传增量。
 12. 阶梯插值在选点后、裁剪前展开，先验证完整原始点对；不改写样本 / 范围 / 拾取。插值进入 pre-style 缓存键；MinMax 阶梯不能宣称精确保持跳变时刻。
 13. Stems 复用 PlotData 范围摘要 / 样本资源去重与可选原始端点拾取索引；动态基线的域验证属于 model，几何属于 render。没有隐式转成折线、重排原始点、杆 LOD 或杆缓存。
+14. QuiverData 在构造时验证原点 / 位移 / 真实端点并缓存联合域范围；每遍汇总只合并摘要。轴域提供向量投影及显式精度拒绝，render 在真实端点构造逻辑点箭头；裁剪交点、箭头翼和杆内部不是原始记录锚点。HoverInfo 保持原契约，PlotResponse 额外返回原始向量记录；不增加隐藏 autoscale、LOD、索引或缓存。
 
 图例在数据之后提交，保持图层次序；切换后请求重绘，数据在下一布局遍 / 重绘使用新显隐状态。多遍返回值是本遍快照，不是可重复向外发布的事件队列。
 

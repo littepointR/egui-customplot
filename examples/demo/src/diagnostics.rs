@@ -2,6 +2,11 @@ use eframe::egui;
 use egui_customplot::PlotDiagnostics;
 
 pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
+    if d.input_quiver_arrows != 0 {
+        ui.monospace(format!("vectors: {} | visited: {} | shafts / heads: {} / {} | invalid / domain-invalid: {} / {} | raw pick visits: {} | vector payload: {} B",
+            d.input_quiver_arrows, d.visited_quiver_arrows, d.output_quiver_shafts, d.output_quiver_heads,
+            d.invalid_quiver_arrows, d.domain_invalid_quiver_arrows, d.visited_pick_quiver_arrows, d.unique_quiver_bytes));
+    }
     if d.input_bars != 0 || d.input_error_bars != 0 {
         ui.monospace(format!("bars: {} (painted {}) | errors: {} (segments {}) | invalid / domain-invalid: {} / {} | primitive payload: {} B",
             d.input_bars, d.output_bars, d.input_error_bars, d.output_error_bar_segments,

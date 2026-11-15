@@ -206,6 +206,7 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--statistical"),
         Some("--stairs"),
         Some("--stems"),
+        Some("--quiver"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
@@ -244,6 +245,9 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
 
 #[path = "stems_tests.rs"]
 mod stems_tests;
+
+#[path = "quiver_tests.rs"]
+mod quiver_tests;
 
 #[test]
 fn stairs_preset_and_live_updates_keep_interpolation_and_samples_across_layout_retries() {

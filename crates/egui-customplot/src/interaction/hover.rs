@@ -1,5 +1,5 @@
 use crate::{
-    HoveredBar, HoveredCell, HoveredPoint, PlotDiagnostics, PlotLayer, PlotState,
+    HoveredBar, HoveredCell, HoveredPoint, HoveredVector, PlotDiagnostics, PlotLayer, PlotState,
     axis::SeriesTransforms, model::ResolvedPlotStyle,
 };
 use egui::Pos2;
@@ -9,6 +9,7 @@ pub(crate) struct HoverPick {
     pub point: Option<HoveredPoint>,
     pub cell: Option<HoveredCell>,
     pub bar: Option<HoveredBar>,
+    pub vector: Option<HoveredVector>,
 }
 
 /// Filled heatmap cells occlude earlier point layers. Among eligible point
@@ -43,8 +44,17 @@ pub(crate) fn pick_hover(
         first_layer,
     };
     let point = super::picking::pick_point(state, layers, transforms, options, diagnostics, style);
+    let vector = point.as_ref().and_then(|p| match layers[p.series_index] {
+        PlotLayer::Quiver(quiver) => Some(HoveredVector::from_point(p, quiver)),
+        _ => None,
+    });
     let cell = if point.is_some() { None } else { cell };
     let bar = if point.is_some() { None } else { bar };
     diagnostics.pick_duration = start.elapsed();
-    HoverPick { point, cell, bar }
+    HoverPick {
+        point,
+        cell,
+        bar,
+        vector,
+    }
 }

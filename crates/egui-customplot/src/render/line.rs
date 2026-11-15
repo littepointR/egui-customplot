@@ -1,6 +1,6 @@
 use egui::Pos2;
 
-use crate::{LineInterpolation, PlotPoint, PlotTransform};
+use crate::{LineInterpolation, PlotPoint, PlotTransform, axis::clip_normalized_segment};
 
 #[derive(Clone, Default)]
 pub(super) struct PreparedLine {
@@ -77,7 +77,7 @@ fn append_segment(
     path: &mut Vec<Pos2>,
     paths: &mut Vec<Vec<Pos2>>,
 ) {
-    if let Some((a, b)) = clip_segment(a, b) {
+    if let Some((a, b)) = clip_normalized_segment(a, b) {
         let a = transform.position_from_normalized(a);
         let b = transform.position_from_normalized(b);
         if path.last() != Some(&a) {
@@ -96,41 +96,6 @@ fn flush(path: &mut Vec<Pos2>, paths: &mut Vec<Vec<Pos2>>) {
     } else {
         path.clear();
     }
-}
-
-fn clip_segment(a: PlotPoint, b: PlotPoint) -> Option<(PlotPoint, PlotPoint)> {
-    let d = [b[0] - a[0], b[1] - a[1]];
-    let mut enter: f64 = 0.0;
-    let mut exit: f64 = 1.0;
-    for (p, q) in [
-        (-d[0], a[0]),
-        (d[0], 1.0 - a[0]),
-        (-d[1], a[1]),
-        (d[1], 1.0 - a[1]),
-    ] {
-        if p == 0.0 {
-            if q < 0.0 {
-                return None;
-            }
-        } else {
-            let ratio = q / p;
-            if p < 0.0 {
-                enter = enter.max(ratio);
-            } else {
-                exit = exit.min(ratio);
-            }
-            if enter > exit {
-                return None;
-            }
-        }
-    }
-    let at = |t: f64| {
-        [
-            (a[0] + t * d[0]).clamp(0.0, 1.0),
-            (a[1] + t * d[1]).clamp(0.0, 1.0),
-        ]
-    };
-    Some((at(enter), at(exit)))
 }
 
 #[cfg(test)]

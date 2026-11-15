@@ -12,7 +12,7 @@
 | 5 GPU 决策 | 已记录暂缓决策，完整验收未完成 | [STAGE_5](STAGE_5.md)：保留 Painter，明确热力图全区 CPU 风险和重新评估条件；尚无同条件 wgpu / GPU / 呈现证据 |
 | 6 丰富二维能力 | 基础切片验证通过，完整验收未完成 | [STAGE_6](STAGE_6.md)：Figure / AxisLink / 双 Y、数值 Heatmap / ColorBar、Bars / ErrorBars、显式分箱 HistogramData、专项与 demo 多遍测试；显示快照导出见阶段 7，分组 / 堆积 / 类别和完整视觉 / 资源验收仍缺 |
 | 7 导出交付 | 显示快照切片验证通过，完整验收未完成 | [STAGE_7](STAGE_7.md)：可选 export feature、PNG / 混合 SVG、宿主字体 atlas、裁剪 / 透明度 / 分辨率 / DPI、局部限制与 demo 防重复写盘；真实像素 / XML / 无外部字体 resvg 及 Windows 窗口生命周期回归通过，独立印刷布局 / 全矢量字体及平台完整验收仍缺 |
-| 8 二维类型补全 | 阶梯线 / 茎状图切片验证通过，完整验收未完成 | [STAGE_8](STAGE_8.md)：前 / 后阶、独立正负杆 / 方向 / 基线、原始拾取 / log / 双轴 / 导出 / 多遍与 demo；统计、多变量、函数、极坐标、几何、网络继续推进 |
+| 8 二维类型补全 | 阶梯线 / 茎状图 / 二维矢量场切片验证通过，完整验收未完成 | [STAGE_8](STAGE_8.md)：前 / 后阶、独立杆 / 基线、显式向量 / 真实端点箭头、原始拾取 / log / 双轴 / 导出 / 多遍与 demo；统计、多变量、函数、极坐标、几何、网络继续推进 |
 | 9 三维与体数据 | 未完成 | 三维轴、相机、深度、曲面、体、流 |
 | 10 地理绘图 | 未完成 | 投影、地图资源策略及四类本体地理图 |
 | 11 全量核销 | 未完成 | ML / EX / LG 与适用 CAP / EGUI / PERF 逐项证据 |
@@ -31,6 +31,8 @@
 
 阶段 8 阶梯线统一批次 **173 项通过**（库单元 32、集成 129、demo 10、rustdoc 2），fmt / 最小库 / 严格 Clippy / Release demo 通过；四个 Windows gallery 生命周期通过。StepAfter 三档 × 六场景各 30 秒及 stream 正式 CPU 记录完成、退出码 0、stderr 为空，结果与严格测量边界见 STAGE_8。阶段 4～7 提交 `b01561e` 的 Windows / Ubuntu CI 均成功；后加能力需独立复验。
 
-茎状图新增 13 项库专项、1 项 demo 与清单状态统计护栏；最终统一 **188 项通过**（库单元 32、集成 143、demo 11、rustdoc 2），默认 workspace / fmt / 最小库 / 严格 Clippy / Release demo 均通过，构建 hash 与五个 Windows gallery 生命周期证据一致。精确杆 + markers 三档 / 两视区各 30 秒 CPU 记录已完成，详见 STAGE_8；全区密集杆的高 CPU / 局部容量风险明确保留，没有静默 LOD 或 GPU / FPS 结论。133 条状态为 17 开发中 / 116 未实现，无条目完整交付。
+茎状图新增 13 项库专项、1 项 demo 与清单状态统计护栏；该历史统一批次 **188 项通过**（库单元 32、集成 143、demo 11、rustdoc 2），默认 workspace / fmt / 最小库 / 严格 Clippy / Release demo 均通过，构建 hash 与五个 Windows gallery 生命周期证据一致。精确杆 + markers 三档 / 两视区各 30 秒 CPU 记录已完成，详见 STAGE_8；全区密集杆的高 CPU / 局部容量风险明确保留，没有静默 LOD 或 GPU / FPS 结论。该批 133 条状态为 17 开发中 / 116 未实现，无条目完整交付。随后确认阶梯提交 `e4623b4` 与茎状图提交 `fc77b72` 的 Windows / Ubuntu CI 均成功，不覆盖后加能力或跨平台实机视觉。
 
-下一阶段继续补阶段 8 二维矢量场等类型，同时保留阶段 4 增量 / 总预算及阶段 6 / 7 完整交付缺口。133 项对照持续保留；工具箱、跨平台实机和许可证等开放边界不以本地 CPU 检查冒充已解决。
+二维矢量场新增 16 项库专项与 1 项 demo；最新统一 all-features **205 项通过**（库单元 32、集成 159、demo 12、rustdoc 2），默认 workspace / fmt / 无默认 feature 库检查 / 严格 all-targets、all-features Clippy / Release demo 同批通过。[检查原始记录](benchmarks/2026-11-15-stage8-quiver-windows-checks.txt)、[默认测试原始记录](benchmarks/2026-11-15-stage8-quiver-windows-default-tests.txt) 已独立归档。[六预设 Windows 生命周期](benchmarks/2026-11-15-stage8-quiver-windows-gallery-smoke.txt) 通过，Release binary SHA256 为 `42153A36A8363EE8963AFB7737756D2DA200D686D2F510E833D9C515E81EDAC8`，已核对一致；不代表视觉正确性 / GPU / FPS 或零泄漏。正式 CPU retry1 三档 × 全区 / 窄区 / 原始拾取九场景均 ≥30 秒，退出码 0、stderr 为空，已验收并记录于 STAGE_8；首轮重启中断记录保留且不作为性能证据。10 万条全区 CPU 合计 p95 为 74.7509 ms，窄区仍全扫描；向量实时性 / 总资源缺口保留。133 条最新状态为 **18 开发中 / 115 未实现，无条目完整交付**。
+
+下一阶段继续补阶段 8 统计、多变量、函数、极坐标等二维类型，同时保留阶段 4 增量 / 总预算及阶段 6 / 7 完整交付缺口。133 项对照持续保留；工具箱、跨平台实机和许可证等开放边界不以本地 CPU 检查冒充已解决。

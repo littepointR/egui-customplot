@@ -14,6 +14,7 @@ mod line_query;
 mod markers;
 mod overlay;
 mod pattern;
+mod quiver;
 mod right_axis;
 mod series;
 mod stems;

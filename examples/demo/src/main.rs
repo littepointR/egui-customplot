@@ -8,6 +8,7 @@ mod data;
 mod diagnostics;
 mod export;
 mod performance;
+mod quiver;
 mod scalar;
 mod statistical;
 mod stems;

@@ -3,6 +3,17 @@ use std::time::Duration;
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
+    pub input_quiver_arrows: usize,
+    /// Nonfinite origins/vectors or overflowed true endpoints.
+    pub invalid_quiver_arrows: usize,
+    /// Otherwise-valid arrows whose origin or true endpoint violates a log domain.
+    pub domain_invalid_quiver_arrows: usize,
+    pub unique_quiver_bytes: usize,
+    pub visited_quiver_arrows: usize,
+    pub visited_pick_quiver_arrows: usize,
+    /// Shaft paths after dashing, excluding solid heads.
+    pub output_quiver_shafts: usize,
+    pub output_quiver_heads: usize,
     /// Stem descriptors whose baseline is nonfinite or outside the value domain.
     /// Raw endpoint diagnostics remain in input_points / domain_invalid_points.
     pub invalid_stem_baselines: usize,

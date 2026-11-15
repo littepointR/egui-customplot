@@ -42,17 +42,18 @@ pub use axis::{Axis, AxisScale, AxisTick, BoundsError, PlotBounds, PlotTransform
 pub use data::{
     AppendReport, Bar, BarData, BarOrientation, ErrorBar, ErrorBarData, GridData, GridError,
     HistogramData, HistogramError, HistogramNormalization, LineIndexError, PlotData, PlotPoint,
-    PlotStream, StreamError,
+    PlotStream, QuiverArrow, QuiverData, StreamError,
 };
 pub use diagnostics::PlotDiagnostics;
 pub use interaction::{
-    AxisLink, HoverInfo, HoveredBar, HoveredCell, HoveredPoint, LinkError, LinkReport, PlotState,
+    AxisLink, HoverInfo, HoveredBar, HoveredCell, HoveredPoint, HoveredVector, LinkError,
+    LinkReport, PlotState, VectorAnchor,
 };
 pub use layout::{FigureError, LegendEntry};
 pub use model::{
     Annotation, Bars, ColorMap, ColorScale, ColorScaleError, ErrorBars, Heatmap, Line,
     LineInterpolation, LinePattern, LineSampling, MarkerShape, MarkerStyle, PlotLayer, PlotStyle,
-    PlotTheme, Scatter, Series, SeriesError, SeriesStyle, StemOrientation, Stems,
+    PlotTheme, Quiver, Scatter, Series, SeriesError, SeriesStyle, StemOrientation, Stems,
 };
 pub use render::PlotCache;
 #[cfg(feature = "export")]

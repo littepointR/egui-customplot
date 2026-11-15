@@ -25,6 +25,7 @@ pub(crate) fn summarize_series(
     let mut seen_grid = HashSet::new();
     let mut seen_bars = HashSet::new();
     let mut seen_errors = HashSet::new();
+    let mut seen_quivers = HashSet::new();
     let mut ranges: [[Option<[f64; 2]>; 2]; 2] = [[None; 2]; 2];
     for (index, s) in series.iter().enumerate() {
         if !present.insert(s.id(index)) {
@@ -97,6 +98,17 @@ pub(crate) fn summarize_series(
                 let allocation = s.data.allocation();
                 if seen_errors.insert(allocation) {
                     diagnostics.unique_error_bar_bytes += allocation.1;
+                }
+                s.data.extent(scales)
+            }
+            PlotLayer::Quiver(s) => {
+                let invalid = s.data.invalid([AxisScale::Linear; 2]);
+                diagnostics.input_quiver_arrows += s.data.len();
+                diagnostics.invalid_quiver_arrows += invalid;
+                diagnostics.domain_invalid_quiver_arrows += s.data.invalid(scales) - invalid;
+                let allocation = s.data.allocation();
+                if seen_quivers.insert(allocation) {
+                    diagnostics.unique_quiver_bytes += allocation.1;
                 }
                 s.data.extent(scales)
             }

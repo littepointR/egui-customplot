@@ -7,6 +7,7 @@ mod grid;
 mod histogram;
 mod index;
 mod points;
+mod quiver;
 mod stream;
 
 pub use bars::{Bar, BarData, BarOrientation};
@@ -16,4 +17,5 @@ pub use histogram::{HistogramData, HistogramError, HistogramNormalization};
 pub use index::LineIndexError;
 pub(crate) use index::QueryStats;
 pub use points::{PlotData, PlotPoint};
+pub use quiver::{QuiverArrow, QuiverData};
 pub use stream::{AppendReport, PlotStream, StreamError};

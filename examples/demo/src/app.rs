@@ -18,6 +18,7 @@ pub(super) struct Demo {
     scalar: crate::scalar::ScalarDemo,
     statistical: crate::statistical::StatisticalDemo,
     stems: crate::stems::StemDemo,
+    quiver: crate::quiver::QuiverDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -33,6 +34,7 @@ impl Default for Demo {
             scalar: crate::scalar::ScalarDemo::default(),
             statistical: crate::statistical::StatisticalDemo::default(),
             stems: crate::stems::StemDemo::default(),
+            quiver: crate::quiver::QuiverDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -44,6 +46,7 @@ impl Demo {
         demo.scalar.enabled = gallery == Some("--scalar");
         demo.statistical.enabled = gallery == Some("--statistical");
         demo.stems.enabled = gallery == Some("--stems");
+        demo.quiver.enabled = gallery == Some("--quiver");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -64,6 +67,7 @@ impl Demo {
                     self.scalar.controls(ui);
                     self.statistical.controls(ui);
                     self.stems.controls(ui);
+                    self.quiver.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -126,6 +130,9 @@ impl Demo {
         }
         if self.stems.enabled {
             return self.stems.show(ui);
+        }
+        if self.quiver.enabled {
+            return self.quiver.show(ui);
         }
         self.views.show(
             ui,

@@ -67,7 +67,9 @@ pub(super) fn show_hover(
     };
     let text = hover.plot.hover_formatter.as_ref().map_or_else(
         || {
-            if let Some(bar) = &picked.bar {
+            if let Some(vector) = &picked.vector {
+                vector.default_text(name)
+            } else if let Some(bar) = &picked.bar {
                 bar.default_text(name)
             } else {
                 picked

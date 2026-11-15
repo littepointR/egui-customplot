@@ -1,6 +1,6 @@
 # 阶段 8：二维类型补全切片
 
-日期：2026-11-15。**阶梯线与茎状图基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
+日期：2026-11-15。**阶梯线、茎状图与二维矢量场基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
 
 ## 阶梯线（ML-003）
 
@@ -72,7 +72,7 @@ let stems = Stems::new(&data).baseline(0.0).orientation(StemOrientation::Vertica
 
 [Windows 五预设生命周期记录](benchmarks/2026-11-15-stage8-stems-windows-gallery-smoke.txt)：SHA256 `EFAD6D3B72C6850AC55AD9381D22F97B32AA6D9153B54464C46055E693DA7DE8`，均响应、正常关闭且退出码 0。不是人工视觉或 GPU 验收。
 
-加入清单状态统计护栏后，茎状图最终统一 all-features **188 项通过**（库单元 32、集成 143、demo 11、rustdoc 2）；默认 workspace 测试也通过。fmt、无默认 feature 库检查、严格 all-targets / all-features Clippy、Release demo 构建同批通过，binary hash 与上述 native smoke 一致。[all-features 与构建原始记录](benchmarks/2026-11-15-stage8-stems-windows-checks.txt)、[默认 workspace 测试原始记录](benchmarks/2026-11-15-stage8-stems-windows-default-tests.txt) 独立保存；此前 173 项和两个旧 native binary 证据保留。阶梯实现提交 `e4623b4` 的 [CI](https://github.com/littepointR/egui-customplot/actions/runs/43697850975) 当前 Ubuntu 成功、Windows 尚在运行，不标记本批跨平台验收完成。
+加入清单状态统计护栏后，茎状图最终统一 all-features **188 项通过**（库单元 32、集成 143、demo 11、rustdoc 2）；默认 workspace 测试也通过。fmt、无默认 feature 库检查、严格 all-targets / all-features Clippy、Release demo 构建同批通过，binary hash 与上述 native smoke 一致。[all-features 与构建原始记录](benchmarks/2026-11-15-stage8-stems-windows-checks.txt)、[默认 workspace 测试原始记录](benchmarks/2026-11-15-stage8-stems-windows-default-tests.txt) 独立保存；此前 173 项和两个旧 native binary 证据保留。随后确认阶梯提交 `e4623b4` 的 [CI](https://github.com/littepointR/egui-customplot/actions/runs/43697850975) 与茎状图提交 `fc77b72` 的 [CI](https://github.com/littepointR/egui-customplot/actions/runs/43698813888) 均为 Windows / Ubuntu 成功；这不是后加 Quiver 或跨平台显示实机的验收。
 
 ### 茎状图 CPU / 局部容量记录
 
@@ -86,6 +86,51 @@ let stems = Stems::new(&data).baseline(0.0).orientation(StemOrientation::Vertica
 
 这是独立精确杆 + 原始 markers，不应套用折线 MinMax 的低成本结论。所有场景仍扫描全部原始杆和 markers；10 万点窄区输出 2,000 杆、2,010 markers（marker 中心允许半径范围内离屏），不是抽样或自动聚合。`geometry capacity` 仅为已计入的坐标 Vec 和 marker mesh 保留容量，不含全部临时分配、Shape 元数据、tessellation 或 GPU / 进程峰值。全区 10 万点有显著 CPU / 容量风险，本次存在高尾延迟；不掩盖、不推导 FPS，也不以此单独决定 GPU 后端。
 
+## 二维矢量场（ML-056）
+
+```rust
+use egui_customplot::{Quiver, QuiverArrow, QuiverData};
+let field = QuiverData::new(vec![
+    QuiverArrow::new([1.0, 2.0], [0.5, -1.0]), // end = [1.5, 1.0]
+]);
+let arrows = Quiver::new(&field).head_size(10.0, 8.0);
+// Plot::new("field").show_layers(ui, &mut state, &[arrows.into()]);
+```
+
+- `QuiverArrow` 为原始 `origin + vector`，`endpoint()` 返回相加后的真实端点；不接受非有限原点 / 分量或端点加法溢出。`QuiverData` 是宿主持有的不可变 Arc 记录与四联合域范围摘要，构造 O(N)、每遍自动范围 O(1)，包含原点和端点；克隆 / 重复图层的原始 payload 去重。
+- **无隐式自动缩放 / 归一化**，需要缩放时由宿主显式发布新位移数据。`Quiver` 通过 `PlotLayer` 进入宿主，不改变 `Series::data()`、旧 show / show_series 或 HoverInfo。零向量和相加后落在同一可表示原点的微小位移保留原始记录 / 合法范围，但没有杆 / 箭头 / 拾取。
+- 整条箭头的原点和真实端点必须满足 XY 联合坐标域，不能只显示跨越非法 log 域的部分。左右 Y / 反向 / 等比例使用共用变换。包括 log 轴在内，杆是**两端变换后的直线弦**，不是对连续数据空间参数曲线的自适应细分。
+- 在 f64 归一化空间裁剪后转 f32。对可能穿过视区的极远向量，若归一化不有限，或 `max(abs(a), abs(b)) × f64::EPSILON × 32 × screen_span > 0.01` 逻辑点，则省略整条箭头并计 `numeric_rejections`。这是保守的数值取消风险护栏，不是任意极值精确裁剪证明；普通折线仍沿用原参考路径的既有数值边界。
+- 默认 10×8 egui 逻辑点的开放 V 形头部，只放在**真实端点位于数据视区内且杆具有可表示可见长度**的箭头上，视区交点不生成假头。头部按完整未裁剪投影长度的 40% 上限同比缩小，不按可见残段缩小；Painter 正常裁剪头部翼，不移动真实端点。高 DPI 不改变逻辑点尺寸。
+- 颜色 / 线宽 / 杆虚线按 Theme → 父 → Plot → 图层继承；头部始终实线。每条杆在裁剪后独立从可见起点起虚线相位；继承的 point marker 字段不适用于向量。隐藏头部不隐藏杆，头部尺寸为零时省略头部，负值 / 非有限尺寸另计一次诊断；无效线宽 / 虚线省略整层。既有杆虚线安全阀继续有效，头部独立提交。
+- 只拾取原始原点和真实端点，不拾取杆内部、翼或裁剪交点；先按屏幕距离，再按提交顺序 / 原始记录顺序，完全相同距离的同条记录以原点优先。填充层遮挡沿用已有点层仲裁。
+- `PlotResponse::hovered_point` / 原 HoverInfo 格式器得到获胜的真实锚点和原始记录下标；额外 `hovered_vector` 保存原始 `QuiverArrow`、真实端点、`VectorAnchor`、轴归属和距离。默认提示列出原点、原始位移和端点；不从箭头几何反推分量。
+- 计数独立为 `input / invalid / domain_invalid / visited / visited_pick_quiver_arrows`、`output_quiver_shafts / heads` 与 `unique_quiver_bytes`。没有向量渲染索引、拾取索引、LOD 或向量缓存；绘制与拾取各自扫描全部记录。geometry capacity 仅计提交路径的点 Vec 容量，不是临时总峰值或 GPU / 进程占用。
+
+### 矢量场正确性与生命周期
+
+新增库专项 16 项：`quiver.rs` 6、`quiver_picking.rs` 4、`quiver_lifecycle.rs` 3、`quiver_dpi.rs` 2、`export_quiver.rs` 1。覆盖正负 / 对角 / 反向 / log / 精确端点、全记录域拒绝 / 加法溢出、空 / 零 / 微小 / 短向量、裁剪不生假头、极远值明示拒绝、头部尺寸和虚线、两真实锚点及旧格式器、填充遮挡、左右轴、32 次引用释放、多遍导航 / 图例与裁剪、样式继承、1 / 1.5 / 2 host DPI 和两输出倍率。
+
+导出专项解析真实 SVG 杆 / V 形路径，PNG 与不加载外部字体的 resvg 同时检查杆 / 真头有墨迹、裁剪交点的假头位置无墨迹；捕获后原始数据和宿主 Context 可销毁。局部 Arc 引用释放不代表整应用零泄漏。
+
+`--quiver` 提供显式旋转场（77 条含一条零向量，另加一条 NaN）与右 log Y 面板，可调头部、杆虚线及反向 X；demo 专项确认八种组合在双遍中不重建 payload。全部六个 gallery 均执行真实 PNG / SVG 编码。
+
+最终统一 all-features **205 项通过**（库单元 32、集成 159、demo 12、rustdoc 2）；默认 workspace、fmt、无默认 feature 库检查、严格 all-targets / all-features Clippy、Release demo 构建同批通过。[all-features 与构建原始记录](benchmarks/2026-11-15-stage8-quiver-windows-checks.txt)、[默认 workspace 测试原始记录](benchmarks/2026-11-15-stage8-quiver-windows-default-tests.txt) 已独立归档，未覆盖历史证据。证据 / 文档收尾后再执行上述七项检查（含默认与 all-features 两组严格 Clippy）全部通过，见 [带命令 / 退出码的最终检查](benchmarks/2026-11-15-stage8-quiver-windows-final-checks.txt)。[六预设 Windows 生命周期](benchmarks/2026-11-15-stage8-quiver-windows-gallery-smoke.txt) 全部启动 / 响应 / 正常关闭通过，native 记录 SHA256 与本批最终 Release binary 一致：`42153A36A8363EE8963AFB7737756D2DA200D686D2F510E833D9C515E81EDAC8`。生命周期脚本不验证完整视觉、GPU / FPS 或整应用资源。
+
+### 矢量场 CPU 测量
+
+`quiver_performance` 对 1 千 / 1 万 / 10 万条显式二维记录，测全区 / 约 2% X 窄区 / 全区原始锚点拾取，每场景预热 5 帧并采集 30 秒，记录 UI、tessellation、合计 p50 / p95 / p99 及拾取 p95，固定 1920×1080 逻辑绘图区、DPI=1、实线杆、10×8 点头部，无自动缩放或 LOD。首轮因 T3 server 重启中断，CSV 为空、无退出码，已确认无残余进程；[旧环境记录](benchmarks/2026-11-15-stage8-quiver-windows-cpu-environment.txt) 保留且明确无有效性能结论。
+
+同一 binary 的 `retry1` 独立重测已验收：九场景齐全、每场景 ≥30 秒、退出码 0、stderr 为空，三档绘制 / 原始拾取访问计数与完整扫描契约一致。[正式 CSV](benchmarks/2026-11-15-stage8-quiver-windows-cpu-retry1.csv)、[环境 / 完成状态](benchmarks/2026-11-15-stage8-quiver-windows-cpu-retry1-environment.txt)、[stderr](benchmarks/2026-11-15-stage8-quiver-windows-cpu-retry1.stderr.txt)。CPU 为 i9-14900KF，Windows 10.0.26300，Rust 1.100.0，normal priority；共享机器上并行开发 / 检查 / 构建，不是隔离的固定硬件发布门槛。benchmark binary SHA256 已复核为 `5254C02E0A5E6D30A096A7010763F4C44E370F0AD44516136FD6867936B8584A`，基于 `fc77b72` 加本切片未提交实现。
+
+| 记录数 | 全区 CPU 合计 p95 ms | 窄区 CPU 合计 p95 ms | 全区含原始拾取合计 p95 ms | 原始拾取自身 p95 ms | 全区路径点 Vec capacity B |
+| --- | --- | --- | --- | --- | --- |
+| 1,000 | 0.5889 | 0.0419 | 0.7867 | 0.0702 | 40,000 |
+| 10,000 | 8.4369 | 0.1648 | 6.9711 | 0.3814 | 400,000 |
+| 100,000 | 74.7509 | 2.2253 | 82.0513 | 3.7368 | 4,000,000 |
+
+合计逐帧计算 UI 构建 + egui tessellation 后取分位数，不把两个独立 p95 相加；不含呈现等待 / GPU、mesh 销毁、原始数据构造或统计样本 Vec 增长。各场景独立计时且共享机器负载变化，1 万记录含拾取合计低于无拾取场景不能解释为拾取加速。三档原始 payload 分别为 32,000 / 320,000 / 3,200,000 B；窄区仍逐条访问全部记录，只把输出杆 / 头部降为 20 / 200 / 2,000。10 万全区的 CPU 成本明显超出候选 16.7 ms 交互预算；没有向量索引、批处理或 LOD，不承诺密集全区实时性。路径点 Vec capacity 不含顶层 Vec、egui shapes / meshes、所有临时分配、进程峰值或 GPU，不能据此声称总占用或零泄漏。
+
 ## 剩余验收
 
-固定硬件门槛、人工及跨平台显示、GPU / 整应用资源、精确阶梯 LOD、杆批处理 / 渲染索引和完整 MATLAB 属性 / 布局兼容仍缺。阶段 8 其余统计、多变量、函数、极坐标、几何、网络类型继续推进；阶段 4 / 6 / 7 遗留验收也不因本切片消失。
+固定硬件门槛、人工及跨平台显示、GPU / 整应用资源、精确阶梯 LOD、杆 / 向量批处理与索引、Quiver 自动缩放 / 全属性和完整 MATLAB 布局兼容仍缺。阶段 8 其余统计、多变量、函数、极坐标、几何、网络类型继续推进；阶段 4 / 6 / 7 遗留验收也不因本切片消失。

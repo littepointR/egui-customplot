@@ -1,7 +1,8 @@
 use egui::Response;
 
 use crate::{
-    AxisTick, HoveredBar, HoveredCell, HoveredPoint, LegendEntry, PlotDiagnostics, PlotTransform,
+    AxisTick, HoveredBar, HoveredCell, HoveredPoint, HoveredVector, LegendEntry, PlotDiagnostics,
+    PlotTransform,
 };
 
 pub struct PlotResponse {
@@ -18,6 +19,9 @@ pub struct PlotResponse {
     pub hovered_point: Option<HoveredPoint>,
     pub hovered_cell: Option<HoveredCell>,
     pub hovered_bar: Option<HoveredBar>,
+    /// Raw vector record plus the chosen origin/endpoint. hovered_point also
+    /// contains this anchor, preserving the existing HoverInfo callback contract.
+    pub hovered_vector: Option<HoveredVector>,
     pub hover_text: Option<String>,
     pub legend_entries: Vec<LegendEntry>,
 }

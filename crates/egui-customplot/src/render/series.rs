@@ -62,6 +62,10 @@ pub(crate) fn paint_series(
                 );
                 continue;
             }
+            PlotLayer::Quiver(quiver) => {
+                super::quiver::paint_quiver(&painter, quiver, transform, resolved, diagnostics);
+                continue;
+            }
             PlotLayer::Series(s) => s,
         };
         let color = resolved.stroke.color;

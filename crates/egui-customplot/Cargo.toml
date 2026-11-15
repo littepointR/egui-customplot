@@ -40,6 +40,10 @@ harness = false
 name = "stems_performance"
 harness = false
 
+[[bench]]
+name = "quiver_performance"
+harness = false
+
 [[example]]
 name = "export_snapshot"
 required-features = ["export"]

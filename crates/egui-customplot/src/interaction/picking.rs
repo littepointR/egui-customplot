@@ -45,6 +45,31 @@ pub(super) fn pick_point(
         if !state.series_visible(s.id(series_index)) {
             continue;
         }
+        if let PlotLayer::Quiver(quiver) = *s {
+            let hit = super::quiver::pick_quiver(
+                quiver,
+                transforms.for_axis(quiver.y_axis),
+                position,
+                radius,
+                s.resolved_style(series_index, style),
+                diagnostics,
+            );
+            if let Some((point_index, point, distance)) = hit
+                && closest
+                    .as_ref()
+                    .is_none_or(|p| distance < p.screen_distance)
+            {
+                closest = Some(HoveredPoint {
+                    y_axis: transforms.effective_axis(quiver.y_axis),
+                    series_id: s.id(series_index),
+                    series_index,
+                    point_index,
+                    point,
+                    screen_distance: distance,
+                });
+            }
+            continue;
+        }
         if let PlotLayer::ErrorBars(bars) = *s {
             let transform = transforms.for_axis(bars.y_axis);
             let stroke = s.resolved_style(series_index, style).stroke;
