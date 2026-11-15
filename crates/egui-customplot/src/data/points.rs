@@ -1,8 +1,14 @@
-use std::sync::Arc;
+use std::sync::{
+    Arc,
+    atomic::{AtomicU64, Ordering},
+};
 
+use super::{LineIndexError, index::LineIndex};
 use crate::{AxisScale, BoundsError, PlotBounds};
 
 pub type PlotPoint = [f64; 2];
+
+static NEXT_VERSION: AtomicU64 = AtomicU64::new(1);
 
 /// Immutable shared XY data. Cloning shares samples; construction scans once.
 /// A point with either non-finite component breaks the polyline.
@@ -12,6 +18,8 @@ pub struct PlotData {
     extents: [Option<(PlotPoint, PlotPoint)>; 4],
     valid_counts: [usize; 4],
     non_finite: usize,
+    line_index: Option<Arc<LineIndex>>,
+    version: u64,
 }
 
 impl PlotData {
@@ -42,11 +50,18 @@ impl PlotData {
             extents,
             valid_counts,
             non_finite,
+            line_index: None,
+            version: next_version(),
         }
     }
 
     pub fn points(&self) -> &[PlotPoint] {
         &self.points
+    }
+    /// Process-local immutable snapshot version. Clones share it; constructing
+    /// another PlotData creates a new version even from the same Arc samples.
+    pub fn version(&self) -> u64 {
+        self.version
     }
     pub fn len(&self) -> usize {
         self.points.len()
@@ -60,6 +75,42 @@ impl PlotData {
     /// Sample payload only, excluding Arc headers, allocator, derived/GPU data.
     pub fn sample_bytes(&self) -> usize {
         std::mem::size_of_val(self.points())
+    }
+    /// Explicit preprocessing, outside UI. Requires nondecreasing X within each
+    /// finite XY run; equal X is allowed, nonfinite points break runs. The budget
+    /// covers this index's run/tree payload and metadata, not samples, allocator
+    /// headers, other snapshots or temporary rendering. Failure preserves the
+    /// existing index. Clones share a successfully built immutable index.
+    pub fn build_line_index(&mut self, budget_bytes: usize) -> Result<(), LineIndexError> {
+        if let Some(index) = &self.line_index {
+            return if index.bytes() <= budget_bytes {
+                Ok(())
+            } else {
+                Err(LineIndexError::BudgetExceeded {
+                    required_bytes: index.bytes(),
+                    budget_bytes,
+                })
+            };
+        }
+        let index = LineIndex::build(self.points(), budget_bytes)?;
+        self.line_index = Some(Arc::new(index));
+        Ok(())
+    }
+
+    pub fn clear_line_index(&mut self) {
+        self.line_index = None;
+    }
+
+    pub fn line_index_bytes(&self) -> usize {
+        self.line_index.as_ref().map_or(0, |i| i.bytes())
+    }
+
+    pub(crate) fn line_index(&self) -> Option<&LineIndex> {
+        self.line_index.as_deref()
+    }
+
+    pub(crate) fn index_identity(&self) -> Option<*const LineIndex> {
+        self.line_index.as_ref().map(Arc::as_ptr)
     }
     pub fn fitted_bounds(&self) -> Result<Option<PlotBounds>, BoundsError> {
         self.fitted_bounds_with_scales([AxisScale::Linear; 2])
@@ -89,6 +140,24 @@ impl PlotData {
 
     pub(crate) fn identity(&self) -> *const PlotPoint {
         self.points.as_ptr()
+    }
+}
+
+fn next_version() -> u64 {
+    let mut current = NEXT_VERSION.load(Ordering::Relaxed);
+    loop {
+        let next = current
+            .checked_add(1)
+            .expect("PlotData snapshot version exhausted");
+        match NEXT_VERSION.compare_exchange_weak(
+            current,
+            next,
+            Ordering::Relaxed,
+            Ordering::Relaxed,
+        ) {
+            Ok(version) => return version,
+            Err(version) => current = version,
+        }
     }
 }
 
@@ -127,6 +196,23 @@ mod tests {
                 .fitted_bounds()
                 .is_err()
         );
+    }
+
+    #[test]
+    fn index_is_released_by_last_owner_and_does_not_retain_samples() {
+        let points: Arc<[PlotPoint]> = vec![[1.0; 2], [2.0; 2]].into();
+        let weak_points = Arc::downgrade(&points);
+        let mut data = PlotData::new(points);
+        data.build_line_index(usize::MAX).unwrap();
+        let weak_index = Arc::downgrade(data.line_index.as_ref().unwrap());
+        let mut clone = data.clone();
+        data.clear_line_index();
+        assert!(weak_index.upgrade().is_some());
+        clone.clear_line_index();
+        assert!(weak_index.upgrade().is_none());
+        drop(data);
+        drop(clone);
+        assert!(weak_points.upgrade().is_none());
     }
 
     #[test]

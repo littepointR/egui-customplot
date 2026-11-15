@@ -1,5 +1,8 @@
 //! Public builder and thin per-pass orchestration. Algorithms live in their modules.
 
+mod color_bar;
+mod figure;
+mod hover;
 mod response;
 mod show;
 
@@ -11,6 +14,8 @@ use crate::{
     Annotation, Axis, HoverInfo, PlotStyle, PlotTheme,
     interaction::{HoverFormatter, NavigationOptions},
 };
+pub use color_bar::{ColorBar, ColorBarResponse};
+pub use figure::{Figure, FigureCell, FigureResponse};
 pub use response::PlotResponse;
 
 /// Native egui control. Drag to pan; double-click or focused Home resets.
@@ -23,6 +28,7 @@ pub struct Plot {
     inherited_style: PlotStyle,
     style: PlotStyle,
     axes: [Axis; 2],
+    right_y_axis: Option<Axis>,
     title: String,
     show_legend: bool,
     show_hover: bool,
@@ -44,6 +50,7 @@ impl Plot {
             inherited_style: PlotStyle::default(),
             style: PlotStyle::default(),
             axes: [Axis::default(), Axis::default()],
+            right_y_axis: None,
             title: String::new(),
             show_legend: false,
             show_hover: true,
@@ -120,6 +127,12 @@ impl Plot {
     }
     pub fn y_axis(mut self, axis: Axis) -> Self {
         self.axes[1] = axis;
+        self
+    }
+    /// Independent scale, direction, ticks and label for Right series. X remains
+    /// shared. Wheel/pan navigate both Y axes using the same screen-space action.
+    pub fn right_y_axis(mut self, axis: Axis) -> Self {
+        self.right_y_axis = Some(axis);
         self
     }
     pub fn title(mut self, title: impl Into<String>) -> Self {

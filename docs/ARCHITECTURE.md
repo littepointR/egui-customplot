@@ -11,41 +11,71 @@ crates/egui-customplot/
     diagnostics.rs            # 跨阶段诊断契约，不执行绘制或采样
     data/
       points.rs               # Arc 样本、坐标域联合范围缓存
+      index/                  # 显式单调 X 索引、四域 run 表、min/max 树与查询
+      stream.rs               # 固定容量环形样本、批次幂等与显式快照发布
+      grid.rs                 # 共享边缘 / 行优先标量、数值 / log 域预处理
+      extents.rs              # 独立图元四坐标域固定范围缓存
+      bars.rs                 # 原始柱记录、两方向范围摘要
+      error_bars.rs           # 非对称误差偏移、整项范围 / 域摘要
+      histogram.rs            # 显式分箱计数、归一化和 BarData 发布
     model/
       line.rs                 # 折线的借用描述与 builder
       line_pattern.rs         # 线型语义与参数合法性
+      sampling.rs             # Exact / Visible / 显式近似 MinMax 语义
       scatter.rs              # 散点描述与逐点样式校验
       marker.rs               # 标记形状与尺寸
       series.rs               # 混合序列、稳定 ID、默认色
       style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
       theme.rs                # 科学浅色 / 监控深色，可共享 palette
       annotation.rs           # 不参与自动范围的基础注解描述
+      layer.rs                # 兼容既有 Series 的有序异构 PlotLayer
+      summary.rs              # 合并预处理范围、身份与样本资源去重
+      heatmap.rs / color_scale.rs # 数值单元描述与显式共享色域
+      bars.rs / error_bars.rs  # 柱 / 误差棒样式描述，不保存视图
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
       transform.rs            # 正反坐标映射、变换空间导航运算
       aspect.rs               # 等比例约束，只扩展变换空间范围
       ticks.rs                # 坐标轴配置、主次刻度、数字格式
+      grid.rs / rect.rs       # 单元可见查询、定位、f64 矩形 / 轴向线段裁剪
+      y_axis.rs / linked.rs   # 左右归属、共享范围与变换组装
     layout/
       plot.rs                 # 宿主空间分配、标题 / 轴标签留白
       legend.rs               # egui 图例排布和控件组装
+      figure.rs / color_bar.rs # 有界 cell 网格与色条空间分配
     interaction/
       state.rs                # 显式视图、隐藏状态、帧快照、一次性切换
       navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
       picking.rs              # 原始点拾取（不构建数据 mesh）
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
+      link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
+      cell.rs / bar.rs        # 原始单元 / 柱拾取
+      hover.rs                # 填充层遮挡及原始点最近距离仲裁
     render/
       line.rs                 # f64 线段裁剪与路径准备
+      line_query.rs           # 采样查询、缓存和参考几何准备的适配
+      cache.rs                # 宿主持有的有界 pre-style 折线几何 LRU
       markers.rs              # 标记批量 mesh 与物理像素羽化
       pattern.rs              # 屏幕空间虚线 phase 与工作量安全阀
       axes.rs                 # 网格、刻度文字、标题、边框绘制
       series.rs               # 按序提交数据图元、统计几何成本
       overlay.rs              # 十字线和拾取高亮
       annotation.rs           # 文字 / 参考线 / 区域的域验证、求交与提交
+      heatmap.rs / color_bar.rs # 精确 cell 分块 mesh、共享色条
+      bars.rs / error_bars.rs # 保序柱及独立误差 stem / cap
+      right_axis.rs           # 右 Y 刻度与标签
+      export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
+        capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
+        raster.rs / png.rs    # 有界 CPU 预乘合成与 RGBA8 编码
+        vector.rs / svg.rs    # 原生矢量与内嵌字形 / AA PNG patch、裁剪层序
+        options.rs / writer.rs # 分辨率 / DPI / 局部预算和有界编码输出
     widget/
       mod.rs                  # Plot 公开配置 builder
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
       response.rs             # 宿主可读取的本遍返回值
+      figure/                 # Figure 与 cell 原生 Ui 接入，样本仍归宿主
+      color_bar.rs / hover.rs # 色条与悬停的阶段组装
   tests/
     support/                  # 无窗口 egui 测试共用驱动
     architecture.rs           # 源码目录与文件规模护栏
@@ -59,15 +89,29 @@ crates/egui-customplot/
     styles.rs                 # 样式优先级、主题隔离、渲染 / 拾取一致性
     tooltip.rs                # 原始数据提示、锁外回调与多遍语义
     annotations.rs            # 注解范围、裁剪、无效值和共享生命周期
+    line_sampling.rs          # 索引 / 精确路径对照、LOD 工作量和 fallback
+    indexed_picking.rs        # 索引 / 原始点拾取对照及舍入边界
+    line_cache.rs             # 数据 / 变换失效、预算、释放与样式复用
+    stream.rs                 # 环形顺序、覆盖、快照与批次幂等
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
+    data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
+    stream_stress.rs          # 有界宿主队列、过载丢弃及长期资源压力
+    heatmap_performance.rs    # 精确全区 / 窄区网格 CPU 与容量分账
+  examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
-  app.rs                      # 应用模型与图表组装
+  app.rs                      # 应用生命周期和 gallery 选择
+  charts.rs                   # 折线描述、Figure / 联动 / 双轴组装
+  scalar.rs                   # 数值网格与显式共享色条
+  statistical.rs              # 显式直方预处理、正负柱与误差棒
+  export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据
   diagnostics.rs              # 诊断展示，不实现测量算法
   appearance.rs               # 保留主题 / 注解、属性面板与配置应用
+  performance.rs              # 显式预处理 / 预算选项、宿主缓存及状态
+  stream.rs                   # Live 信号、按节奏批量发布及多遍去重
 docs/                         # 规范、阶段证据、原始基准
 ```
 
@@ -82,6 +126,10 @@ docs/                         # 规范、阶段证据、原始基准
 5. `diagnostics` 是共用返回契约，不是资源所有者。sample payload、geometry capacity、耗时均明确计量范围，不冒充进程 / GPU 峰值。
 6. 样本和长期配置由宿主持有；`PlotState` 只保存视图 / 显隐与小型帧快照，不保存数据引用。库不依赖 eframe；demo 才负责原生窗口。
 7. 样式在进入绘制前按 Theme → 父值层 → Plot → Series 解析；绘制、图例和拾取共享解析规则。显式透明 / 零 / false 不得误当缺省。主题不写宿主 Style；格式化回调在锁外逐遍运行，不发布副作用事件。
+8. `PlotCache` 与 `PlotStream` 归宿主显式所有，不存入 `PlotState` 或 egui Memory。缓存只保留屏幕坐标，不持有样本；数据版本而非可重用裸指针区分快照。流式批次 ID 由宿主提供，重复布局不能重复追加。
+9. `PlotLayer` 不改变旧 Series / data 契约。数值网格、柱、误差棒在 `data` 构造时缓存范围；`summary` 只合并摘要，不能每遍为自动范围偷偷扫描原始记录。绘制和拾取各自的工作量继续计数。
+10. `Figure` 不保存 cell 样本 / 状态；`AxisLink` 在全部成员每遍显示后同步，`secondary` 重放同一导航动作。填充层与点层的拾取仲裁属于 interaction，不回流到 widget。
+11. 导出是显式 displayed-geometry 快照，不自动恢复原始数据或另建 Context；编码后端属于 render/export。库返回 bytes，宿主在最终布局遍之外处理文件副作用；文字的 atlas 捕获不消费上传增量。
 
 图例在数据之后提交，保持图层次序；切换后请求重绘，数据在下一布局遍 / 重绘使用新显隐状态。多遍返回值是本遍快照，不是可重复向外发布的事件队列。
 

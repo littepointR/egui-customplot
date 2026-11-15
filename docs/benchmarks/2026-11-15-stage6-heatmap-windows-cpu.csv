@@ -1,0 +1,9 @@
+# date=2026-11-15T16:32:39.4053114+08:00
+# cpu=Intel(R) Core(TM) i9-14900KF; os=Microsoft Windows NT 10.0.26300.0; rust=rustc 1.100.0 (0ef1bc386 2026-11-09)
+# Concurrent workload: stage4 stream_stress + development on the same machine; results are not isolated hardware thresholds.
+# heatmap CPU benchmark; profile=bench; egui=0.37.0; plot=1920x1080; dpi=1; warmup=5; seconds_per_scene=30
+# Cells are exact piecewise constant quads, not texture LOD. No window, GPU, FPS, process-memory or idle-wakeup conclusions.
+cells,scene,frames,construction_ms,sample_bytes,build_p50_ms,build_p95_ms,build_p99_ms,tess_p50_ms,tess_p95_ms,tess_p99_ms,total_p50_ms,total_p95_ms,total_p99_ms,visited_cells,output_cells,output_meshes,geometry_capacity_bytes
+65536,full,4645,0.7339,528400,3.0637,4.8923,5.5163,2.9604,4.6540,6.0719,6.0634,9.1704,11.0904,65536,65536,4,6815744
+1048576,zoom_17x17,1202558,13.3724,8405008,0.0187,0.0340,0.0478,0.0037,0.0076,0.0181,0.0224,0.0419,0.0642,289,289,1,53248
+1048576,full,283,13.3568,8405008,48.5653,60.7130,79.2077,52.4437,77.1864,92.7998,101.4275,134.8719,168.5954,1048576,1048576,64,109051904

@@ -11,6 +11,7 @@ pub(super) enum Scene {
 pub(super) struct DemoData {
     pub signal: PlotData,
     pub reference: PlotData,
+    pub secondary: PlotData,
     pub observations: PlotData,
     pub colors: Vec<Color32>,
     pub radii: Vec<f32>,
@@ -65,6 +66,14 @@ impl DemoData {
                 })
                 .collect::<Vec<_>>(),
         );
+        let secondary = PlotData::new(
+            (0..256)
+                .map(|i| {
+                    let t = i as f64 / 255.0;
+                    [x_at(t), 1000.0 + 500.0 * (t * 10.0).cos()]
+                })
+                .collect::<Vec<_>>(),
+        );
         let colors = (0..80)
             .map(|i| Color32::from_rgb(220, 90 + (i * 23 % 140) as u8, 65))
             .collect();
@@ -72,6 +81,7 @@ impl DemoData {
         Self {
             signal,
             reference,
+            secondary,
             observations,
             colors,
             radii,

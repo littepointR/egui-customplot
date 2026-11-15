@@ -1,0 +1,11 @@
+date=2026-11-15T16:14:46.1682887+08:00
+cpu=Intel(R) Core(TM) i9-14900KF
+os=Microsoft Windows NT 10.0.26300.0
+rust=rustc 1.100.0 (0ef1bc386 2026-11-09)
+git_head=8002a41318ada3a4d36592b12d57f4c7e62a8093
+executable=D:\littepoint\Documents\WorkingSpace\things\egui-customplot\target\release\build\egui-customplot\598ea470e730e6c8\out\stream_stress-598ea470e730e6c8.exe
+executable_sha256=66EE6733EFFCD7DB4FECF6D0DFD27FE1822190100E2C4BE2D8A8F9C5167D5E1F
+seconds=1800; process_sample_interval_ms=5000; priority=normal
+Headless stress, not the desktop demo; concurrent development on the machine.
+Private bytes / working set are process observations, not live allocations or GPU memory.
+completed=2026-11-15T16:44:47.6450843+08:00; exit_code=0; elapsed_s=1800.0216504

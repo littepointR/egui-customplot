@@ -1,7 +1,7 @@
 use egui::IdSalt;
 
 use super::{Line, ResolvedPlotStyle, ResolvedSeriesStyle, Scatter};
-use crate::PlotData;
+use crate::{PlotData, YAxis};
 
 /// Explicit mixed-series API; the original Plot::show remains a line shortcut.
 #[derive(Clone, Copy, Debug)]
@@ -22,6 +22,12 @@ impl<'a> From<Scatter<'a>> for Series<'a> {
 }
 
 impl<'a> Series<'a> {
+    pub fn y_axis(self) -> YAxis {
+        match self {
+            Self::Line(s) => s.y_axis,
+            Self::Scatter(s) => s.y_axis,
+        }
+    }
     pub fn data(self) -> &'a PlotData {
         match self {
             Self::Line(s) => s.data,

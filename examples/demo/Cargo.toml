@@ -7,7 +7,7 @@ publish.workspace = true
 
 [dependencies]
 eframe.workspace = true
-egui-customplot.workspace = true
+egui-customplot = { workspace = true, features = ["export"] }
 
 [lints]
 workspace = true

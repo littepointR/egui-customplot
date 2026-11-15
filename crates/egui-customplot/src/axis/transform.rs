@@ -83,6 +83,10 @@ impl PlotTransform {
         self.scales
     }
 
+    pub fn reversed(self) -> [bool; 2] {
+        self.reversed
+    }
+
     pub fn is_valid_point(self, point: [f64; 2]) -> bool {
         self.scales[0].forward(point[0]).is_some() && self.scales[1].forward(point[1]).is_some()
     }

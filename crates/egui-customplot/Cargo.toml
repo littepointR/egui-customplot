@@ -7,15 +7,38 @@ publish.workspace = true
 repository.workspace = true
 description = "An embeddable scientific plotting prototype for egui"
 
+[features]
+default = []
+export = ["dep:png"]
+
 [dependencies]
 egui.workspace = true
+png = { version = "0.18.1", optional = true }
 
 [dev-dependencies]
 egui = { workspace = true, features = ["default_fonts"] }
+roxmltree = "0.21.1"
+resvg = { version = "0.48.1", default-features = false, features = ["raster-images"] }
 
 [[bench]]
 name = "frame_baseline"
 harness = false
+
+[[bench]]
+name = "data_performance"
+harness = false
+
+[[bench]]
+name = "stream_stress"
+harness = false
+
+[[bench]]
+name = "heatmap_performance"
+harness = false
+
+[[example]]
+name = "export_snapshot"
+required-features = ["export"]
 
 [lints]
 workspace = true

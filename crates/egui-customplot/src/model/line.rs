@@ -1,7 +1,7 @@
 use egui::{AsIdSalt, Color32, IdSalt, Stroke};
 
-use super::{LinePattern, MarkerStyle, SeriesStyle};
-use crate::PlotData;
+use super::{LinePattern, LineSampling, MarkerStyle, SeriesStyle};
+use crate::{PlotData, YAxis};
 
 /// A borrowed series description; samples remain in the application model.
 #[derive(Clone, Copy, Debug)]
@@ -10,6 +10,8 @@ pub struct Line<'a> {
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) style: SeriesStyle,
+    pub(crate) sampling: LineSampling,
+    pub(crate) y_axis: YAxis,
 }
 
 impl<'a> Line<'a> {
@@ -19,10 +21,17 @@ impl<'a> Line<'a> {
             name: "",
             id_salt: None,
             style: SeriesStyle::default(),
+            sampling: LineSampling::Exact,
+            y_axis: YAxis::Left,
         }
     }
     pub fn name(mut self, name: &'a str) -> Self {
         self.name = name;
+        self
+    }
+    /// Right falls back to Left, with a diagnostic, if no right axis is configured.
+    pub fn y_axis(mut self, axis: YAxis) -> Self {
+        self.y_axis = axis;
         self
     }
     pub fn id_salt(mut self, id: impl AsIdSalt) -> Self {
@@ -59,6 +68,12 @@ impl<'a> Line<'a> {
     }
     pub fn style(mut self, style: SeriesStyle) -> Self {
         self.style = style.over(self.style);
+        self
+    }
+    /// Visible/MinMax require `PlotData::build_line_index`. Otherwise the exact
+    /// reference path is used and `lod_fallback_series` reports that fallback.
+    pub fn sampling(mut self, sampling: LineSampling) -> Self {
+        self.sampling = sampling;
         self
     }
 }

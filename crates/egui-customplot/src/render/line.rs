@@ -2,7 +2,7 @@ use egui::Pos2;
 
 use crate::{PlotPoint, PlotTransform};
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(super) struct PreparedLine {
     pub paths: Vec<Vec<Pos2>>,
     pub visited_segments: usize,
@@ -11,9 +11,22 @@ pub(super) struct PreparedLine {
 
 /// Reference O(N) path. Clip in f64 normalized coordinates before casting to f32.
 pub(super) fn prepare_line(points: &[PlotPoint], transform: PlotTransform) -> PreparedLine {
+    prepare_line_iter(points.iter().copied(), transform)
+}
+
+pub(super) fn prepare_line_iter(
+    points: impl IntoIterator<Item = PlotPoint>,
+    transform: PlotTransform,
+) -> PreparedLine {
     let mut prepared = PreparedLine::default();
     let mut path = Vec::new();
-    for pair in points.windows(2) {
+    let mut points = points.into_iter();
+    let Some(mut previous) = points.next() else {
+        return prepared;
+    };
+    for point in points {
+        let pair = [previous, point];
+        previous = point;
         prepared.visited_segments += 1;
         if !transform.is_valid_point(pair[0]) || !transform.is_valid_point(pair[1]) {
             flush(&mut path, &mut prepared.paths);

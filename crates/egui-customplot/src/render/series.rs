@@ -2,26 +2,59 @@ use std::time::Instant;
 
 use egui::{Color32, Pos2, Ui};
 
-use super::{line::prepare_line, markers::prepare_markers, pattern::apply_pattern};
-use crate::{PlotDiagnostics, PlotState, PlotTransform, Series, model::ResolvedPlotStyle};
+use super::{line_query::prepare_series_line, markers::prepare_markers, pattern::apply_pattern};
+use crate::{
+    PlotCache, PlotDiagnostics, PlotLayer, PlotState, Series, axis::SeriesTransforms,
+    model::ResolvedPlotStyle,
+};
 
 pub(crate) fn paint_series(
     ui: &Ui,
     state: &PlotState,
-    series: &[Series<'_>],
-    transform: PlotTransform,
+    series: &[PlotLayer<'_>],
+    transforms: SeriesTransforms,
     diagnostics: &mut PlotDiagnostics,
     style: &ResolvedPlotStyle<'_>,
+    mut cache: Option<&mut PlotCache>,
 ) {
-    let painter = ui.painter().with_clip_rect(transform.rect());
+    let painter = ui.painter().with_clip_rect(transforms.left.rect());
     let start = Instant::now();
+    let query_start = diagnostics.query_duration;
     for (index, s) in series.iter().enumerate() {
         if !state.series_visible(s.id(index)) {
             continue;
         }
+        let transform = transforms.for_axis(s.y_axis());
         let resolved = s.resolved_style(index, style);
+        let s = match *s {
+            PlotLayer::Heatmap(heatmap) => {
+                super::heatmap::paint_heatmap(&painter, heatmap, transform, diagnostics);
+                continue;
+            }
+            PlotLayer::Bars(bars) => {
+                super::bars::paint_bars(
+                    &painter,
+                    bars,
+                    transform,
+                    resolved.stroke.color,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::ErrorBars(bars) => {
+                super::error_bars::paint_error_bars(
+                    &painter,
+                    bars,
+                    transform,
+                    resolved.stroke,
+                    diagnostics,
+                );
+                continue;
+            }
+            PlotLayer::Series(s) => s,
+        };
         let color = resolved.stroke.color;
-        let markers = match *s {
+        let markers = match s {
             Series::Line(line) => {
                 let stroke = resolved.stroke;
                 if stroke.width.is_finite()
@@ -29,7 +62,13 @@ pub(crate) fn paint_series(
                     && stroke.color != Color32::TRANSPARENT
                 {
                     if resolved.pattern.is_valid() {
-                        let prepared = prepare_line(line.data.points(), transform);
+                        let prepared = prepare_series_line(
+                            line,
+                            transform,
+                            ui.ctx().pixels_per_point(),
+                            diagnostics,
+                            cache.as_deref_mut(),
+                        );
                         diagnostics.visited_segments += prepared.visited_segments;
                         diagnostics.numeric_rejections += prepared.numeric_rejections;
                         let patterned = apply_pattern(prepared.paths, resolved.pattern);
@@ -72,5 +111,7 @@ pub(crate) fn paint_series(
             }
         }
     }
-    diagnostics.prepare_duration = start.elapsed();
+    diagnostics.prepare_duration = start
+        .elapsed()
+        .saturating_sub(diagnostics.query_duration - query_start);
 }

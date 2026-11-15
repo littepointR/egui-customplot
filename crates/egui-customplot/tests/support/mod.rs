@@ -1,16 +1,8 @@
-use egui::{Context, Event, RawInput, Rect, Ui};
-use egui_customplot::PlotResponse;
+mod input;
 
-pub fn input(events: Vec<Event>) -> RawInput {
-    RawInput {
-        screen_rect: Some(Rect::from_min_size(
-            egui::Pos2::ZERO,
-            egui::vec2(800.0, 600.0),
-        )),
-        events,
-        ..Default::default()
-    }
-}
+use egui::{Context, Event, Ui};
+use egui_customplot::PlotResponse;
+pub use input::input;
 
 pub fn run(
     ctx: &Context,

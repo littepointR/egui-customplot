@@ -109,6 +109,21 @@ impl PlotBounds {
         }
     }
 
+    pub(crate) fn fit_optional_ranges(
+        ranges: [Option<[f64; 2]>; 2],
+        scales: [AxisScale; 2],
+    ) -> Result<Self, BoundsError> {
+        let mut result = Self::default_scaled(scales);
+        for axis in 0..2 {
+            if let Some([lo, hi]) = ranges[axis] {
+                let fitted = Self::fit_scaled([lo; 2], [hi; 2], [scales[axis]; 2])?;
+                result.min[axis] = fitted.min[0];
+                result.max[axis] = fitted.max[0];
+            }
+        }
+        Ok(result)
+    }
+
     /// Translate in data coordinates. Invalid/overflowing navigation is rejected.
     pub fn translated(self, delta: [f64; 2]) -> Result<Self, BoundsError> {
         Self::new(

@@ -2,9 +2,11 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 3 可定制化切片可运行，尚非完整绘图库。**
+**当前状态：阶段 4～7 基础切片已实现并持续验证，尚非完整绘图库。**
 
-已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库只依赖 egui，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
+已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
+
+另有宿主持有的索引 / 可选 MinMax / 折线缓存 / 环形数据、Figure 网格、显式轴联动、双 Y 轴、有序数值网格 / 柱 / 误差棒和共享色条，以及显式直方图分箱预处理。各能力边界见阶段文档。
 
 ## 运行
 
@@ -12,12 +14,17 @@
 
 ```sh
 cargo run -p customplot-demo --release --locked
+cargo run -p customplot-demo --release --locked -- --scalar
+cargo run -p customplot-demo --release --locked -- --statistical
 ```
 
 - 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
-- Demo 提供信号 / 正值幂律场景，可切换 1 千～100 万点、NaN 断段、散点、7 种标记、实线 / 虚线、对数 / 反向 / 等比例轴、图例和独立双视图。
+- Demo 提供信号 / 正值幂律场景，可切换 1 千～1000 万点、NaN 断段、散点、7 种标记、实线 / 虚线、对数 / 反向 / 等比例轴、Figure 双视图、可选 X 联动和右 Y 轴。
+- `--scalar` 展示数值网格 / 共享色条 / 折线叠加，`--statistical` 展示显式分箱与正负柱 / 非对称 XY 误差棒；两者也可在控制面板打开。
+- Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
 - 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
-- **百万点选项是压力场景，不是帧率承诺。** 当前逐段扫描，没有 LOD、几何缓存或专用 GPU 后端。
+- 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
+- **大数据选项是压力场景，不是帧率承诺。** 索引 / 缓存 / 环形缓冲仅限制各自明示的资源；标记仍全量扫描，没有专用 GPU 后端。Demo 数据重建 / 索引构建是显式同步操作。
 - 不要求宿主使用 eframe，也不创建第二个窗口系统、事件循环或 GPU device。
 
 ## 嵌入 egui
@@ -38,7 +45,18 @@ let mut state = PlotState::default();
 //     .show(ui, &mut state, &[Line::new(&data)]);
 ```
 
-库的滚轮缩放**默认关闭**，避免抢走父 ScrollArea 的滚动；demo 显式开启。`show` 返回 egui `Response`、坐标变换和本遍诊断；UI 多遍调用不是一次性事件通知，最终视图从 `PlotState` 读取。
+库的滚轮缩放**默认关闭**，避免抢走父 ScrollArea 的滚动；demo 显式开启。`show` 返回 egui `Response`、坐标变换和本遍诊断；UI 多遍调用不是一次性事件通知。`PlotState` 保存本地手动视图，实际联动 / 双轴显示范围读取返回的 `transform` / `right_transform`。
+
+异构图元使用 `PlotLayer` 与 `show_layers`，不改变旧的 `Line` / `Series::data()` 契约。样本预处理放在 UI 更新节奏之外：
+
+```rust
+use egui_customplot::{Bar, BarData, Bars, ErrorBar, ErrorBarData, ErrorBars};
+let bars = BarData::new(vec![Bar::new(1.0, 2.0), Bar::new(2.0, -1.0)]);
+let errors = ErrorBarData::new(vec![ErrorBar::new([1.0, 2.0]).y_error([0.2, 0.4])]);
+// Plot::new("measurements").show_layers(ui, &mut state, &[
+//     Bars::new(&bars).into(), ErrorBars::new(&errors).into(),
+// ]);
+```
 
 ## 检查与基准
 
@@ -47,14 +65,21 @@ cargo fmt --all -- --check
 cargo test --workspace --locked
 cargo clippy --workspace --all-targets --locked -- -D warnings
 cargo bench -p egui-customplot --bench frame_baseline --locked
+cargo bench -p egui-customplot --bench data_performance --locked
+cargo bench -p egui-customplot --bench heatmap_performance --locked
+cargo run -p egui-customplot --example export_snapshot --features export --release --locked -- target/exports/example
 ```
 
-基准默认每场景采样 30 秒，包含空白 egui、空图、10 万点静态 / 平移场景；**只测 CPU UI 构建和 tessellation，不测窗口呈现或 GPU**。快速试跑可设置环境变量 `CUSTOMPLOT_BENCH_SECONDS=2`，不得与正式 30 秒记录混用。
+基准默认每场景采样 30 秒。`frame_baseline` 保留空白 egui、空图、10 万点静态 / 平移；`data_performance` 增加 10 万 / 100 万 / 1000 万点索引 / LOD / 缓存 / 拾取及流式记录。**只测 CPU UI 构建和 tessellation，不测窗口呈现或 GPU**。快速试跑可设置环境变量 `CUSTOMPLOT_BENCH_SECONDS=2`，不得与正式 30 秒记录混用。
 
 ## 交付记录与长期对照
 
 - [源码职责、目录和扩展规则](docs/ARCHITECTURE.md)：按 data / model / axis / layout / interaction / render / widget 分域，带架构回归检查。
 - [全量实施进度](docs/PROGRESS.md)
+- [阶段 7 显示快照、PNG / 混合 SVG 与字体 / 分辨率边界](docs/STAGE_7.md)
+- [阶段 6 多面板、双轴、数值网格、柱 / 误差棒与直方图](docs/STAGE_6.md)
+- [阶段 5 GPU 暂缓决策、证据与重新评估条件](docs/STAGE_5.md)
+- [阶段 4 索引、LOD、缓存、流式与资源边界](docs/STAGE_4.md)
 - [阶段 3 样式、主题、提示与注解](docs/STAGE_3.md)
 - [阶段 2 功能、验证与限制](docs/STAGE_2.md)
 - [首轮实现、测试证据与已知限制](docs/STAGE_1.md)
@@ -64,6 +89,6 @@ cargo bench -p egui-customplot --bench frame_baseline --locked
 - [egui 集成、性能与资源占用约束](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)：原生嵌入、多遍布局、按需重绘、CPU / GPU 预算与长期验收要求。
 - 推荐推进顺序：最小闭环 → 绘图能力 → 定制能力 → 数据性能 → 按需 GPU 加速 → 导出与发布。
 
-尚无导出、LOD / 拾取索引、流式数据、资源硬预算或实际 Figure 容器；拾取 hover 时 O(N)，大量标记仍可能占用较多内存。MATLAB 清单中已有 10 项进入“开发中”，没有图类型通过完整交付门槛；不能声称已交付 133 项能力。Windows / Ubuntu 自动检查已有记录，跨平台显示尚未实机验证。
+尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、完整类别 / 堆积 / 三维 / 地理能力；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图的 CPU / 几何成本很高，没有静默 LOD 或帧率承诺。MATLAB 清单已有 15 项“开发中”，没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
 
 许可证尚未决定，workspace 包均设为 `publish = false`；本项目没有默认授予开源许可。

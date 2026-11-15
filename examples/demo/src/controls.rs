@@ -5,10 +5,12 @@ use crate::{appearance::Appearance, data::Scene};
 
 pub(super) struct Options {
     pub appearance: Appearance,
+    pub performance: crate::performance::Options,
     pub scene: Scene,
     pub count: usize,
     pub gaps: bool,
     pub second_view: bool,
+    pub multi: crate::charts::MultiViewOptions,
     pub grid: bool,
     pub legend: bool,
     pub hover: bool,
@@ -29,10 +31,12 @@ impl Default for Options {
     fn default() -> Self {
         Self {
             appearance: Appearance::default(),
+            performance: crate::performance::Options::default(),
             scene: Scene::Signal,
             count: 10_000,
             gaps: true,
             second_view: false,
+            multi: crate::charts::MultiViewOptions::default(),
             grid: true,
             legend: true,
             hover: true,
@@ -54,6 +58,7 @@ impl Default for Options {
 pub(super) struct Changes {
     pub rebuild: bool,
     pub reset: bool,
+    pub reindex: bool,
 }
 
 impl Options {
@@ -97,6 +102,7 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     ui.heading("Plot controls");
     egui::widgets::global_theme_preference_buttons(ui);
     options.appearance.show(ui);
+    let reindex = options.performance.show(ui);
     ui.separator();
     ui.selectable_value(&mut options.scene, Scene::Signal, "Signal + scatter");
     ui.selectable_value(&mut options.scene, Scene::PowerLaw, "Positive power law");
@@ -106,12 +112,12 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     egui::ComboBox::from_id_salt("samples")
         .selected_text(format!("{} points", options.count))
         .show_ui(ui, |ui| {
-            for count in [1_000, 10_000, 100_000, 1_000_000] {
+            for count in [1_000, 10_000, 100_000, 1_000_000, 10_000_000] {
                 ui.selectable_value(&mut options.count, count, format!("{count} points"));
             }
         });
     ui.checkbox(&mut options.gaps, "NaN gap");
-    ui.checkbox(&mut options.second_view, "Independent second view");
+    options.multi.show(ui, &mut options.second_view);
     ui.separator();
     ui.checkbox(&mut options.grid, "Grid (major + log minor)");
     ui.checkbox(&mut options.legend, "Clickable legend");
@@ -126,7 +132,7 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     if options.markers && options.count >= 100_000 {
         ui.colored_label(
             egui::Color32::YELLOW,
-            "Large marker meshes: no LOD / budget yet.",
+            "Markers remain full-resolution: no marker LOD / hard mesh budget.",
         );
     }
     ui.horizontal(|ui| {
@@ -167,5 +173,6 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
         reset: reset
             || old_axes != (options.log_axes, options.reversed)
             || old_data.0 != options.scene,
+        reindex,
     }
 }

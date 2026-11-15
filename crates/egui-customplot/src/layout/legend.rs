@@ -1,6 +1,6 @@
 use egui::{IdSalt, Rect, Ui};
 
-use crate::{PlotState, Series, model::ResolvedPlotStyle};
+use crate::{PlotLayer, PlotState, model::ResolvedPlotStyle};
 
 #[derive(Clone, Debug)]
 pub struct LegendEntry {
@@ -10,7 +10,7 @@ pub struct LegendEntry {
     pub visible: bool,
 }
 
-pub(crate) fn legend_rect(rect: Rect, series: &[Series<'_>]) -> Option<Rect> {
+pub(crate) fn legend_rect(rect: Rect, series: &[PlotLayer<'_>]) -> Option<Rect> {
     let count = series.iter().filter(|s| !s.name().is_empty()).count();
     if count == 0 || rect.width() < 100.0 || rect.height() < 50.0 {
         return None;
@@ -30,7 +30,7 @@ pub(crate) fn legend_rect(rect: Rect, series: &[Series<'_>]) -> Option<Rect> {
 pub(crate) fn show_legend(
     ui: &mut Ui,
     state: &mut PlotState,
-    series: &[Series<'_>],
+    series: &[PlotLayer<'_>],
     rect: Rect,
     id_salt: IdSalt,
     style: &ResolvedPlotStyle<'_>,

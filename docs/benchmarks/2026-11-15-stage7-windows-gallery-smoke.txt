@@ -1,0 +1,9 @@
+date=2026-11-15T16:59:02.1894333+08:00
+os=Microsoft Windows NT 10.0.26300.0
+executable=D:\littepoint\Documents\WorkingSpace\things\egui-customplot\target\release\customplot-demo.exe
+sha256=A6D7313C05CB79B5EF941E052A0C9753CCE50CC3C7F92BEB9A9FFD27C6BF110C
+Window lifecycle smoke only; not visual correctness, GPU timing or FPS.
+gallery=default; input_idle=True; title=egui-customplot | Stage 7; responsive=true; close_requested=True; exit_code=0
+gallery=--scalar; input_idle=True; title=egui-customplot | Stage 7; responsive=true; close_requested=True; exit_code=0
+gallery=--statistical; input_idle=True; title=egui-customplot | Stage 7; responsive=true; close_requested=True; exit_code=0
+completed=true

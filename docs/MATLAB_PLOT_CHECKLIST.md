@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：5 项 ML 与 EX-026 / 028～031 共 10 项“开发中”，其余 123 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：10 项 ML 与 EX-026 / 028～031 共 15 项“开发中”，其余 118 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -38,7 +38,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-001 | 开发中 | [`plot`](https://ww2.mathworks.cn/help/matlab/ref/plot.html) | 二维折线 / 标记图，2D | 已有折线 / 标记 / 混合叠加 / 断段 / 基础线型；复数适配、导出与完整验收仍缺，见阶段 2 |
 | ML-002 | 未实现 | [`plot3`](https://ww2.mathworks.cn/help/matlab/ref/plot3.html) | 三维折线，3D | XYZ 轨迹、深度遮挡、相机与拾取 |
 | ML-003 | 未实现 | [`stairs`](https://ww2.mathworks.cn/help/matlab/ref/stairs.html) | 阶梯图，2D | 阶跃边界、端点、非等距 X |
-| ML-004 | 未实现 | [`errorbar`](https://ww2.mathworks.cn/help/matlab/ref/errorbar.html) | 误差棒图，2D | 水平 / 垂直、对称 / 非对称误差、端帽 |
+| ML-004 | 开发中 | [`errorbar`](https://ww2.mathworks.cn/help/matlab/ref/errorbar.html) | 误差棒图，2D | 已有独立水平 / 垂直非对称偏移、逻辑点端帽、log / 右轴及原始中心拾取；连接中心线可显式叠加 Line，导出 / 性能 / 完整验收仍缺，见阶段 6 |
 | ML-005 | 未实现 | [`area`](https://ww2.mathworks.cn/help/matlab/ref/area.html) | 面积图 / 堆积面积图，2D | 基线、堆积、正负值与透明叠加 |
 | ML-006 | 未实现 | [`stackedplot`](https://ww2.mathworks.cn/help/matlab/ref/stackedplot.html) | 共用 X 轴的纵向堆叠图，复合 2D | 各行独立 Y 轴、共享 X、时间数据与联动 |
 | ML-007 | 开发中 | [`loglog`](https://ww2.mathworks.cn/help/matlab/ref/loglog.html) | 双对数折线，2D | 已有双 log 轴、非正值断段、导航 / 拾取与测试；导出和完整验收仍缺 |
@@ -65,7 +65,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-021 | 未实现 | [`histogram`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram.html) | 一维直方图，2D | 箱边界、计数 / 概率 / 密度 / 累积归一化、分类数据 |
+| ML-021 | 开发中 | [`histogram`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram.html) | 一维直方图，2D | 已有显式不等宽箱、边界、计数 / 概率 / 密度 / 累积、缺失与越界统计；自动估计器、类别数据、导出 / 完整验收仍缺，见阶段 6 |
 | ML-022 | 未实现 | [`histogram2`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram2.html) | 二维分箱直方图，2D / 3D | 二元分箱、柱体 / 平铺显示、归一化 |
 | ML-023 | 未实现 | [`scatterhistogram`](https://ww2.mathworks.cn/help/matlab/ref/scatterhistogram.html) | 带边缘分布的散点图，复合 2D | 中央散点与边缘直方 / 密度的一致分组 |
 | ML-024 | 未实现 | [`boxchart`](https://ww2.mathworks.cn/help/matlab/ref/boxchart.html) | 箱线图，2D | 四分位数、须、异常值、分组与方向 |
@@ -83,8 +83,8 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-034 | 未实现 | [`bar`](https://ww2.mathworks.cn/help/matlab/ref/bar.html) | 竖向柱状图，2D | 分组 / 堆积、正负值、柱宽与基线 |
-| ML-035 | 未实现 | [`barh`](https://ww2.mathworks.cn/help/matlab/ref/barh.html) | 横向条形图，2D | 横向分组 / 堆积、分类标签 |
+| ML-034 | 开发中 | [`bar`](https://ww2.mathworks.cn/help/matlab/ref/bar.html) | 竖向柱状图，2D | 已有独立柱、正负值、数据宽度 / 基线、边框与原始柱拾取；分组 / 堆积、类别、导出 / 完整验收仍缺，见阶段 6 |
+| ML-035 | 开发中 | [`barh`](https://ww2.mathworks.cn/help/matlab/ref/barh.html) | 横向条形图，2D | 已有横向独立柱、双轴 / log / 反向与拾取测试；分组 / 堆积、类别和导出 / 完整验收仍缺，见阶段 6 |
 | ML-036 | 未实现 | [`bar3`](https://ww2.mathworks.cn/help/matlab/ref/bar3.html) | 柱状图，3D | 柱体布局、分组 / 堆积模式、遮挡与着色 |
 | ML-037 | 未实现 | [`bar3h`](https://ww2.mathworks.cn/help/matlab/ref/bar3h.html) | 横向条形图，3D | 横向柱体布局与深度关系 |
 | ML-038 | 未实现 | [`pareto`](https://ww2.mathworks.cn/help/matlab/ref/pareto.html) | 帕累托图，复合 2D | 降序柱、累计百分比、双刻度与截取规则 |
@@ -179,7 +179,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | ML-081 | 未实现 | [`image`](https://ww2.mathworks.cn/help/matlab/ref/image.html) | 图像 / 索引色图，2D | RGB / 索引色、像素边界、坐标方向、透明度 |
-| ML-082 | 未实现 | [`imagesc`](https://ww2.mathworks.cn/help/matlab/ref/imagesc.html) | 缩放色值图像，2D | 标量到色图映射、色域、缺失值与色条 |
+| ML-082 | 开发中 | [`imagesc`](https://ww2.mathworks.cn/help/matlab/ref/imagesc.html) | 缩放色值图像，2D | 已有数值 GridData / Heatmap、显式 linear / log 色域、缺失空洞与共享 ColorBar；精确 cell 绘制非纹理插值，导出 / 完整验收仍缺，见阶段 6 |
 
 ## B. 本体补充清单：35 项
 
@@ -295,7 +295,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 ## E. 跨图类型交付项：不计入 133 项
 
-以下项目为各图类型共用的能力矩阵，尚未整项验收；线性 / 对数 / 反向 / 等比例、刻度、混合序列、图例与拾取已有局部实现，见 [阶段 2](STAGE_2.md)。每种图需要标注适用 / 不适用，并引用相应测试。
+以下项目为各图类型共用的能力矩阵，尚未整项验收；基础二维见 [阶段 2](STAGE_2.md)，CAP-01 / 02 / 03 / 07 / 10 / 13 的 Figure、异构图层、双轴、色条、颜色映射与 AxisLink 切片见 [阶段 6](STAGE_6.md)，CAP-14 / 19 的有界缓存 / 流式见 [阶段 4](STAGE_4.md)。这不等于各 CAP 行全部实现。每种图需要标注适用 / 不适用，并引用相应测试。
 
 | 编号 | 能力 | MATLAB 对照 / 验收范围 |
 | --- | --- | --- |

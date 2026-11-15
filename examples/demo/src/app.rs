@@ -1,19 +1,23 @@
 use eframe::egui;
-use egui_customplot::{Line, LinePattern, MarkerStyle, PlotState, Scatter, Series};
 
 use crate::{
     appearance::Presentation,
+    charts::Charts,
     controls::{self, Options},
     data::DemoData,
     diagnostics,
+    performance::Performance,
 };
 
 pub(super) struct Demo {
     data: DemoData,
     options: Options,
     presentation: Presentation,
-    state: PlotState,
-    detail_state: PlotState,
+    performance: Performance,
+    views: Charts,
+    scalar: crate::scalar::ScalarDemo,
+    statistical: crate::statistical::StatisticalDemo,
+    export: crate::export::ExportPanel,
 }
 
 impl Default for Demo {
@@ -23,97 +27,99 @@ impl Default for Demo {
             data: DemoData::new(options.scene, options.count, options.gaps),
             options,
             presentation: Presentation::default(),
-            state: PlotState::default(),
-            detail_state: PlotState::default(),
+            performance: Performance::default(),
+            views: Charts::default(),
+            scalar: crate::scalar::ScalarDemo::default(),
+            statistical: crate::statistical::StatisticalDemo::default(),
+            export: crate::export::ExportPanel::default(),
         }
     }
 }
 
 impl Demo {
+    pub fn with_gallery(gallery: Option<&str>) -> Self {
+        let mut demo = Self::default();
+        demo.scalar.enabled = gallery == Some("--scalar");
+        demo.statistical.enabled = gallery == Some("--statistical");
+        demo
+    }
+
     fn show(&mut self, ui: &mut egui::Ui) {
+        self.export.flush_previous(ui.ctx());
         egui::Panel::left("controls")
             .default_size(250.0)
             .show(ui, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     let changes = controls::show(ui, &mut self.options);
+                    self.scalar.controls(ui);
+                    self.statistical.controls(ui);
+                    self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
                             self.options.scene,
                             self.options.count,
                             self.options.gaps,
                         );
+                        self.performance.live = crate::stream::LiveSignal::default();
+                        self.performance.cache.clear();
                     }
+                    if changes.rebuild || changes.reindex {
+                        self.performance
+                            .index(&mut self.data, &self.options.performance);
+                    }
+                    self.performance.status(ui);
                     if changes.reset {
-                        self.state.reset();
-                        self.detail_state.reset();
+                        self.views.reset();
                     }
                 });
             });
+        let performance = &self.options.performance;
+        self.performance
+            .cache
+            .set_budget(performance.cache_budget_mib * 1_048_576);
+        if performance.streaming {
+            self.performance.live.tick(
+                ui.ctx(),
+                self.options.scene,
+                self.options.gaps,
+                performance
+                    .indexed
+                    .then_some(performance.index_budget_mib * 1_048_576),
+            );
+        }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 3");
-            let mut line = Line::new(&self.data.signal)
-                .id_salt("signal")
-                .name("Signal")
-                .width(self.options.width);
-            if self.options.appearance.override_signal {
-                line = line.color(self.options.color);
-            }
-            if self.options.markers {
-                line = line.markers(MarkerStyle {
-                    shape: self.options.shape,
-                    radius: self.options.radius,
-                });
-            }
-            if self.options.dashed {
-                line = line.pattern(LinePattern::Dashed {
-                    length: 8.0,
-                    gap: 5.0,
-                });
-            }
-            let mut series: Vec<Series<'_>> = vec![
-                line.into(),
-                Line::new(&self.data.reference)
-                    .id_salt("reference")
-                    .name("Reference")
-                    .into(),
-            ];
-            if self.options.observations {
-                series.push(
-                    Scatter::new(&self.data.observations)
-                        .id_salt("observations")
-                        .name("Observations")
-                        .shape(self.options.shape)
-                        .colors(&self.data.colors)
-                        .expect("matching colors")
-                        .radii(&self.data.radii)
-                        .expect("matching radii")
-                        .into(),
-                );
-            }
-            let height = ((ui.available_height() - 105.0)
-                / if self.options.second_view { 2.0 } else { 1.0 })
-            .max(80.0);
-            let result = self
-                .options
-                .appearance
-                .configure(
-                    self.options.plot("main", height),
-                    &self.presentation,
-                    self.options.scene,
-                )
-                .show_series(ui, &mut self.state, &series);
-            diagnostics::show(ui, &result.diagnostics);
-            if self.options.second_view {
-                self.options
-                    .appearance
-                    .configure(
-                        self.options.plot("detail", height),
-                        &self.presentation,
-                        self.options.scene,
-                    )
-                    .show_series(ui, &mut self.detail_state, &series);
-            }
+            ui.heading("egui-customplot / Stage 7");
+            let responses = if self.export.request.is_some() {
+                let rect = ui.available_rect_before_wrap();
+                let mut responses = Vec::new();
+                let captured =
+                    egui_customplot::PlotSnapshot::capture(ui, Default::default(), |ui| {
+                        responses = self.show_charts(ui);
+                        rect
+                    });
+                self.export.store(ui.ctx(), captured);
+                responses
+            } else {
+                self.show_charts(ui)
+            };
+            diagnostics::show(ui, &responses[0].diagnostics);
         });
+    }
+
+    fn show_charts(&mut self, ui: &mut egui::Ui) -> Vec<egui_customplot::PlotResponse> {
+        if self.scalar.enabled {
+            return vec![self.scalar.show(ui)];
+        }
+        if self.statistical.enabled {
+            return self.statistical.show(ui);
+        }
+        self.views.show(
+            ui,
+            &self.options,
+            &self.presentation,
+            &self.data,
+            &mut self.performance,
+        )
     }
 }
 
@@ -124,44 +130,5 @@ impl eframe::App for Demo {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{appearance::ThemeChoice, data::Scene};
-
-    #[test]
-    fn demo_scenes_embed_in_headless_egui_with_independent_views() {
-        let ctx = egui::Context::default();
-        let mut demo = Demo::default();
-        demo.options.count = 1000;
-        demo.options.second_view = true;
-        demo.options.markers = true;
-        demo.options.dashed = true;
-        demo.options.equal_units = true;
-        for scene in [Scene::Signal, Scene::PowerLaw] {
-            demo.options.scene = scene;
-            demo.options.log_axes = [scene == Scene::PowerLaw; 2];
-            demo.data = DemoData::new(scene, 1000, true);
-            for theme in [
-                ThemeChoice::Host,
-                ThemeChoice::Scientific,
-                ThemeChoice::Monitoring,
-            ] {
-                demo.options.appearance.theme = theme;
-                let output = ctx.run_ui(
-                    egui::RawInput {
-                        screen_rect: Some(egui::Rect::from_min_size(
-                            egui::Pos2::ZERO,
-                            egui::vec2(1200.0, 820.0),
-                        )),
-                        ..Default::default()
-                    },
-                    |ui| demo.show(ui),
-                );
-                assert!(!output.shapes.is_empty());
-                output.drop_without_applying_deltas();
-            }
-        }
-        assert!(demo.state.bounds().is_none());
-        assert!(demo.detail_state.bounds().is_none());
-    }
-}
+#[path = "app_tests.rs"]
+mod tests;

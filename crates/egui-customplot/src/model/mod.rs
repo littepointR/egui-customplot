@@ -1,20 +1,34 @@
 //! Borrowed series descriptors and typed styles. Samples live in `data`.
 
 mod annotation;
+mod bars;
+mod color_scale;
+mod error_bars;
+mod heatmap;
+mod layer;
 mod line;
 mod line_pattern;
 mod marker;
+mod sampling;
 mod scatter;
 mod series;
 mod style;
+mod summary;
 mod theme;
 
 pub use annotation::Annotation;
+pub use bars::Bars;
+pub use color_scale::{ColorMap, ColorScale, ColorScaleError};
+pub use error_bars::ErrorBars;
+pub use heatmap::Heatmap;
+pub use layer::PlotLayer;
 pub use line::Line;
 pub use line_pattern::LinePattern;
 pub use marker::{MarkerShape, MarkerStyle};
+pub use sampling::LineSampling;
 pub use scatter::{Scatter, SeriesError};
 pub use series::Series;
 pub use style::{PlotStyle, SeriesStyle};
 pub(crate) use style::{ResolvedPlotStyle, ResolvedSeriesStyle, resolve_plot_style};
+pub(crate) use summary::summarize_series;
 pub use theme::PlotTheme;

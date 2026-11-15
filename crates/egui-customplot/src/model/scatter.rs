@@ -1,7 +1,7 @@
 use egui::{AsIdSalt, Color32, IdSalt};
 
 use super::{MarkerShape, SeriesStyle};
-use crate::PlotData;
+use crate::{PlotData, YAxis};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SeriesError {
@@ -28,6 +28,7 @@ pub struct Scatter<'a> {
     pub(crate) style: SeriesStyle,
     pub(crate) colors: Option<&'a [Color32]>,
     pub(crate) radii: Option<&'a [f32]>,
+    pub(crate) y_axis: YAxis,
 }
 
 impl<'a> Scatter<'a> {
@@ -39,10 +40,15 @@ impl<'a> Scatter<'a> {
             style: SeriesStyle::default(),
             colors: None,
             radii: None,
+            y_axis: YAxis::Left,
         }
     }
     pub fn name(mut self, name: &'a str) -> Self {
         self.name = name;
+        self
+    }
+    pub fn y_axis(mut self, axis: YAxis) -> Self {
+        self.y_axis = axis;
         self
     }
     pub fn id_salt(mut self, id: impl AsIdSalt) -> Self {
