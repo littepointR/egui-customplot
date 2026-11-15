@@ -1,6 +1,6 @@
 use egui::{IdSalt, Rect, Ui};
 
-use crate::{PlotState, Series};
+use crate::{PlotState, Series, model::ResolvedPlotStyle};
 
 #[derive(Clone, Debug)]
 pub struct LegendEntry {
@@ -33,6 +33,7 @@ pub(crate) fn show_legend(
     series: &[Series<'_>],
     rect: Rect,
     id_salt: IdSalt,
+    style: &ResolvedPlotStyle<'_>,
 ) -> Vec<LegendEntry> {
     let mut entries = Vec::new();
     let mut child = ui.new_child(
@@ -42,41 +43,44 @@ pub(crate) fn show_legend(
             .layout(egui::Layout::top_down(egui::Align::Min)),
     );
     child.set_clip_rect(rect.intersect(ui.clip_rect()));
-    egui::Frame::popup(ui.style()).show(&mut child, |ui| {
-        ui.set_max_width((rect.width() - 16.0).max(1.0));
-        egui::ScrollArea::vertical()
-            .max_height((rect.height() - 16.0).max(1.0))
-            .show(ui, |ui| {
-                for (index, s) in series
-                    .iter()
-                    .enumerate()
-                    .filter(|(_, s)| !s.name().is_empty())
-                {
-                    let id = s.id(index);
-                    let visible = state.series_visible(id);
-                    let response = ui
-                        .push_id(id, |ui| {
-                            ui.selectable_label(
-                                visible,
-                                egui::RichText::new(s.name()).color(if visible {
-                                    s.color(index)
-                                } else {
-                                    ui.visuals().weak_text_color()
-                                }),
-                            )
-                        })
-                        .inner;
-                    if response.clicked() && state.toggle_series(id) {
-                        ui.ctx().request_repaint();
+    egui::Frame::popup(ui.style())
+        .fill(style.background)
+        .stroke(style.border_stroke)
+        .show(&mut child, |ui| {
+            ui.set_max_width((rect.width() - 16.0).max(1.0));
+            egui::ScrollArea::vertical()
+                .max_height((rect.height() - 16.0).max(1.0))
+                .show(ui, |ui| {
+                    for (index, s) in series
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, s)| !s.name().is_empty())
+                    {
+                        let id = s.id(index);
+                        let visible = state.series_visible(id);
+                        let response = ui
+                            .push_id(id, |ui| {
+                                ui.selectable_label(
+                                    visible,
+                                    egui::RichText::new(s.name()).color(if visible {
+                                        s.resolved_style(index, style).stroke.color
+                                    } else {
+                                        style.text_color.gamma_multiply(0.45)
+                                    }),
+                                )
+                            })
+                            .inner;
+                        if response.clicked() && state.toggle_series(id) {
+                            ui.ctx().request_repaint();
+                        }
+                        entries.push(LegendEntry {
+                            id,
+                            name: s.name().to_owned(),
+                            rect: response.rect.intersect(rect),
+                            visible: state.series_visible(id),
+                        });
                     }
-                    entries.push(LegendEntry {
-                        id,
-                        name: s.name().to_owned(),
-                        rect: response.rect.intersect(rect),
-                        visible: state.series_visible(id),
-                    });
-                }
-            });
-    });
+                });
+        });
     entries
 }

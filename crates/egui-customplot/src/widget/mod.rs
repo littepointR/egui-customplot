@@ -3,9 +3,14 @@
 mod response;
 mod show;
 
+use std::sync::Arc;
+
 use egui::{AsIdSalt, Color32, IdSalt};
 
-use crate::{Axis, interaction::NavigationOptions};
+use crate::{
+    Annotation, Axis, HoverInfo, PlotStyle, PlotTheme,
+    interaction::{HoverFormatter, NavigationOptions},
+};
 pub use response::PlotResponse;
 
 /// Native egui control. Drag to pan; double-click or focused Home resets.
@@ -14,7 +19,9 @@ pub struct Plot {
     height: f32,
     show_grid: bool,
     navigation: NavigationOptions,
-    background: Option<Color32>,
+    theme: Option<Arc<PlotTheme>>,
+    inherited_style: PlotStyle,
+    style: PlotStyle,
     axes: [Axis; 2],
     title: String,
     show_legend: bool,
@@ -22,6 +29,8 @@ pub struct Plot {
     crosshair: bool,
     pick_radius: f32,
     data_aspect: Option<f64>,
+    hover_formatter: Option<Arc<HoverFormatter>>,
+    annotations: Arc<[Annotation]>,
 }
 
 impl Plot {
@@ -31,7 +40,9 @@ impl Plot {
             height: 320.0,
             show_grid: true,
             navigation: NavigationOptions::default(),
-            background: None,
+            theme: None,
+            inherited_style: PlotStyle::default(),
+            style: PlotStyle::default(),
             axes: [Axis::default(), Axis::default()],
             title: String::new(),
             show_legend: false,
@@ -39,6 +50,8 @@ impl Plot {
             crosshair: true,
             pick_radius: 12.0,
             data_aspect: None,
+            hover_formatter: None,
+            annotations: Arc::from([]),
         }
     }
     pub fn height(mut self, height: f32) -> Self {
@@ -79,7 +92,26 @@ impl Plot {
         self
     }
     pub fn background(mut self, color: Color32) -> Self {
-        self.background = Some(color);
+        self.style.background = Some(color);
+        self
+    }
+    pub fn theme(mut self, theme: impl Into<Arc<PlotTheme>>) -> Self {
+        self.theme = Some(theme.into());
+        self
+    }
+    /// Retain and share an Arc slice to avoid cloning labels each frame.
+    /// Replaces the previous annotation slice; annotations do not affect auto-fit.
+    pub fn annotations(mut self, annotations: impl Into<Arc<[Annotation]>>) -> Self {
+        self.annotations = annotations.into();
+        self
+    }
+    /// Parent figure/group defaults. Does not mutate egui's local Style.
+    pub fn inherited_style(mut self, style: PlotStyle) -> Self {
+        self.inherited_style = style.over(self.inherited_style);
+        self
+    }
+    pub fn style(mut self, style: PlotStyle) -> Self {
+        self.style = style.over(self.style);
         self
     }
     pub fn x_axis(mut self, axis: Axis) -> Self {
@@ -100,6 +132,15 @@ impl Plot {
     }
     pub fn show_hover(mut self, show: bool) -> Self {
         self.show_hover = show;
+        self
+    }
+    /// Runs outside Context locks, once per hovered show pass (including discarded
+    /// passes), even before the delayed tooltip opens. Keep it pure and cheap.
+    pub fn hover_formatter(
+        mut self,
+        formatter: impl for<'a> Fn(HoverInfo<'a>) -> String + Send + Sync + 'static,
+    ) -> Self {
+        self.hover_formatter = Some(Arc::new(formatter));
         self
     }
     pub fn crosshair(mut self, show: bool) -> Self {

@@ -18,6 +18,10 @@ pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
         d.non_finite_points, d.domain_invalid_points, d.numeric_rejections, d.visible_series
     ));
     ui.small("Per-pass CPU counters only. Excludes tessellation, process/GPU memory and presentation. No LOD, geometry cache or performance guarantee.");
+    ui.small(format!(
+        "Annotations submitted: {} | invalid: {}",
+        d.output_annotations, d.annotation_rejections
+    ));
     if d.pattern_truncated || d.aspect_constraint_failed {
         ui.colored_label(
             egui::Color32::YELLOW,

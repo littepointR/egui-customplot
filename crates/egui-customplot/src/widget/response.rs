@@ -10,5 +10,6 @@ pub struct PlotResponse {
     pub view_changed: bool,
     pub axis_ticks: [Vec<AxisTick>; 2],
     pub hovered_point: Option<HoveredPoint>,
+    pub hover_text: Option<String>,
     pub legend_entries: Vec<LegendEntry>,
 }

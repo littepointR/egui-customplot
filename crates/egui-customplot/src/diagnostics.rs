@@ -14,6 +14,10 @@ pub struct PlotDiagnostics {
     pub output_points: usize,
     pub output_paths: usize,
     pub output_markers: usize,
+    /// Visible annotation items submitted (a labeled reference line is one item).
+    pub output_annotations: usize,
+    /// Invalid coordinates, reversed/NaN intervals, or invalid annotation widths.
+    pub annotation_rejections: usize,
     /// Line-point / marker vertex / marker index Vec capacities submitted to egui.
     pub geometry_capacity_bytes: usize,
     pub numeric_rejections: usize,

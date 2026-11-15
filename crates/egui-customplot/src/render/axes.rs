@@ -1,11 +1,11 @@
-use egui::{Color32, Rect, Stroke, StrokeKind, Ui};
+use egui::{Rect, StrokeKind, Ui};
 
-use crate::{Axis, AxisTick, PlotTransform};
+use crate::{Axis, AxisTick, PlotTransform, model::ResolvedPlotStyle};
 
 pub(crate) struct AxesStyle<'a> {
     pub axes: &'a [Axis; 2],
     pub title: &'a str,
-    pub background: Option<Color32>,
+    pub style: &'a ResolvedPlotStyle<'a>,
     pub show_grid: bool,
 }
 
@@ -18,13 +18,9 @@ pub(crate) fn paint_axes(
 ) {
     let painter = ui.painter().with_clip_rect(outer);
     let rect = transform.rect();
-    let visuals = ui.visuals();
-    painter.rect_filled(
-        rect,
-        0.0,
-        style.background.unwrap_or(visuals.extreme_bg_color),
-    );
-    let grid = Stroke::new(1.0, visuals.widgets.noninteractive.bg_stroke.color);
+    let colors = style.style;
+    painter.rect_filled(rect, 0.0, colors.background);
+    let grid = colors.grid_stroke;
     let font = egui::TextStyle::Small.resolve(ui.style());
     let min = transform.bounds().min();
     for axis in 0..2 {
@@ -36,7 +32,7 @@ pub(crate) fn paint_axes(
                 let stroke = if tick.major {
                     grid
                 } else {
-                    Stroke::new(0.5, grid.color.gamma_multiply(0.5))
+                    colors.minor_grid_stroke
                 };
                 let segment = if axis == 0 {
                     [egui::pos2(p.x, rect.top()), egui::pos2(p.x, rect.bottom())]
@@ -57,7 +53,7 @@ pub(crate) fn paint_axes(
                         egui::Align2::RIGHT_CENTER,
                     )
                 };
-                painter.text(pos, anchor, &tick.label, font.clone(), visuals.text_color());
+                painter.text(pos, anchor, &tick.label, font.clone(), colors.text_color);
             }
         }
     }
@@ -67,7 +63,7 @@ pub(crate) fn paint_axes(
             egui::Align2::CENTER_TOP,
             style.title,
             egui::TextStyle::Heading.resolve(ui.style()),
-            visuals.text_color(),
+            colors.text_color,
         );
     }
     if !style.axes[0].label.is_empty() {
@@ -76,23 +72,17 @@ pub(crate) fn paint_axes(
             egui::Align2::CENTER_BOTTOM,
             &style.axes[0].label,
             font.clone(),
-            visuals.text_color(),
+            colors.text_color,
         );
     }
     if !style.axes[1].label.is_empty() {
-        let galley =
-            painter.layout_no_wrap(style.axes[1].label.clone(), font, visuals.text_color());
+        let galley = painter.layout_no_wrap(style.axes[1].label.clone(), font, colors.text_color);
         let center = egui::pos2(outer.left() + 10.0, rect.center().y);
         let pos = center - galley.size() * 0.5;
         painter.add(
-            egui::epaint::TextShape::new(pos, galley, visuals.text_color())
+            egui::epaint::TextShape::new(pos, galley, colors.text_color)
                 .with_angle_and_anchor(-std::f32::consts::FRAC_PI_2, egui::Align2::CENTER_CENTER),
         );
     }
-    painter.rect_stroke(
-        rect,
-        0.0,
-        visuals.widgets.noninteractive.bg_stroke,
-        StrokeKind::Inside,
-    );
+    painter.rect_stroke(rect, 0.0, colors.border_stroke, StrokeKind::Inside);
 }

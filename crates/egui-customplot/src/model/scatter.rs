@@ -1,6 +1,6 @@
 use egui::{AsIdSalt, Color32, IdSalt};
 
-use super::{MarkerShape, MarkerStyle};
+use super::{MarkerShape, SeriesStyle};
 use crate::PlotData;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -25,8 +25,7 @@ pub struct Scatter<'a> {
     pub(crate) data: &'a PlotData,
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
-    pub(crate) color: Option<Color32>,
-    pub(crate) style: MarkerStyle,
+    pub(crate) style: SeriesStyle,
     pub(crate) colors: Option<&'a [Color32]>,
     pub(crate) radii: Option<&'a [f32]>,
 }
@@ -37,8 +36,7 @@ impl<'a> Scatter<'a> {
             data,
             name: "",
             id_salt: None,
-            color: None,
-            style: MarkerStyle::default(),
+            style: SeriesStyle::default(),
             colors: None,
             radii: None,
         }
@@ -52,16 +50,16 @@ impl<'a> Scatter<'a> {
         self
     }
     pub fn color(mut self, color: Color32) -> Self {
-        self.color = Some(color);
+        self.style.color = Some(color);
         self
     }
     /// Invalid scalar radii are rejected by rendering/picking and counted in diagnostics.
     pub fn radius(mut self, radius: f32) -> Self {
-        self.style.radius = radius;
+        self.style.marker_radius = Some(radius);
         self
     }
     pub fn shape(mut self, shape: MarkerShape) -> Self {
-        self.style.shape = shape;
+        self.style.marker_shape = Some(shape);
         self
     }
     pub fn colors(mut self, colors: &'a [Color32]) -> Result<Self, SeriesError> {
@@ -70,6 +68,10 @@ impl<'a> Scatter<'a> {
         }
         self.colors = Some(colors);
         Ok(self)
+    }
+    pub fn style(mut self, style: SeriesStyle) -> Self {
+        self.style = style.over(self.style);
+        self
     }
     pub fn radii(mut self, radii: &'a [f32]) -> Result<Self, SeriesError> {
         if radii.len() != self.data.len() {

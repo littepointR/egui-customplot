@@ -1,9 +1,10 @@
 use eframe::egui;
 use egui_customplot::{Axis, AxisScale, MarkerShape, Plot};
 
-use crate::data::Scene;
+use crate::{appearance::Appearance, data::Scene};
 
 pub(super) struct Options {
+    pub appearance: Appearance,
     pub scene: Scene,
     pub count: usize,
     pub gaps: bool,
@@ -27,6 +28,7 @@ pub(super) struct Options {
 impl Default for Options {
     fn default() -> Self {
         Self {
+            appearance: Appearance::default(),
             scene: Scene::Signal,
             count: 10_000,
             gaps: true,
@@ -94,6 +96,7 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     let old_axes = (options.log_axes, options.reversed);
     ui.heading("Plot controls");
     egui::widgets::global_theme_preference_buttons(ui);
+    options.appearance.show(ui);
     ui.separator();
     ui.selectable_value(&mut options.scene, Scene::Signal, "Signal + scatter");
     ui.selectable_value(&mut options.scene, Scene::PowerLaw, "Positive power law");
@@ -135,7 +138,9 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
         ui.checkbox(&mut options.reversed[1], "Reverse Y");
     });
     ui.checkbox(&mut options.lock_y, "Lock Y navigation");
-    ui.color_edit_button_srgba(&mut options.color);
+    if options.appearance.override_signal {
+        ui.color_edit_button_srgba(&mut options.color);
+    }
     ui.add(egui::Slider::new(&mut options.width, 0.0..=5.0).text("Line width"));
     ui.add(egui::Slider::new(&mut options.radius, 1.0..=10.0).text("Line marker radius"));
     egui::ComboBox::from_id_salt("shape")

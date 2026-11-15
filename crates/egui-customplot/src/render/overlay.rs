@@ -1,6 +1,6 @@
 use egui::{Pos2, Stroke, Ui};
 
-use crate::{HoveredPoint, PlotTransform};
+use crate::{HoveredPoint, PlotTransform, model::ResolvedPlotStyle};
 
 pub(crate) fn paint_hover(
     ui: &Ui,
@@ -8,11 +8,12 @@ pub(crate) fn paint_hover(
     position: Pos2,
     closest: Option<&HoveredPoint>,
     crosshair: bool,
+    style: &ResolvedPlotStyle<'_>,
 ) {
     let painter = ui.painter().with_clip_rect(transform.rect());
     if crosshair {
         let rect = transform.rect();
-        let stroke = Stroke::new(1.0, ui.visuals().weak_text_color());
+        let stroke = style.crosshair_stroke;
         painter.line_segment(
             [
                 egui::pos2(position.x, rect.top()),
@@ -32,7 +33,7 @@ pub(crate) fn paint_hover(
         painter.circle_stroke(
             transform.position_from_point(point.point),
             5.0,
-            Stroke::new(1.5, ui.visuals().text_color()),
+            Stroke::new(1.5, style.text_color),
         );
     }
 }

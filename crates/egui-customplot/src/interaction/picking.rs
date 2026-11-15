@@ -1,8 +1,11 @@
 use std::time::Instant;
 
-use egui::{Color32, IdSalt, Pos2, Response, Stroke};
+use egui::{Color32, IdSalt, Pos2};
 
-use crate::{PlotDiagnostics, PlotPoint, PlotState, PlotTransform, Series};
+use crate::{
+    PlotDiagnostics, PlotPoint, PlotState, PlotTransform, Series,
+    model::{ResolvedPlotStyle, ResolvedSeriesStyle},
+};
 
 #[derive(Clone, Debug)]
 pub struct HoveredPoint {
@@ -21,6 +24,7 @@ pub(crate) fn pick_point(
     position: Pos2,
     radius: f32,
     diagnostics: &mut PlotDiagnostics,
+    style: &ResolvedPlotStyle<'_>,
 ) -> Option<HoveredPoint> {
     let start = Instant::now();
     let mut closest: Option<HoveredPoint> = None;
@@ -28,9 +32,10 @@ pub(crate) fn pick_point(
         if !state.series_visible(s.id(series_index)) {
             continue;
         }
+        let resolved = s.resolved_style(series_index, style);
         for (point_index, point) in s.data().points().iter().enumerate() {
             diagnostics.visited_pick_points += 1;
-            if !transform.is_valid_point(*point) || !point_visible(*s, point_index, series_index) {
+            if !transform.is_valid_point(*point) || !point_visible(*s, point_index, resolved) {
                 continue;
             }
             let screen = transform.position_from_point(*point);
@@ -57,51 +62,24 @@ pub(crate) fn pick_point(
     closest
 }
 
-pub(crate) fn show_tooltip(
-    response: &Response,
-    series: &[Series<'_>],
-    point: Option<&HoveredPoint>,
-    position: PlotPoint,
-) {
-    response.clone().on_hover_ui_at_pointer(|ui| {
-        if let Some(point) = point {
-            let name = series[point.series_index].name();
-            if !name.is_empty() {
-                ui.strong(name);
-            }
-            ui.monospace(format!(
-                "[{}]  x={:.8e}  y={:.8e}",
-                point.point_index, point.point[0], point.point[1]
-            ));
-        } else {
-            ui.monospace(format!("x={:.8e}  y={:.8e}", position[0], position[1]));
-        }
-    });
-}
-
-fn point_visible(series: Series<'_>, index: usize, series_index: usize) -> bool {
+fn point_visible(series: Series<'_>, index: usize, resolved: ResolvedSeriesStyle) -> bool {
     match series {
-        Series::Line(line) => {
-            let stroke = line
-                .stroke
-                .unwrap_or(Stroke::new(1.5, series.color(series_index)));
+        Series::Line(_) => {
+            let stroke = resolved.stroke;
             (stroke.width.is_finite()
                 && stroke.width > 0.0
                 && stroke.color != Color32::TRANSPARENT
-                && line.pattern.is_valid())
-                || line.markers.is_some_and(|style| {
-                    style.radius.is_finite()
-                        && style.radius > 0.0
-                        && stroke.color != Color32::TRANSPARENT
-                })
+                && resolved.pattern.is_valid())
+                || (resolved.line_markers
+                    && resolved.marker.radius.is_finite()
+                    && resolved.marker.radius > 0.0
+                    && stroke.color != Color32::TRANSPARENT)
         }
         Series::Scatter(scatter) => {
-            let radius = scatter.radii.map_or(scatter.style.radius, |r| r[index]);
+            let radius = scatter.radii.map_or(resolved.marker.radius, |r| r[index]);
             radius.is_finite()
                 && radius > 0.0
-                && scatter
-                    .colors
-                    .map_or(series.color(series_index), |c| c[index])
+                && scatter.colors.map_or(resolved.stroke.color, |c| c[index])
                     != Color32::TRANSPARENT
         }
     }

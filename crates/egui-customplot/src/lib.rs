@@ -26,7 +26,10 @@ mod widget;
 pub use axis::{Axis, AxisScale, AxisTick, BoundsError, PlotBounds, PlotTransform};
 pub use data::{PlotData, PlotPoint};
 pub use diagnostics::PlotDiagnostics;
-pub use interaction::{HoveredPoint, PlotState};
+pub use interaction::{HoverInfo, HoveredPoint, PlotState};
 pub use layout::LegendEntry;
-pub use model::{Line, LinePattern, MarkerShape, MarkerStyle, Scatter, Series, SeriesError};
+pub use model::{
+    Annotation, Line, LinePattern, MarkerShape, MarkerStyle, PlotStyle, PlotTheme, Scatter, Series,
+    SeriesError, SeriesStyle,
+};
 pub use widget::{Plot, PlotResponse};

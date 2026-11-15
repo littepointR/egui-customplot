@@ -1,28 +1,24 @@
 use egui::{AsIdSalt, Color32, IdSalt, Stroke};
 
-use super::{LinePattern, MarkerStyle};
+use super::{LinePattern, MarkerStyle, SeriesStyle};
 use crate::PlotData;
 
 /// A borrowed series description; samples remain in the application model.
 #[derive(Clone, Copy, Debug)]
 pub struct Line<'a> {
     pub(crate) data: &'a PlotData,
-    pub(crate) stroke: Option<Stroke>,
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
-    pub(crate) markers: Option<MarkerStyle>,
-    pub(crate) pattern: LinePattern,
+    pub(crate) style: SeriesStyle,
 }
 
 impl<'a> Line<'a> {
     pub fn new(data: &'a PlotData) -> Self {
         Self {
             data,
-            stroke: None,
             name: "",
             id_salt: None,
-            markers: None,
-            pattern: LinePattern::Solid,
+            style: SeriesStyle::default(),
         }
     }
     pub fn name(mut self, name: &'a str) -> Self {
@@ -34,24 +30,35 @@ impl<'a> Line<'a> {
         self
     }
     pub fn markers(mut self, markers: MarkerStyle) -> Self {
-        self.markers = Some(markers);
+        self.style.line_markers = Some(true);
+        self.style.marker_shape = Some(markers.shape);
+        self.style.marker_radius = Some(markers.radius);
         self
     }
     pub fn pattern(mut self, pattern: LinePattern) -> Self {
-        self.pattern = pattern;
+        self.style.line_pattern = Some(pattern);
         self
     }
     pub fn stroke(mut self, stroke: impl Into<Stroke>) -> Self {
-        self.stroke = Some(stroke.into());
+        let stroke = stroke.into();
+        self.style.color = Some(stroke.color);
+        self.style.line_width = Some(stroke.width);
         self
     }
-    pub fn color(self, color: Color32) -> Self {
-        self.stroke(Stroke::new(self.stroke.map_or(1.5, |s| s.width), color))
+    pub fn color(mut self, color: Color32) -> Self {
+        self.style.color = Some(color);
+        self
     }
-    pub fn width(self, width: f32) -> Self {
-        self.stroke(Stroke::new(
-            width,
-            self.stroke.map_or(Color32::LIGHT_BLUE, |s| s.color),
-        ))
+    pub fn width(mut self, width: f32) -> Self {
+        self.style.line_width = Some(width);
+        self
+    }
+    pub fn show_markers(mut self, show: bool) -> Self {
+        self.style.line_markers = Some(show);
+        self
+    }
+    pub fn style(mut self, style: SeriesStyle) -> Self {
+        self.style = style.over(self.style);
+        self
     }
 }

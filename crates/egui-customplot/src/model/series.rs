@@ -1,6 +1,6 @@
-use egui::{Color32, IdSalt};
+use egui::IdSalt;
 
-use super::{Line, Scatter};
+use super::{Line, ResolvedPlotStyle, ResolvedSeriesStyle, Scatter};
 use crate::PlotData;
 
 /// Explicit mixed-series API; the original Plot::show remains a line shortcut.
@@ -47,17 +47,17 @@ impl<'a> Series<'a> {
             }
         })
     }
-    pub(crate) fn color(self, index: usize) -> Color32 {
-        let color = match self {
-            Self::Line(s) => s.stroke.map(|s| s.color),
-            Self::Scatter(s) => s.color,
-        };
-        color.unwrap_or(
-            [
-                Color32::from_rgb(70, 160, 235),
-                Color32::from_rgb(235, 145, 65),
-                Color32::from_rgb(90, 190, 130),
-            ][index % 3],
+    pub(crate) fn resolved_style(
+        self,
+        index: usize,
+        plot: &ResolvedPlotStyle<'_>,
+    ) -> ResolvedSeriesStyle {
+        plot.resolve_series(
+            index,
+            match self {
+                Self::Line(s) => s.style,
+                Self::Scatter(s) => s.style,
+            },
         )
     }
 }

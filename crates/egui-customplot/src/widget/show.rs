@@ -4,10 +4,12 @@ use egui::{Sense, Ui};
 
 use super::{Plot, PlotResponse};
 use crate::{
-    AxisScale, Line, PlotBounds, PlotDiagnostics, PlotPoint, PlotState, PlotTransform, Series,
+    AxisScale, HoverInfo, Line, PlotBounds, PlotDiagnostics, PlotPoint, PlotState, PlotTransform,
+    Series,
     interaction::{navigate, pick_point, show_tooltip},
     layout::{allocate_plot, data_rect, legend_rect, show_legend},
-    render::{AxesStyle, paint_axes, paint_hover, paint_series},
+    model::resolve_plot_style,
+    render::{AxesStyle, paint_annotations, paint_axes, paint_hover, paint_series},
 };
 
 impl Plot {
@@ -24,12 +26,14 @@ impl Plot {
         series: &[Series<'_>],
     ) -> PlotResponse {
         let outer = allocate_plot(ui, self.height);
+        let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
         let rect = data_rect(outer, &self.axes, &self.title);
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
         let scales = [self.axes[0].scale, self.axes[1].scale];
         let reversed = [self.axes[0].reversed, self.axes[1].reversed];
         let (auto, mut diagnostics) = summarize_series(state, series, scales);
+        diagnostics.numeric_rejections += style.invalid_strokes;
         let auto_transform = PlotTransform::with_axes(auto, rect, scales, reversed)
             .expect("valid layout and fitted bounds");
         let auto_transform = self.data_aspect.map_or(auto_transform, |ratio| {
@@ -90,37 +94,51 @@ impl Plot {
                 AxesStyle {
                     axes: &self.axes,
                     title: &self.title,
-                    background: self.background,
+                    style: &style,
                     show_grid: self.show_grid,
                 },
             );
-            paint_series(ui, state, series, transform, &mut diagnostics);
+            paint_series(ui, state, series, transform, &mut diagnostics, &style);
+            paint_annotations(ui, &self.annotations, transform, &style, &mut diagnostics);
         }
         let legend_entries = legend_rect.map_or_else(Vec::new, |area| {
-            show_legend(ui, state, series, area, self.id_salt)
+            show_legend(ui, state, series, area, self.id_salt, &style)
         });
-        let hovered_point = if self.show_hover && ui.is_enabled() && !diagnostics.painting_skipped {
-            navigation.hover_pos.and_then(|position| {
-                let point = pick_point(
-                    state,
-                    series,
-                    transform,
-                    position,
-                    self.pick_radius,
-                    &mut diagnostics,
-                );
-                paint_hover(ui, transform, position, point.as_ref(), self.crosshair);
-                show_tooltip(
-                    &response,
-                    series,
-                    point.as_ref(),
-                    transform.point_from_position(position),
-                );
-                point
-            })
-        } else {
-            None
-        };
+        let (hovered_point, hover_text) =
+            if self.show_hover && ui.is_enabled() && !diagnostics.painting_skipped {
+                navigation.hover_pos.map_or((None, None), |position| {
+                    let point = pick_point(
+                        state,
+                        series,
+                        transform,
+                        position,
+                        self.pick_radius,
+                        &mut diagnostics,
+                        &style,
+                    );
+                    paint_hover(
+                        ui,
+                        transform,
+                        position,
+                        point.as_ref(),
+                        self.crosshair,
+                        &style,
+                    );
+                    let info = HoverInfo {
+                        hovered_point: point.as_ref(),
+                        cursor: transform.point_from_position(position),
+                        series_name: point.as_ref().map_or("", |p| series[p.series_index].name()),
+                    };
+                    let text = self
+                        .hover_formatter
+                        .as_ref()
+                        .map_or_else(|| info.default_text(), |format| format(info));
+                    show_tooltip(&response, &text);
+                    (point, Some(text))
+                })
+            } else {
+                (None, None)
+            };
         PlotResponse {
             response,
             transform,
@@ -128,6 +146,7 @@ impl Plot {
             view_changed: navigation.changed,
             axis_ticks,
             hovered_point,
+            hover_text,
             legend_entries,
         }
     }

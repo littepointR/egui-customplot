@@ -2,6 +2,7 @@ use eframe::egui;
 use egui_customplot::{Line, LinePattern, MarkerStyle, PlotState, Scatter, Series};
 
 use crate::{
+    appearance::Presentation,
     controls::{self, Options},
     data::DemoData,
     diagnostics,
@@ -10,6 +11,7 @@ use crate::{
 pub(super) struct Demo {
     data: DemoData,
     options: Options,
+    presentation: Presentation,
     state: PlotState,
     detail_state: PlotState,
 }
@@ -20,6 +22,7 @@ impl Default for Demo {
         Self {
             data: DemoData::new(options.scene, options.count, options.gaps),
             options,
+            presentation: Presentation::default(),
             state: PlotState::default(),
             detail_state: PlotState::default(),
         }
@@ -47,11 +50,14 @@ impl Demo {
                 });
             });
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 2");
+            ui.heading("egui-customplot / Stage 3");
             let mut line = Line::new(&self.data.signal)
                 .id_salt("signal")
                 .name("Signal")
-                .stroke((self.options.width, self.options.color));
+                .width(self.options.width);
+            if self.options.appearance.override_signal {
+                line = line.color(self.options.color);
+            }
             if self.options.markers {
                 line = line.markers(MarkerStyle {
                     shape: self.options.shape,
@@ -69,7 +75,6 @@ impl Demo {
                 Line::new(&self.data.reference)
                     .id_salt("reference")
                     .name("Reference")
-                    .color(egui::Color32::LIGHT_GREEN)
                     .into(),
             ];
             if self.options.observations {
@@ -88,17 +93,25 @@ impl Demo {
             let height = ((ui.available_height() - 105.0)
                 / if self.options.second_view { 2.0 } else { 1.0 })
             .max(80.0);
-            let result =
-                self.options
-                    .plot("main", height)
-                    .show_series(ui, &mut self.state, &series);
+            let result = self
+                .options
+                .appearance
+                .configure(
+                    self.options.plot("main", height),
+                    &self.presentation,
+                    self.options.scene,
+                )
+                .show_series(ui, &mut self.state, &series);
             diagnostics::show(ui, &result.diagnostics);
             if self.options.second_view {
-                self.options.plot("detail", height).show_series(
-                    ui,
-                    &mut self.detail_state,
-                    &series,
-                );
+                self.options
+                    .appearance
+                    .configure(
+                        self.options.plot("detail", height),
+                        &self.presentation,
+                        self.options.scene,
+                    )
+                    .show_series(ui, &mut self.detail_state, &series);
             }
         });
     }
@@ -113,7 +126,7 @@ impl eframe::App for Demo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::Scene;
+    use crate::{appearance::ThemeChoice, data::Scene};
 
     #[test]
     fn demo_scenes_embed_in_headless_egui_with_independent_views() {
@@ -128,7 +141,12 @@ mod tests {
             demo.options.scene = scene;
             demo.options.log_axes = [scene == Scene::PowerLaw; 2];
             demo.data = DemoData::new(scene, 1000, true);
-            for _ in 0..2 {
+            for theme in [
+                ThemeChoice::Host,
+                ThemeChoice::Scientific,
+                ThemeChoice::Monitoring,
+            ] {
+                demo.options.appearance.theme = theme;
                 let output = ctx.run_ui(
                     egui::RawInput {
                         screen_rect: Some(egui::Rect::from_min_size(

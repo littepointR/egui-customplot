@@ -1,9 +1,9 @@
 use std::time::Instant;
 
-use egui::{Color32, Pos2, Stroke, Ui};
+use egui::{Color32, Pos2, Ui};
 
 use super::{line::prepare_line, markers::prepare_markers, pattern::apply_pattern};
-use crate::{PlotDiagnostics, PlotState, PlotTransform, Series};
+use crate::{PlotDiagnostics, PlotState, PlotTransform, Series, model::ResolvedPlotStyle};
 
 pub(crate) fn paint_series(
     ui: &Ui,
@@ -11,6 +11,7 @@ pub(crate) fn paint_series(
     series: &[Series<'_>],
     transform: PlotTransform,
     diagnostics: &mut PlotDiagnostics,
+    style: &ResolvedPlotStyle<'_>,
 ) {
     let painter = ui.painter().with_clip_rect(transform.rect());
     let start = Instant::now();
@@ -18,19 +19,20 @@ pub(crate) fn paint_series(
         if !state.series_visible(s.id(index)) {
             continue;
         }
-        let color = s.color(index);
+        let resolved = s.resolved_style(index, style);
+        let color = resolved.stroke.color;
         let markers = match *s {
             Series::Line(line) => {
-                let stroke = line.stroke.unwrap_or(Stroke::new(1.5, color));
+                let stroke = resolved.stroke;
                 if stroke.width.is_finite()
                     && stroke.width > 0.0
                     && stroke.color != Color32::TRANSPARENT
                 {
-                    if line.pattern.is_valid() {
+                    if resolved.pattern.is_valid() {
                         let prepared = prepare_line(line.data.points(), transform);
                         diagnostics.visited_segments += prepared.visited_segments;
                         diagnostics.numeric_rejections += prepared.numeric_rejections;
-                        let patterned = apply_pattern(prepared.paths, line.pattern);
+                        let patterned = apply_pattern(prepared.paths, resolved.pattern);
                         diagnostics.pattern_truncated |= patterned.truncated;
                         diagnostics.output_paths += patterned.paths.len();
                         for path in patterned.paths {
@@ -43,9 +45,11 @@ pub(crate) fn paint_series(
                         diagnostics.numeric_rejections += 1;
                     }
                 }
-                line.markers.map(|style| (style, None, None))
+                resolved
+                    .line_markers
+                    .then_some((resolved.marker, None, None))
             }
-            Series::Scatter(scatter) => Some((scatter.style, scatter.colors, scatter.radii)),
+            Series::Scatter(scatter) => Some((resolved.marker, scatter.colors, scatter.radii)),
         };
         if let Some((style, colors, radii)) = markers {
             let prepared = prepare_markers(

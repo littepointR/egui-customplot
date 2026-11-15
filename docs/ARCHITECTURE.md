@@ -17,6 +17,9 @@ crates/egui-customplot/
       scatter.rs              # 散点描述与逐点样式校验
       marker.rs               # 标记形状与尺寸
       series.rs               # 混合序列、稳定 ID、默认色
+      style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
+      theme.rs                # 科学浅色 / 监控深色，可共享 palette
+      annotation.rs           # 不参与自动范围的基础注解描述
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -29,7 +32,8 @@ crates/egui-customplot/
     interaction/
       state.rs                # 显式视图、隐藏状态、帧快照、一次性切换
       navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
-      picking.rs              # 原始点拾取、提示内容（不构建数据 mesh）
+      picking.rs              # 原始点拾取（不构建数据 mesh）
+      tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
     render/
       line.rs                 # f64 线段裁剪与路径准备
       markers.rs              # 标记批量 mesh 与物理像素羽化
@@ -37,6 +41,7 @@ crates/egui-customplot/
       axes.rs                 # 网格、刻度文字、标题、边框绘制
       series.rs               # 按序提交数据图元、统计几何成本
       overlay.rs              # 十字线和拾取高亮
+      annotation.rs           # 文字 / 参考线 / 区域的域验证、求交与提交
     widget/
       mod.rs                  # Plot 公开配置 builder
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
@@ -51,6 +56,9 @@ crates/egui-customplot/
     aspect.rs                 # 等比例、幂律单位、锚点与锁轴
     line_styles.rs            # 基础线型与参数拒绝
     checklist.rs              # 133 条 ID 和官方快照完整性
+    styles.rs                 # 样式优先级、主题隔离、渲染 / 拾取一致性
+    tooltip.rs                # 原始数据提示、锁外回调与多遍语义
+    annotations.rs            # 注解范围、裁剪、无效值和共享生命周期
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
 examples/demo/src/
@@ -59,6 +67,7 @@ examples/demo/src/
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据
   diagnostics.rs              # 诊断展示，不实现测量算法
+  appearance.rs               # 保留主题 / 注解、属性面板与配置应用
 docs/                         # 规范、阶段证据、原始基准
 ```
 
@@ -72,6 +81,7 @@ docs/                         # 规范、阶段证据、原始基准
 4. `widget` 依次分配 → 汇总缓存范围 → 导航 → 刻度 → 有序绘制 → 图例 → 悬停，连接各域；不是收纳所有逻辑的“大控件文件”。
 5. `diagnostics` 是共用返回契约，不是资源所有者。sample payload、geometry capacity、耗时均明确计量范围，不冒充进程 / GPU 峰值。
 6. 样本和长期配置由宿主持有；`PlotState` 只保存视图 / 显隐与小型帧快照，不保存数据引用。库不依赖 eframe；demo 才负责原生窗口。
+7. 样式在进入绘制前按 Theme → 父值层 → Plot → Series 解析；绘制、图例和拾取共享解析规则。显式透明 / 零 / false 不得误当缺省。主题不写宿主 Style；格式化回调在锁外逐遍运行，不发布副作用事件。
 
 图例在数据之后提交，保持图层次序；切换后请求重绘，数据在下一布局遍 / 重绘使用新显隐状态。多遍返回值是本遍快照，不是可重复向外发布的事件队列。
 

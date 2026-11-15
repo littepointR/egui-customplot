@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：ML-001 / 007 / 008 / 009 / 013 共 5 项“开发中”，其余 128 项未实现；没有图类型通过完整交付门槛。** 基础二维实现和限制见 [阶段 2](STAGE_2.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：5 项 ML 与 EX-026 / 028～031 共 10 项“开发中”，其余 123 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -229,12 +229,12 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 绘制能力 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| EX-026 | 未实现 | [`text`](https://ww2.mathworks.cn/help/matlab/ref/text.html) | 2D / 3D 数据文本 | 坐标锚定、旋转、对齐、字体与裁剪 |
+| EX-026 | 开发中 | [`text`](https://ww2.mathworks.cn/help/matlab/ref/text.html) | 2D / 3D 数据文本 | 已有二维坐标锚定、对齐、继承文字色和父裁剪；旋转 / 字体独立配置、三维、导出及完整验收仍缺，见阶段 3 |
 | EX-027 | 未实现 | [`annotation`](https://ww2.mathworks.cn/help/matlab/ref/annotation.html) | 图窗注解图元 | line、arrow、doublearrow、textarrow、textbox、rectangle、ellipse 七种；图窗 / 数据坐标分离 |
-| EX-028 | 未实现 | [`xline`](https://ww2.mathworks.cn/help/matlab/ref/xline.html) | 竖直常量参考线 | 多条线、标签、缩放后的跨区显示 |
-| EX-029 | 未实现 | [`yline`](https://ww2.mathworks.cn/help/matlab/ref/yline.html) | 水平常量参考线 | 多条线、标签、图例和裁剪 |
-| EX-030 | 未实现 | [`xregion`](https://ww2.mathworks.cn/help/matlab/ref/xregion.html) | X 区间填充带 | 区间端点、无限延展方向、透明叠加 |
-| EX-031 | 未实现 | [`yregion`](https://ww2.mathworks.cn/help/matlab/ref/yregion.html) | Y 区间填充带 | 区间端点、范围更新和标签 |
+| EX-028 | 开发中 | [`xline`](https://ww2.mathworks.cn/help/matlab/ref/xline.html) | 竖直常量参考线 | 已有多条线、标签、对数 / 反向坐标和裁剪；图例、导出及完整验收仍缺 |
+| EX-029 | 开发中 | [`yline`](https://ww2.mathworks.cn/help/matlab/ref/yline.html) | 水平常量参考线 | 已有多条线、标签、对数 / 反向坐标和裁剪；图例、导出及完整验收仍缺 |
+| EX-030 | 开发中 | [`xregion`](https://ww2.mathworks.cn/help/matlab/ref/xregion.html) | X 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
+| EX-031 | 开发中 | [`yregion`](https://ww2.mathworks.cn/help/matlab/ref/yregion.html) | Y 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
 | EX-032 | 未实现 | [`constantplane`](https://ww2.mathworks.cn/help/matlab/ref/constantplane.html) | 三维无限参考平面 | 平面方程、可见范围裁剪与透明深度 |
 | EX-033 | 未实现 | [`thetaregion`](https://ww2.mathworks.cn/help/matlab/ref/thetaregion.html) | 极坐标角度扇区 | 跨零角度、方向和径向裁剪 |
 | EX-034 | 未实现 | [`radiusregion`](https://ww2.mathworks.cn/help/matlab/ref/radiusregion.html) | 极坐标圆盘 / 圆环 | 内外半径与角度范围裁剪 |
