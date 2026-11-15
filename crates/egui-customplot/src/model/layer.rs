@@ -1,7 +1,7 @@
 use egui::IdSalt;
 
 use super::{ResolvedPlotStyle, ResolvedSeriesStyle, SeriesStyle};
-use crate::{Bars, ErrorBars, Heatmap, Line, Scatter, Series, YAxis};
+use crate::{Bars, ErrorBars, Heatmap, Line, PlotData, Scatter, Series, Stems, YAxis};
 
 /// Ordered heterogeneous layers. This extends the plotting API without changing
 /// the existing point-series enum or Series::data() contract.
@@ -12,6 +12,7 @@ pub enum PlotLayer<'a> {
     Heatmap(Heatmap<'a>),
     Bars(Bars<'a>),
     ErrorBars(ErrorBars<'a>),
+    Stems(Stems<'a>),
 }
 
 impl<'a> From<Series<'a>> for PlotLayer<'a> {
@@ -44,6 +45,11 @@ impl<'a> From<ErrorBars<'a>> for PlotLayer<'a> {
         Self::ErrorBars(value)
     }
 }
+impl<'a> From<Stems<'a>> for PlotLayer<'a> {
+    fn from(value: Stems<'a>) -> Self {
+        Self::Stems(value)
+    }
+}
 
 impl<'a> PlotLayer<'a> {
     pub fn name(self) -> &'a str {
@@ -52,6 +58,7 @@ impl<'a> PlotLayer<'a> {
             Self::Heatmap(s) => s.name,
             Self::Bars(s) => s.name,
             Self::ErrorBars(s) => s.name,
+            Self::Stems(s) => s.name,
         }
     }
     pub fn y_axis(self) -> YAxis {
@@ -60,6 +67,7 @@ impl<'a> PlotLayer<'a> {
             Self::Heatmap(s) => s.y_axis,
             Self::Bars(s) => s.y_axis,
             Self::ErrorBars(s) => s.y_axis,
+            Self::Stems(s) => s.y_axis,
         }
     }
     pub(crate) fn id(self, index: usize) -> IdSalt {
@@ -68,6 +76,7 @@ impl<'a> PlotLayer<'a> {
             Self::Heatmap(s) => s.id_salt,
             Self::Bars(s) => s.id_salt,
             Self::ErrorBars(s) => s.id_salt,
+            Self::Stems(s) => s.id_salt,
         };
         id_salt.unwrap_or_else(|| {
             if self.name().is_empty() {
@@ -93,6 +102,15 @@ impl<'a> PlotLayer<'a> {
             ),
             Self::Bars(s) => plot.resolve_series(index, s.style),
             Self::ErrorBars(s) => plot.resolve_series(index, s.style),
+            Self::Stems(s) => plot.resolve_series(index, s.style),
+        }
+    }
+
+    pub(crate) fn point_data(self) -> Option<&'a PlotData> {
+        match self {
+            Self::Series(s) => Some(s.data()),
+            Self::Stems(s) => Some(s.data),
+            _ => None,
         }
     }
 }

@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[test]
 fn matlab_checklist_retains_every_frozen_id_and_official_function() {
@@ -44,4 +44,30 @@ fn matlab_checklist_retains_every_frozen_id_and_official_function() {
         .collect();
     assert_eq!(names.len(), 82);
     assert_eq!(actual, names);
+}
+
+#[test]
+fn matlab_status_summary_matches_all_133_rows_without_counting_toolboxes() {
+    let checklist = include_str!("../../../docs/MATLAB_PLOT_CHECKLIST.md");
+    let mut counts = BTreeMap::new();
+    for row in checklist.lines().filter(|line| {
+        ["| ML-", "| EX-", "| LG-"]
+            .iter()
+            .any(|prefix| line.starts_with(prefix))
+    }) {
+        let status = row.split('|').nth(2).unwrap().trim();
+        assert!(
+            ["未实现", "开发中", "待验收", "已交付"].contains(&status),
+            "unknown status: {row}"
+        );
+        *counts.entry(status).or_insert(0usize) += 1;
+    }
+    assert_eq!(counts.values().sum::<usize>(), 133);
+    let developing = counts.get("开发中").copied().unwrap_or(0);
+    let unimplemented = counts.get("未实现").copied().unwrap_or(0);
+    assert!(checklist.contains(&format!("共 {developing} 项“开发中”")));
+    assert!(checklist.contains(&format!("其余 {unimplemented} 项未实现")));
+    if counts.get("已交付").copied().unwrap_or(0) == 0 {
+        assert!(checklist.contains("没有图类型通过完整交付门槛"));
+    }
 }

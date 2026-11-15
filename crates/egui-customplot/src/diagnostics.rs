@@ -3,6 +3,13 @@ use std::time::Duration;
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
+    /// Stem descriptors whose baseline is nonfinite or outside the value domain.
+    /// Raw endpoint diagnostics remain in input_points / domain_invalid_points.
+    pub invalid_stem_baselines: usize,
+    pub visited_stems: usize,
+    /// Rod paths after dashing, not original endpoint count.
+    pub output_stem_segments: usize,
+    pub output_stem_baselines: usize,
     pub input_bars: usize,
     /// Invalid record payloads (including width/overflow), before log domains.
     pub invalid_bars: usize,

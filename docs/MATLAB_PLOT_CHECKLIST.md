@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：11 项 ML 与 EX-026 / 028～031 共 16 项“开发中”，其余 117 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：12 项 ML 与 EX-026 / 028～031 共 17 项“开发中”，其余 116 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线 / 茎状图见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -88,7 +88,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-036 | 未实现 | [`bar3`](https://ww2.mathworks.cn/help/matlab/ref/bar3.html) | 柱状图，3D | 柱体布局、分组 / 堆积模式、遮挡与着色 |
 | ML-037 | 未实现 | [`bar3h`](https://ww2.mathworks.cn/help/matlab/ref/bar3h.html) | 横向条形图，3D | 横向柱体布局与深度关系 |
 | ML-038 | 未实现 | [`pareto`](https://ww2.mathworks.cn/help/matlab/ref/pareto.html) | 帕累托图，复合 2D | 降序柱、累计百分比、双刻度与截取规则 |
-| ML-039 | 未实现 | [`stem`](https://ww2.mathworks.cn/help/matlab/ref/stem.html) | 针状图，2D | 针杆、端点标记、基线与方向 |
+| ML-039 | 开发中 | [`stem`](https://ww2.mathworks.cn/help/matlab/ref/stem.html) | 针状图，2D | [阶段 8](STAGE_8.md)：独立杆 / 原始端点、基线 / 方向 / log / 双轴 / 导出；完整验收未完成 |
 | ML-040 | 未实现 | [`stem3`](https://ww2.mathworks.cn/help/matlab/ref/stem3.html) | 针状图，3D | 三维位置、针杆与基面 |
 
 `stairs` 已记录为 ML-003，不重复计数。

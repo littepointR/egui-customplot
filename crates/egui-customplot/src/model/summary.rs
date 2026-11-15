@@ -43,8 +43,8 @@ pub(crate) fn summarize_series(
             },
         ];
         let extent = match *s {
-            PlotLayer::Series(s) => {
-                let data = s.data();
+            PlotLayer::Series(_) | PlotLayer::Stems(_) => {
+                let data = s.point_data().expect("point-data layer");
                 diagnostics.input_points += data.len();
                 diagnostics.non_finite_points += data.non_finite_points();
                 diagnostics.domain_invalid_points +=
@@ -57,7 +57,13 @@ pub(crate) fn summarize_series(
                 {
                     diagnostics.unique_index_bytes += data.line_index_bytes();
                 }
-                data.extent(scales)
+                if let PlotLayer::Stems(stems) = *s {
+                    diagnostics.invalid_stem_baselines +=
+                        usize::from(!stems.baseline_valid(scales));
+                    stems.extent(scales)
+                } else {
+                    data.extent(scales)
+                }
             }
             PlotLayer::Heatmap(s) => {
                 diagnostics.input_heatmap_cells += s.data.values().len();

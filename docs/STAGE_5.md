@@ -12,6 +12,7 @@
 - 缓存命中只跳过查询 / 裁剪，仍要复制路径和 tessellate。千百万点的索引拾取仍可能访问密集 X 列；GPU 并不自动解决原始数据定位。
 - [阶段 6 热力图记录](benchmarks/2026-11-15-stage6-heatmap-windows-cpu.csv)：1,048,576 cell 全区精确四边形的 UI 构建 / tessellation p95 为 60.7130 / 77.1864 ms，窄区访问 289 cell。表明**全区精确网格几何是明确的 CPU / 容量风险**，不应把折线 LOD 的成本结论套用到热力图。
 - 全网格的 geometry capacity 为 109,051,904 B；这不是 GPU 显存，也不是进程总内存。
+- 阶段 8 新增独立精确杆 + 原始 markers 的 [另批 CPU 记录](benchmarks/2026-11-15-stage8-stems-windows-cpu.csv)：10 万点全区合计 p95 631.3393 ms、geometry capacity 152,594,928 B，2% 窄区合计 p95 3.3797 ms；仍全量扫描原始记录。共享机器并发开发 / 构建，有明显尾延迟，不能当作隔离硬件门槛；但不能隐去全区成本或套用折线 LOD 结论。明细和分账见 STAGE_8；未测 GPU。
 
 ## 推论与取舍
 

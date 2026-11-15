@@ -1,0 +1,11 @@
+date=2026-11-15T17:03:50.8799601+08:00
+cpu=Intel(R) Core(TM) i9-14900KF
+os=Microsoft Windows NT 10.0.26300.0
+rust=rustc 1.100.0 (0ef1bc386 2026-11-09)
+git_head=b01561e1d710a48b091d3d0e7bef7d7907e2a3cf
+source=uncommitted stage8 interpolation changes on top of git_head
+executable=D:\littepoint\Documents\WorkingSpace\things\egui-customplot\target\release\build\egui-customplot\4a3d0660924a03cf\out\data_performance-4a3d0660924a03cf.exe
+sha256=DCD8D3392A2600B1CBCE91D0D7782131421ABE304AFA57E03A7CDCADA6285A43
+interpolation=StepAfter; seconds_per_scene=30; priority=normal; no_markers
+Headless CPU only. Shared machine with concurrent development; no GPU, FPS, process-memory or isolated release-gate conclusions.
+completed=2026-11-15T17:13:23.3666428+08:00; exit_code=0

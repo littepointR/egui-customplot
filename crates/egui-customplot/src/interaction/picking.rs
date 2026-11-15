@@ -81,10 +81,14 @@ pub(super) fn pick_point(
             }
             continue;
         }
-        let PlotLayer::Series(s) = *s else { continue };
+        let Some(data) = s.point_data() else { continue };
         let transform = transforms.for_axis(s.y_axis());
+        if let PlotLayer::Stems(stems) = *s
+            && !stems.baseline_valid(transform.scales())
+        {
+            continue;
+        }
         let resolved = s.resolved_style(series_index, style);
-        let data = s.data();
         let ranges = if let Some(index) = data.line_index() {
             // A one-point guard conservatively covers f32 projection rounding;
             // the final raw-point distance filter still uses the exact radius.
@@ -114,7 +118,7 @@ pub(super) fn pick_point(
         for point_index in ranges.into_iter().flatten() {
             let point = data.points()[point_index];
             diagnostics.visited_pick_points += 1;
-            if !transform.is_valid_point(point) || !point_visible(s, point_index, resolved) {
+            if !transform.is_valid_point(point) || !point_visible(*s, point_index, resolved) {
                 continue;
             }
             let screen = transform.position_from_point(point);
@@ -142,19 +146,19 @@ pub(super) fn pick_point(
     closest
 }
 
-fn point_visible(series: Series<'_>, index: usize, resolved: ResolvedSeriesStyle) -> bool {
-    match series {
-        Series::Line(_) => {
-            let stroke = resolved.stroke;
-            (stroke.width.is_finite()
-                && stroke.width > 0.0
-                && stroke.color != Color32::TRANSPARENT
-                && resolved.pattern.is_valid())
-                || (resolved.line_markers
-                    && resolved.marker.radius.is_finite()
-                    && resolved.marker.radius > 0.0
-                    && stroke.color != Color32::TRANSPARENT)
+fn point_visible(layer: PlotLayer<'_>, index: usize, resolved: ResolvedSeriesStyle) -> bool {
+    if let PlotLayer::Stems(stems) = layer {
+        let mut resolved = resolved;
+        if stems.data.points()[index][stems.orientation.axis()] == stems.baseline {
+            resolved.stroke.width = 0.0; // Only an enabled marker can show a zero rod.
         }
+        return line_point_visible(resolved);
+    }
+    let PlotLayer::Series(series) = layer else {
+        return false;
+    };
+    match series {
+        Series::Line(_) => line_point_visible(resolved),
         Series::Scatter(scatter) => {
             let radius = scatter.radii.map_or(resolved.marker.radius, |r| r[index]);
             radius.is_finite()
@@ -163,4 +167,16 @@ fn point_visible(series: Series<'_>, index: usize, resolved: ResolvedSeriesStyle
                     != Color32::TRANSPARENT
         }
     }
+}
+
+fn line_point_visible(resolved: ResolvedSeriesStyle) -> bool {
+    let stroke = resolved.stroke;
+    (stroke.width.is_finite()
+        && stroke.width > 0.0
+        && stroke.color != Color32::TRANSPARENT
+        && resolved.pattern.is_valid())
+        || (resolved.line_markers
+            && resolved.marker.radius.is_finite()
+            && resolved.marker.radius > 0.0
+            && stroke.color != Color32::TRANSPARENT)
 }

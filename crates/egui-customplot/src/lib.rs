@@ -52,7 +52,7 @@ pub use layout::{FigureError, LegendEntry};
 pub use model::{
     Annotation, Bars, ColorMap, ColorScale, ColorScaleError, ErrorBars, Heatmap, Line,
     LineInterpolation, LinePattern, LineSampling, MarkerShape, MarkerStyle, PlotLayer, PlotStyle,
-    PlotTheme, Scatter, Series, SeriesError, SeriesStyle,
+    PlotTheme, Scatter, Series, SeriesError, SeriesStyle, StemOrientation, Stems,
 };
 pub use render::PlotCache;
 #[cfg(feature = "export")]

@@ -51,6 +51,17 @@ pub(crate) fn paint_series(
                 );
                 continue;
             }
+            PlotLayer::Stems(stems) => {
+                super::stems::paint_stems(
+                    &painter,
+                    stems,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                );
+                continue;
+            }
             PlotLayer::Series(s) => s,
         };
         let color = resolved.stroke.color;

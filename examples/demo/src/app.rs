@@ -17,6 +17,7 @@ pub(super) struct Demo {
     views: Charts,
     scalar: crate::scalar::ScalarDemo,
     statistical: crate::statistical::StatisticalDemo,
+    stems: crate::stems::StemDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -31,6 +32,7 @@ impl Default for Demo {
             views: Charts::default(),
             scalar: crate::scalar::ScalarDemo::default(),
             statistical: crate::statistical::StatisticalDemo::default(),
+            stems: crate::stems::StemDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -41,6 +43,7 @@ impl Demo {
         let mut demo = Self::default();
         demo.scalar.enabled = gallery == Some("--scalar");
         demo.statistical.enabled = gallery == Some("--statistical");
+        demo.stems.enabled = gallery == Some("--stems");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -60,6 +63,7 @@ impl Demo {
                     let changes = controls::show(ui, &mut self.options);
                     self.scalar.controls(ui);
                     self.statistical.controls(ui);
+                    self.stems.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -119,6 +123,9 @@ impl Demo {
         }
         if self.statistical.enabled {
             return self.statistical.show(ui);
+        }
+        if self.stems.enabled {
+            return self.stems.show(ui);
         }
         self.views.show(
             ui,

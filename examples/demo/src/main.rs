@@ -10,6 +10,7 @@ mod export;
 mod performance;
 mod scalar;
 mod statistical;
+mod stems;
 mod stream;
 
 fn main() -> eframe::Result {

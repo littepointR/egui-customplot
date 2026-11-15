@@ -205,11 +205,14 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--scalar"),
         Some("--statistical"),
         Some("--stairs"),
+        Some("--stems"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
-        demo.options.count = 1000;
-        demo.data = DemoData::new(demo.options.scene, 1000, false);
+        if gallery != Some("--stairs") {
+            demo.options.count = 1000;
+            demo.data = DemoData::new(demo.options.scene, 1000, false);
+        }
         let mut snapshot = None;
         ctx.run_ui(input(0.0), |ui| {
             snapshot = Some(
@@ -238,6 +241,9 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         assert!(snapshot.to_png(options).unwrap().starts_with(b"\x89PNG"));
     }
 }
+
+#[path = "stems_tests.rs"]
+mod stems_tests;
 
 #[test]
 fn stairs_preset_and_live_updates_keep_interpolation_and_samples_across_layout_retries() {

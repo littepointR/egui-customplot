@@ -33,6 +33,7 @@ crates/egui-customplot/
       summary.rs              # 合并预处理范围、身份与样本资源去重
       heatmap.rs / color_scale.rs # 数值单元描述与显式共享色域
       bars.rs / error_bars.rs  # 柱 / 误差棒样式描述，不保存视图
+      stems.rs                # 借用点样本的杆、方向 / 基线与 O(1) 范围
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -65,6 +66,7 @@ crates/egui-customplot/
       annotation.rs           # 文字 / 参考线 / 区域的域验证、求交与提交
       heatmap.rs / color_bar.rs # 精确 cell 分块 mesh、共享色条
       bars.rs / error_bars.rs # 保序柱及独立误差 stem / cap
+      stems.rs                # 独立杆 / 基线和原始端点 markers
       right_axis.rs           # 右 Y 刻度与标签
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
@@ -96,11 +98,13 @@ crates/egui-customplot/
     stream.rs                 # 环形顺序、覆盖、快照与批次幂等
     stairs.rs / stairs_lifecycle.rs # 原始点 / 派生拐点、精确对照与缓存 / 导航
     export_stairs.rs           # 真实 SVG 路径与两后端像素
+    stems*.rs / export_stems.rs # 精确杆、原始拾取 / 资源 / 多遍及导出像素
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
     stream_stress.rs          # 有界宿主队列、过载丢弃及长期资源压力
     heatmap_performance.rs    # 精确全区 / 窄区网格 CPU 与容量分账
+    stems_performance.rs      # 精确杆 + markers 全区 / 窄区 CPU 与局部容量
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -108,6 +112,7 @@ examples/demo/src/
   charts.rs                   # 折线描述、Figure / 联动 / 双轴组装
   scalar.rs                   # 数值网格与显式共享色条
   statistical.rs              # 显式直方预处理、正负柱与误差棒
+  stems.rs                    # 独立正负杆 / 基线、原始端点与右 log Y gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据
@@ -134,6 +139,7 @@ docs/                         # 规范、阶段证据、原始基准
 10. `Figure` 不保存 cell 样本 / 状态；`AxisLink` 在全部成员每遍显示后同步，`secondary` 重放同一导航动作。填充层与点层的拾取仲裁属于 interaction，不回流到 widget。
 11. 导出是显式 displayed-geometry 快照，不自动恢复原始数据或另建 Context；编码后端属于 render/export。库返回 bytes，宿主在最终布局遍之外处理文件副作用；文字的 atlas 捕获不消费上传增量。
 12. 阶梯插值在选点后、裁剪前展开，先验证完整原始点对；不改写样本 / 范围 / 拾取。插值进入 pre-style 缓存键；MinMax 阶梯不能宣称精确保持跳变时刻。
+13. Stems 复用 PlotData 范围摘要 / 样本资源去重与可选原始端点拾取索引；动态基线的域验证属于 model，几何属于 render。没有隐式转成折线、重排原始点、杆 LOD 或杆缓存。
 
 图例在数据之后提交，保持图层次序；切换后请求重绘，数据在下一布局遍 / 重绘使用新显隐状态。多遍返回值是本遍快照，不是可重复向外发布的事件队列。
 

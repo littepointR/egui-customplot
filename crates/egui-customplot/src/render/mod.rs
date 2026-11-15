@@ -16,6 +16,7 @@ mod overlay;
 mod pattern;
 mod right_axis;
 mod series;
+mod stems;
 
 pub(crate) use annotation::paint_annotations;
 pub(crate) use axes::{AxesStyle, paint_axes};

@@ -36,6 +36,10 @@ harness = false
 name = "heatmap_performance"
 harness = false
 
+[[bench]]
+name = "stems_performance"
+harness = false
+
 [[example]]
 name = "export_snapshot"
 required-features = ["export"]
