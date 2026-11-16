@@ -194,7 +194,7 @@ docs/
 3. 首版是否必须包含多子图、双 Y 轴或热力图？若必须，应调整第二阶段范围。
 4. 是否要求 Web、已有 egui / eframe 版本、指定渲染后端和最低 Rust 版本？
 5. 是否需要中文标签、数学公式和论文级矢量输出？默认支持用户注入字体，完整公式排版暂缓。
-6. 发布许可证与 crate 名称尚未确定；规划不等于同意具体许可证。
+6. 已采用与 egui 相同的双重许可（`MIT OR Apache-2.0`，见 `LICENSE-MIT` / `LICENSE-APACHE`），workspace 包目前保持 `publish = false`；crate 正式发布范围与名字待定。
 
 ## 9. 技术参考
 

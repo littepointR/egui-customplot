@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）、阶段 9 全三维能力（Stage 9A～9C）、阶段 10 地理绘图及阶段 11 全量核销审计均已实现并持续验证（133/133 清单条目均处于“开发中”、0 未实现、0 静默删减），同时显式保留跨平台实机 / 硬件 GPU / 独立印刷排版 / 许可证（`publish = false`）等开放交付边界，因此不宣称“已交付”。**
+**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）、阶段 9 全三维能力（Stage 9A～9C）、阶段 10 地理绘图及阶段 11 全量核销审计均已实现并持续验证（133/133 清单条目均处于“开发中”、0 未实现、0 静默删减），同时显式保留跨平台实机 / 硬件 GPU / 独立印刷排版等开放交付边界，workspace 包保持 `publish = false`，因此不宣称“已交付”。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -135,6 +135,13 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 - [egui 集成、性能与资源占用约束](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)：原生嵌入、多遍布局、按需重绘、CPU / GPU 预算与长期验收要求。
 - 推荐推进顺序：最小闭环 → 绘图能力 → 定制能力 → 数据性能 → 按需 GPU 加速 → 导出与发布。
 
-尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、地理绘图（Stage 10）与完整类别/堆积全量核销（Stage 11）；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网、全区 10 万非零 `spy` 与高密三维 Z-buffer/网格/`fimplicit3`/`isosurface` 等值提取的 CPU / 几何成本很高（`ZBuffer` 限制为最大 360px 边长且不代表硬件 GPU 光栅化），没有静默 LOD 或帧率承诺。MATLAB 清单已有 129 项“开发中”（4 项“未实现”），没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
+尚无独立印刷布局 / 全矢量文字导出、专用 `wgpu` GPU 后端与全局资源硬预算；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网、全区 10 万非零 `spy`、高密三维 Z-buffer/网格/`fimplicit3`/`isosurface` 等值提取与 2 万点 `geoscatter` 的 CPU / 几何成本很高（`ZBuffer` 限制为最大 360px 边长且不代表硬件 GPU 光栅化），没有静默 LOD 或帧率承诺。MATLAB 清单全部 133 项已落入“开发中”（0 项“未实现”），但没有图类型通过完整交付门槛（0 项“已交付”）；不能声称已通过跨平台实机或硬件 GPU 验收。
 
-许可证尚未决定，workspace 包均设为 `publish = false`；本项目没有默认授予开源许可。
+## 许可
+
+本项目采用与 [`egui`](https://github.com/emilk/egui) 相同的双重许可（`MIT OR Apache-2.0`）：
+
+- Apache License, Version 2.0（见 [LICENSE-APACHE](LICENSE-APACHE)）
+- MIT License（见 [LICENSE-MIT](LICENSE-MIT)）
+
+按 Apache-2.0 第 5 条约定，向本仓库提交贡献均默认按上述双重许可提供，不附加额外条款。当前 workspace 包仍设为 `publish = false`，未经明确发布准备不发布 crates.io。

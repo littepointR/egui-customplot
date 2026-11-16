@@ -1,6 +1,6 @@
 # 阶段 11：全量对照核销与就绪审计（133 项 + CAP / EGUI / PERF）
 
-日期：2026-11-16。**Stage 11 对 [MATLAB 绘图类型交付对照表](MATLAB_PLOT_CHECKLIST.md)（82 项 ML + 35 项 EX + 16 项 LG = 133 项）、[EGUI-01..10 与 PERF-01..12](EGUI_INTEGRATION_AND_PERFORMANCE.md)、CAP-01..20 通用能力矩阵以及 TB-01..21 工具箱分账完成交叉核销与自动化一致性验证；全量 133 项已 100% 落入“开发中”（0 未实现、0 静默删除），同时坚持“已交付 = 0”的诚实口径，明确保留未完成的多平台实机、硬件 GPU / FPS、独立印刷级排版、长时全应用资源回归及未决开源许可证边界。**
+日期：2026-11-16。**Stage 11 对 [MATLAB 绘图类型交付对照表](MATLAB_PLOT_CHECKLIST.md)（82 项 ML + 35 项 EX + 16 项 LG = 133 项）、[EGUI-01..10 与 PERF-01..12](EGUI_INTEGRATION_AND_PERFORMANCE.md)、CAP-01..20 通用能力矩阵以及 TB-01..21 工具箱分账完成交叉核销与自动化一致性验证；全量 133 项已 100% 落入“开发中”（0 未实现、0 静默删除），同时坚持“已交付 = 0”的诚实口径，明确保留未完成的多平台实机、硬件 GPU / FPS、独立印刷级排版、长时全应用资源回归与暂不发布边界（许可已明确为与 egui 一致的 `MIT OR Apache-2.0`）。**
 
 ## 1. 133 项对照汇总（按分类与阶段）
 
@@ -117,7 +117,7 @@
 
 ## 7. 明确保持开放与未完成事项
 
-1. **许可与发布**：仓库仍保持私有、`publish = false`，许可证未确定，不擅自授予开源许可或发布 crates.io。
+1. **许可与发布**：全仓库已采用与 egui 相同的双重许可 `MIT OR Apache-2.0`（`LICENSE-MIT` / `LICENSE-APACHE`），workspace 包目前保持 `publish = false`，暂不发布 crates.io。
 2. **跨平台实机**：Linux / macOS / WebAssembly 显示与原生输入尚未在对应实机环境验证。
 3. **可选 `wgpu` 后端与真实渲染性能**：按阶段 5 决策保留 Painter；尚无 `egui-wgpu` 硬件光栅化实现、真实 GPU 时间或整应用长时间工作集验证。
 4. **独立印刷排版导出**：`PlotSnapshot` 为混合矢量 + 宿主字形栅格（`Stage 7`）；尚无印刷尺寸重排或纯矢量字体轮廓转换。
