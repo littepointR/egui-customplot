@@ -29,7 +29,7 @@ mod volumes3d;
 fn main() -> eframe::Result {
     let gallery = std::env::args().nth(1);
     eframe::run_native(
-        "egui-customplot | Stage 10",
+        "egui-customplot | Stage 11",
         eframe::NativeOptions {
             renderer: eframe::Renderer::Glow,
             viewport: eframe::egui::ViewportBuilder::default().with_inner_size([1200.0, 820.0]),

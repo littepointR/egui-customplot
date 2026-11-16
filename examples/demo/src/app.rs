@@ -151,7 +151,7 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 10: Geographic Plots");
+            ui.heading("egui-customplot / Stage 11: Full 133-Item Readiness");
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();

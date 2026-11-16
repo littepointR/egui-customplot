@@ -182,6 +182,7 @@ crates/egui-customplot/
     geo_projection_plot_scatter.rs # Stage 10 WebMercator/Equirectangular 逆变换、±180° 最小弧、geoplot 跨日期变更线切分/连续与 geoscatter 多遍导航
     geo_density_bubble_basemap.rs  # Stage 10 geodensityplot 核权重与半径语义、geobubble 面积/分类图例与拾取、署名校验/有界瓦片缓存与离线回退
     export_stage10.rs             # Stage 10 Pacific/HostTiles 双子图混合 SVG(roxmltree/resvg)/PNG 宿主释放导出
+    stage11_readiness_audit.rs    # Stage 11 133 项/CAP/EGUI/PERF 全量一致性审计与 ScrollArea 四坐标系同图嵌入/导出回归
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU

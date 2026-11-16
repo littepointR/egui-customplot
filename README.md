@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）、阶段 9 全三维能力（Stage 9A～9C）与阶段 10 地理绘图及离线 / 缓存底图契约（`geoplot` / `geoscatter` / `geodensityplot` / `geobubble`，133/133 清单条目均处于“开发中”）已实现并持续验证，尚非完整交付库。**
+**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）、阶段 9 全三维能力（Stage 9A～9C）、阶段 10 地理绘图及阶段 11 全量核销审计均已实现并持续验证（133/133 清单条目均处于“开发中”、0 未实现、0 静默删减），同时显式保留跨平台实机 / 硬件 GPU / 独立印刷排版 / 许可证（`publish = false`）等开放交付边界，因此不宣称“已交付”。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -118,6 +118,7 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 
 - [源码职责、目录和扩展规则](docs/ARCHITECTURE.md)：按 data / model / axis / layout / interaction / render / widget 分域，带架构回归检查。
 - [全量实施进度](docs/PROGRESS.md)
+- [阶段 11 全量对照核销与 EGUI / PERF 审计](docs/STAGE_11.md)
 - [阶段 10 地理绘图：经纬度线图、地理散点/密度/气泡与离线/缓存底图契约](docs/STAGE_10.md)
 - [阶段 9 三维与体数据：三维全能力与 Stage 9A～9C 证据](docs/STAGE_9.md)
 - [阶段 8 阶梯线 / 茎状图 / 二维矢量场及二维类型补全](docs/STAGE_8.md)
