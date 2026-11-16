@@ -29,6 +29,7 @@ pub(super) struct Demo {
     networks: crate::networks::NetworksDemo,
     plot3d: crate::plot3d::Plot3DDemo,
     surfaces3d: crate::surfaces3d::Surfaces3DDemo,
+    volumes3d: crate::volumes3d::Volumes3DDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -55,6 +56,7 @@ impl Default for Demo {
             networks: crate::networks::NetworksDemo::default(),
             plot3d: crate::plot3d::Plot3DDemo::default(),
             surfaces3d: crate::surfaces3d::Surfaces3DDemo::default(),
+            volumes3d: crate::volumes3d::Volumes3DDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -77,6 +79,7 @@ impl Demo {
         demo.networks.enabled = gallery == Some("--networks");
         demo.plot3d.enabled = gallery == Some("--plot3d");
         demo.surfaces3d.enabled = gallery == Some("--surfaces3d");
+        demo.volumes3d.enabled = gallery == Some("--volumes3d");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -108,6 +111,7 @@ impl Demo {
                     self.networks.controls(ui);
                     self.plot3d.controls(ui);
                     self.surfaces3d.controls(ui);
+                    self.volumes3d.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -143,7 +147,7 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 9B: 2D & 3D Surfaces");
+            ui.heading("egui-customplot / Stage 9C: 3D Volumes & Flow");
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();
@@ -203,6 +207,9 @@ impl Demo {
         }
         if self.surfaces3d.enabled {
             return self.surfaces3d.show(ui);
+        }
+        if self.volumes3d.enabled {
+            return self.volumes3d.show(ui);
         }
         self.views.show(
             ui,

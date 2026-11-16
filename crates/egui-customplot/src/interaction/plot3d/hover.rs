@@ -156,6 +156,23 @@ pub(crate) fn pick_plot3d_hover(
                     &mut best_pt,
                 );
             }
+            Layer3D::Streamline(_) | Layer3D::StreamParticles(_) | Layer3D::ConePlot(_) => {
+                super::volume_hover::pick_volume_points(
+                    layer,
+                    id,
+                    li,
+                    transform,
+                    pointer,
+                    pick_radius,
+                    &mut best_pt,
+                );
+            }
+            Layer3D::VolumeSlice(_)
+            | Layer3D::Isosurface(_)
+            | Layer3D::Isocaps(_)
+            | Layer3D::TetraMesh(_)
+            | Layer3D::StreamRibbon(_)
+            | Layer3D::StreamTube(_) => {}
         }
     }
 
@@ -192,24 +209,28 @@ pub(crate) fn pick_plot3d_hover(
             continue;
         }
         match layer {
-            Layer3D::Fill(fill) => {
-                for (pi, poly) in fill.data.polygons().iter().enumerate() {
-                    for &[ia, ib, ic] in poly.triangles.iter() {
-                        consider_tri_region(
-                            &mut best_region,
-                            id,
-                            li,
-                            pi,
-                            || format!("fill3[{pi}]"),
-                            [poly.vertices[ia], poly.vertices[ib], poly.vertices[ic]],
-                            transform,
-                            pointer,
-                        );
-                    }
-                }
-            }
-            Layer3D::Pie(_) | Layer3D::Surface(_) | Layer3D::Ribbon(_) | Layer3D::TriSurf(_) => {
+            Layer3D::Fill(_)
+            | Layer3D::Pie(_)
+            | Layer3D::Surface(_)
+            | Layer3D::Ribbon(_)
+            | Layer3D::TriSurf(_) => {
                 super::surface_hover::pick_extra_regions(
+                    layer,
+                    id,
+                    li,
+                    transform,
+                    pointer,
+                    &mut best_region,
+                );
+            }
+            Layer3D::VolumeSlice(_)
+            | Layer3D::Isosurface(_)
+            | Layer3D::Isocaps(_)
+            | Layer3D::TetraMesh(_)
+            | Layer3D::StreamRibbon(_)
+            | Layer3D::StreamTube(_)
+            | Layer3D::ConePlot(_) => {
+                super::volume_hover::pick_volume_regions(
                     layer,
                     id,
                     li,

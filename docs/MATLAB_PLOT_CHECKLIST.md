@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：72 项 ML、32 项 EX 与 16 项 LG 共 120 项“开发中”，其余 13 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9A/9B 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）、曲面 / 网格 / 隐式与解析几何见 [阶段 9](STAGE_9.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：78 项 ML、35 项 EX 与 16 项 LG 共 129 项“开发中”，其余 4 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）、曲面网格与体切片流可视（Stage 9A～9C）见 [阶段 9](STAGE_9.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -122,7 +122,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-051 | 开发中 | [`contour`](https://ww2.mathworks.cn/help/matlab/ref/contour.html) | 等高线，2D | [阶段 8](STAGE_8.md)：`ScalarField2D`、`ContourData::from_field`（四三角中心分裂 Marching Squares）、`Contours` / `ColorScale` / 居中标签与原始顶点拾取；缺自动平滑避让标签、非规则参数网格与完整验收 |
 | ML-052 | 开发中 | [`contourf`](https://ww2.mathworks.cn/help/matlab/ref/contourf.html) | 填充等高线，2D | [阶段 8](STAGE_8.md)：`FilledContourData::from_field`（半平面三角裁剪）、`FilledContours` / 边界线 / 色条与等值带拾取；高密度等值带 CPU 三角数量大，完整优化与验收仍缺 |
 | ML-053 | 开发中 | [`contour3`](https://ww2.mathworks.cn/help/matlab/ref/contour3.html) | 等高线，3D | [阶段 9](STAGE_9.md)：`Contour3DData::{from_contour2d, from_field, from_surface}`（在真实 `z = level` 提取并拼接等高线）与 `Contour3D` + 顶点拾取（`tests/plot3d_meshes_contours.rs`）；完整平滑与验收仍缺 |
-| ML-054 | 未实现 | [`contourslice`](https://ww2.mathworks.cn/help/matlab/ref/contourslice.html) | 体数据切片等高线，3D | 切片插值、等值提取、平面位置 |
+| ML-054 | 开发中 | [`contourslice`](https://ww2.mathworks.cn/help/matlab/ref/contourslice.html) | 体数据切片等高线，3D | [阶段 9](STAGE_9.md)：`Contour3DData::from_volume_slices` 在 `ScalarVolume3D` 正交与倾斜任意切面直接抽取并拼接满足 `V(p)=level` 的 3D 等值线，渲染于 `Contour3D`（`tests/plot3d_volumes_slices.rs`）；完整平滑与验收仍缺 |
 | ML-055 | 开发中 | [`fcontour`](https://ww2.mathworks.cn/help/matlab/ref/fcontour.html) | 函数等高线，2D | [阶段 8](STAGE_8.md)：`ContourData::from_function` / `FilledContourData::from_function` 与显式 `max_evaluations` 预算保护；当前采用均匀采样，自适应细化与完整误差估计仍缺 |
 
 ### A8. 向量场：3 项
@@ -156,13 +156,13 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-071 | 开发中 | [`streamline`](https://ww2.mathworks.cn/help/matlab/ref/streamline.html) | 流线，2D / 3D | 起始点、积分方向 / 步长、停止条件与回流 |
-| ML-072 | 开发中 | [`streamslice`](https://ww2.mathworks.cn/help/matlab/ref/streamslice.html) | 流切片，2D / 3D | 平面内向量投影、密度、方向指示 |
-| ML-073 | 未实现 | [`streamparticles`](https://ww2.mathworks.cn/help/matlab/ref/streamparticles.html) | 流粒子动画，时变 3D | 粒子沿流线运动、速度与时间控制 |
-| ML-074 | 未实现 | [`streamribbon`](https://ww2.mathworks.cn/help/matlab/ref/streamribbon.html) | 流带，3D | 带宽、扭转 / 旋度、法线 |
-| ML-075 | 未实现 | [`streamtube`](https://ww2.mathworks.cn/help/matlab/ref/streamtube.html) | 流管，3D | 管径 / 散度映射、网格质量 |
-| ML-076 | 未实现 | [`coneplot`](https://ww2.mathworks.cn/help/matlab/ref/coneplot.html) | 圆锥向量场，3D | 圆锥方向、长度 / 尺度与采样位置 |
-| ML-077 | 未实现 | [`slice`](https://ww2.mathworks.cn/help/matlab/ref/slice.html) | 体数据切片，3D | 轴对齐 / 指定切面、体插值、色彩与透明度 |
+| ML-071 | 开发中 | [`streamline`](https://ww2.mathworks.cn/help/matlab/ref/streamline.html) | 流线，2D / 3D | [阶段 8](STAGE_8.md) / [阶段 9](STAGE_9.md)：2D `VectorField2D`/`Streamlines` 与 3D `VectorField3D`/`Streamline3DData`（RK4 步进、`min_speed` 终止与顶点速度着色，`tests/plot3d_flow_volumes.rs`）；完整属性与验收仍缺 |
+| ML-072 | 开发中 | [`streamslice`](https://ww2.mathworks.cn/help/matlab/ref/streamslice.html) | 流切片，2D / 3D | [阶段 8](STAGE_8.md) / [阶段 9](STAGE_9.md)：2D 流切片与 3D `Streamline3DData::streamslice`（平面投影速度积分与带方向 `Quiver3DData` 采样，`tests/plot3d_flow_volumes.rs`）；完整验收仍缺 |
+| ML-073 | 开发中 | [`streamparticles`](https://ww2.mathworks.cn/help/matlab/ref/streamparticles.html) | 流粒子动画，时变 3D | [阶段 9](STAGE_9.md)：`StreamParticles3DData` 与帧幂等 `StreamParticlesPlayback::advance_once` + `StreamParticles3D` 沿三维流线运动及动态拾取（`tests/plot3d_flow_volumes.rs`）；完整验收仍缺 |
+| ML-074 | 开发中 | [`streamribbon`](https://ww2.mathworks.cn/help/matlab/ref/streamribbon.html) | 流带，3D | [阶段 9](STAGE_9.md)：`StreamRibbon3DData` Bishop 并行运输标架随轴向涡度 `(∇×V)·t` 扭转条带与 `StreamRibbon3D`（`tests/plot3d_flow_volumes.rs`）；完整验收仍缺 |
+| ML-075 | 开发中 | [`streamtube`](https://ww2.mathworks.cn/help/matlab/ref/streamtube.html) | 流管，3D | [阶段 9](STAGE_9.md)：`StreamTube3DData` 沿流线按积分散度 `∇·V` 动态缩放管径生成法向流管网格与 `StreamTube3D`（`tests/plot3d_flow_volumes.rs`）；完整验收仍缺 |
+| ML-076 | 开发中 | [`coneplot`](https://ww2.mathworks.cn/help/matlab/ref/coneplot.html) | 圆锥向量场，3D | [阶段 9](STAGE_9.md)：`ConePlot3DData::{from_field, from_vectors}` + `ConePlot3D` 三维圆锥采样渲染与圆锥/顶点拾取（`tests/plot3d_flow_volumes.rs`）；完整验收仍缺 |
+| ML-077 | 开发中 | [`slice`](https://ww2.mathworks.cn/help/matlab/ref/slice.html) | 体数据切片，3D | [阶段 9](STAGE_9.md)：`ScalarVolume3D`（三线性插值 + 梯度）与 `VolumeSliceData::{from_volume}` 正交轴向 / 倾斜任意凸六边切片与 `VolumeSlice3D` 区域拾取（`tests/plot3d_volumes_slices.rs`）；完整验收仍缺 |
 
 等值面和端盖未出现在官方总览，已补为 EX-023 / EX-024。`volshow` 属于工具箱扩展，不冒充 MATLAB 本体函数。
 
@@ -202,7 +202,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | EX-011 | 开发中 | [`triplot`](https://ww2.mathworks.cn/help/matlab/ref/triplot.html) | 二维三角剖分线图 | 顶点 / 索引输入、边去重与裁剪 |
 | EX-012 | 开发中 | [`trimesh`](https://ww2.mathworks.cn/help/matlab/ref/trimesh.html) | 三角网格线框，2D / 3D | [阶段 8](STAGE_8.md) / [阶段 9](STAGE_9.md)：2D `TriMesh2D` 与 3D `TriMesh3DData` + `TriSurf3D::wireframe`（边去重 + 可选 `hidden_line` 遮挡，`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
 | EX-013 | 开发中 | [`trisurf`](https://ww2.mathworks.cn/help/matlab/ref/trisurf.html) | 三角曲面，3D | [阶段 9](STAGE_9.md)：`TriMesh3DData::{new, from_delaunay_xy}` + `TriSurf3D`（面/顶点标量着色与 `"trisurf[i]"` 区域拾取，`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
-| EX-014 | 未实现 | [`tetramesh`](https://ww2.mathworks.cn/help/matlab/ref/tetramesh.html) | 四面体网格，3D | 单元面、内部面 / 透明策略与索引 |
+| EX-014 | 开发中 | [`tetramesh`](https://ww2.mathworks.cn/help/matlab/ref/tetramesh.html) | 四面体网格，3D | [阶段 9](STAGE_9.md)：`TetraMesh3DData`（共享内面剔除 `boundary_faces`、单元标量着色与线框边）及 `TetraMesh3D` 与 `"tet[i]"` 拾取（`tests/plot3d_isosurface_tetramesh.rs`）；完整验收仍缺 |
 | EX-015 | 开发中 | [`voronoi`](https://ww2.mathworks.cn/help/matlab/ref/voronoi.html) | 二维 Voronoi 图 | 有界边、视区裁剪、重复 / 退化点策略 |
 | EX-016 | 开发中 | [`plot(polyshape)`](https://ww2.mathworks.cn/help/matlab/ref/polyshape.plot.html) | 多区域 / 带孔多边形 | [阶段 8](STAGE_8.md)：`PolyRegion::{new, hole}`、`PolyShapeData`（Eberly 孔洞桥接 + 四域耳切）与 `PolyShape`，孔洞不阻断穿透且矢量 SVG / PNG 一致；布尔并交差运算仍缺 |
 | EX-017 | 开发中 | [`plot(alphaShape)`](https://ww2.mathworks.cn/help/matlab/ref/alphashape.plot.html) | 二维 / 三维 alpha 形状 | 边界与区域渲染；几何生成算法单独说明 |
@@ -221,8 +221,8 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 绘制能力 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| EX-023 | 未实现 | [`isosurface`](https://ww2.mathworks.cn/help/matlab/ref/isosurface.html) | 体数据等值面，3D | 等值面提取、拓扑、法线与多等值层 |
-| EX-024 | 未实现 | [`isocaps`](https://ww2.mathworks.cn/help/matlab/ref/isocaps.html) | 等值面端盖，3D | 切面封口、上下阈值、颜色与边缘对齐 |
+| EX-023 | 开发中 | [`isosurface`](https://ww2.mathworks.cn/help/matlab/ref/isosurface.html) | 体数据等值面，3D | [阶段 9](STAGE_9.md)：`Isosurface3DData::from_volume`（6 四面体 Kuhn Marching Tetrahedra + 次级标量场 `.with_colors_from_volume` 着色）与 `Isosurface3D`（`tests/plot3d_isosurface_tetramesh.rs`）；完整验收仍缺 |
+| EX-024 | 开发中 | [`isocaps`](https://ww2.mathworks.cn/help/matlab/ref/isocaps.html) | 等值面端盖，3D | [阶段 9](STAGE_9.md)：`Isocaps3DData::from_volume`（沿一致 Kuhn 主对角线裁剪 6 外边界面、`IsocapThreshold::{Above, Below}` 真实体标量与外法线）及 `Isocaps3D`（`tests/plot3d_isosurface_tetramesh.rs`）；完整验收仍缺 |
 | EX-025 | 开发中 | [`imshow`](https://ww2.mathworks.cn/help/matlab/ref/imshow.html) | 图像显示视图，2D | [阶段 8](STAGE_8.md)：`Plot::imshow_axes`（反转 Y + 1:1 等比例）结合 `ImageData::grayscale` / `PlotImage`；完整图像标尺 / colormap 属性与视觉验收仍缺 |
 
 ### B4. 文本、参考线、参考面与区域：10 项

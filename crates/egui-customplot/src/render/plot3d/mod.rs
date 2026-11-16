@@ -4,6 +4,7 @@ mod meshes_contours;
 mod scene;
 mod solid_layers;
 mod surfaces;
+mod volume_flow;
 mod zbuffer;
 
 use egui::Painter;

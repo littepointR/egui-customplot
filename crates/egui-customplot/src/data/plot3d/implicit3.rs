@@ -39,132 +39,25 @@ impl ImplicitSurface3DData {
         }
         let bmin = bounds.min();
         let bspan = bounds.span();
-        let pos = |ix: usize, iy: usize, iz: usize| -> Point3D {
-            [
-                bmin[0] + bspan[0] * (ix as f64 / (nx - 1) as f64),
-                bmin[1] + bspan[1] * (iy as f64 / (ny - 1) as f64),
-                bmin[2] + bspan[2] * (iz as f64 / (nz - 1) as f64),
-            ]
-        };
+        let x: Vec<f64> = (0..nx)
+            .map(|i| bmin[0] + bspan[0] * (i as f64 / (nx - 1) as f64))
+            .collect();
+        let y: Vec<f64> = (0..ny)
+            .map(|i| bmin[1] + bspan[1] * (i as f64 / (ny - 1) as f64))
+            .collect();
+        let z: Vec<f64> = (0..nz)
+            .map(|i| bmin[2] + bspan[2] * (i as f64 / (nz - 1) as f64))
+            .collect();
 
         let mut vals = Vec::with_capacity(req);
-        for iz in 0..nz {
-            let z = bmin[2] + bspan[2] * (iz as f64 / (nz - 1) as f64);
-            for iy in 0..ny {
-                let y = bmin[1] + bspan[1] * (iy as f64 / (ny - 1) as f64);
-                for ix in 0..nx {
-                    let x = bmin[0] + bspan[0] * (ix as f64 / (nx - 1) as f64);
-                    vals.push(f(x, y, z));
+        for &zi in &z {
+            for &yi in &y {
+                for &xi in &x {
+                    vals.push(f(xi, yi, zi));
                 }
             }
         }
-
-        let med_df = median_edge_diff(nx, ny, nz, &vals);
-        let idx = |ix: usize, iy: usize, iz: usize| (iz * ny + iy) * nx + ix;
-        let grad_at = |ix: usize, iy: usize, iz: usize| -> [f64; 3] {
-            let x0 = ix.saturating_sub(1);
-            let x1 = (ix + 1).min(nx - 1);
-            let y0 = iy.saturating_sub(1);
-            let y1 = (iy + 1).min(ny - 1);
-            let z0 = iz.saturating_sub(1);
-            let z1 = (iz + 1).min(nz - 1);
-            let dx = bspan[0] * ((x1 - x0) as f64 / (nx - 1) as f64).max(1e-12);
-            let dy = bspan[1] * ((y1 - y0) as f64 / (ny - 1) as f64).max(1e-12);
-            let dz = bspan[2] * ((z1 - z0) as f64 / (nz - 1) as f64).max(1e-12);
-            let gx = (vals[idx(x1, iy, iz)] - vals[idx(x0, iy, iz)]) / dx;
-            let gy = (vals[idx(ix, y1, iz)] - vals[idx(ix, y0, iz)]) / dy;
-            let gz = (vals[idx(ix, iy, z1)] - vals[idx(ix, iy, z0)]) / dz;
-            if gx.is_finite() && gy.is_finite() && gz.is_finite() {
-                [gx, gy, gz]
-            } else {
-                [0.0, 0.0, 1.0]
-            }
-        };
-
-        let mut vertices = Vec::<Point3D>::new();
-        let mut normals = Vec::<[f64; 3]>::new();
-        let mut triangles = Vec::<[u32; 3]>::new();
-        let mut edge_cache: HashMap<(usize, usize), u32> = HashMap::new();
-        let mut discontinuities = 0usize;
-
-        let tets: [[usize; 4]; 6] = [
-            [0, 1, 3, 7],
-            [0, 3, 2, 7],
-            [0, 2, 6, 7],
-            [0, 6, 4, 7],
-            [0, 4, 5, 7],
-            [0, 5, 1, 7],
-        ];
-
-        for iz in 0..(nz - 1) {
-            for iy in 0..(ny - 1) {
-                for ix in 0..(nx - 1) {
-                    let c_idx = [
-                        idx(ix, iy, iz),
-                        idx(ix + 1, iy, iz),
-                        idx(ix, iy + 1, iz),
-                        idx(ix + 1, iy + 1, iz),
-                        idx(ix, iy, iz + 1),
-                        idx(ix + 1, iy, iz + 1),
-                        idx(ix, iy + 1, iz + 1),
-                        idx(ix + 1, iy + 1, iz + 1),
-                    ];
-                    let c_vals: [f64; 8] = std::array::from_fn(|k| vals[c_idx[k]]);
-                    if c_vals.iter().any(|v| !v.is_finite()) {
-                        discontinuities += 1;
-                        continue;
-                    }
-                    let c_pos: [Point3D; 8] = [
-                        pos(ix, iy, iz),
-                        pos(ix + 1, iy, iz),
-                        pos(ix, iy + 1, iz),
-                        pos(ix + 1, iy + 1, iz),
-                        pos(ix, iy, iz + 1),
-                        pos(ix + 1, iy, iz + 1),
-                        pos(ix, iy + 1, iz + 1),
-                        pos(ix + 1, iy + 1, iz + 1),
-                    ];
-                    let c_grd: [[f64; 3]; 8] = [
-                        grad_at(ix, iy, iz),
-                        grad_at(ix + 1, iy, iz),
-                        grad_at(ix, iy + 1, iz),
-                        grad_at(ix + 1, iy + 1, iz),
-                        grad_at(ix, iy, iz + 1),
-                        grad_at(ix + 1, iy, iz + 1),
-                        grad_at(ix, iy + 1, iz + 1),
-                        grad_at(ix + 1, iy + 1, iz + 1),
-                    ];
-
-                    for tet in tets {
-                        if let Some((tri_tris, pole)) = extract_tet(
-                            tet,
-                            &c_idx,
-                            &c_vals,
-                            &c_pos,
-                            &c_grd,
-                            med_df,
-                            &mut edge_cache,
-                            &mut vertices,
-                            &mut normals,
-                        ) {
-                            if pole {
-                                discontinuities += 1;
-                            } else {
-                                triangles.extend_from_slice(&tri_tris);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        let mesh = if vertices.len() >= 3 && !triangles.is_empty() {
-            TriMesh3DData::new(vertices, triangles)
-                .ok()
-                .and_then(|m| m.with_normals(normals).ok())
-        } else {
-            None
-        };
+        let (mesh, discontinuities) = extract_kuhn_mesh(&x, &y, &z, &vals, 0.0, true);
         Ok(Self {
             mesh,
             evaluations: req,
@@ -195,6 +88,131 @@ impl ImplicitSurface3DData {
     }
 }
 
+/// Shared 6-tetrahedra Kuhn Marching Tetrahedra iso-level extractor for rectilinear 3D grids.
+pub(super) fn extract_kuhn_mesh(
+    x: &[f64],
+    y: &[f64],
+    z: &[f64],
+    vals: &[f64],
+    isovalue: f64,
+    pole_guard: bool,
+) -> (Option<TriMesh3DData>, usize) {
+    let (nx, ny, nz) = (x.len(), y.len(), z.len());
+    let med_df = if pole_guard {
+        median_edge_diff(nx, ny, nz, vals)
+    } else {
+        f64::INFINITY
+    };
+    let idx = |ix: usize, iy: usize, iz: usize| (iz * ny + iy) * nx + ix;
+    let pos = |ix: usize, iy: usize, iz: usize| [x[ix], y[iy], z[iz]];
+    let grad_at = |ix: usize, iy: usize, iz: usize| -> [f64; 3] {
+        let x0 = ix.saturating_sub(1);
+        let x1 = (ix + 1).min(nx - 1);
+        let y0 = iy.saturating_sub(1);
+        let y1 = (iy + 1).min(ny - 1);
+        let z0 = iz.saturating_sub(1);
+        let z1 = (iz + 1).min(nz - 1);
+        let dx = (x[x1] - x[x0]).max(1e-12);
+        let dy = (y[y1] - y[y0]).max(1e-12);
+        let dz = (z[z1] - z[z0]).max(1e-12);
+        let gx = (vals[idx(x1, iy, iz)] - vals[idx(x0, iy, iz)]) / dx;
+        let gy = (vals[idx(ix, y1, iz)] - vals[idx(ix, y0, iz)]) / dy;
+        let gz = (vals[idx(ix, iy, z1)] - vals[idx(ix, iy, z0)]) / dz;
+        if gx.is_finite() && gy.is_finite() && gz.is_finite() {
+            [gx, gy, gz]
+        } else {
+            [0.0, 0.0, 1.0]
+        }
+    };
+
+    let mut vertices = Vec::<Point3D>::new();
+    let mut normals = Vec::<[f64; 3]>::new();
+    let mut triangles = Vec::<[u32; 3]>::new();
+    let mut edge_cache: HashMap<(usize, usize), u32> = HashMap::new();
+    let mut discontinuities = 0usize;
+
+    let tets: [[usize; 4]; 6] = [
+        [0, 1, 3, 7],
+        [0, 3, 2, 7],
+        [0, 2, 6, 7],
+        [0, 6, 4, 7],
+        [0, 4, 5, 7],
+        [0, 5, 1, 7],
+    ];
+
+    for iz in 0..(nz - 1) {
+        for iy in 0..(ny - 1) {
+            for ix in 0..(nx - 1) {
+                let c_idx = [
+                    idx(ix, iy, iz),
+                    idx(ix + 1, iy, iz),
+                    idx(ix, iy + 1, iz),
+                    idx(ix + 1, iy + 1, iz),
+                    idx(ix, iy, iz + 1),
+                    idx(ix + 1, iy, iz + 1),
+                    idx(ix, iy + 1, iz + 1),
+                    idx(ix + 1, iy + 1, iz + 1),
+                ];
+                let c_vals: [f64; 8] = std::array::from_fn(|k| vals[c_idx[k]] - isovalue);
+                if c_vals.iter().any(|v| !v.is_finite()) {
+                    discontinuities += 1;
+                    continue;
+                }
+                let c_pos: [Point3D; 8] = [
+                    pos(ix, iy, iz),
+                    pos(ix + 1, iy, iz),
+                    pos(ix, iy + 1, iz),
+                    pos(ix + 1, iy + 1, iz),
+                    pos(ix, iy, iz + 1),
+                    pos(ix + 1, iy, iz + 1),
+                    pos(ix, iy + 1, iz + 1),
+                    pos(ix + 1, iy + 1, iz + 1),
+                ];
+                let c_grd: [[f64; 3]; 8] = [
+                    grad_at(ix, iy, iz),
+                    grad_at(ix + 1, iy, iz),
+                    grad_at(ix, iy + 1, iz),
+                    grad_at(ix + 1, iy + 1, iz),
+                    grad_at(ix, iy, iz + 1),
+                    grad_at(ix + 1, iy, iz + 1),
+                    grad_at(ix, iy + 1, iz + 1),
+                    grad_at(ix + 1, iy + 1, iz + 1),
+                ];
+
+                for tet in tets {
+                    if let Some((tri_tris, pole)) = extract_tet(
+                        tet,
+                        &c_idx,
+                        &c_vals,
+                        &c_pos,
+                        &c_grd,
+                        med_df,
+                        pole_guard,
+                        &mut edge_cache,
+                        &mut vertices,
+                        &mut normals,
+                    ) {
+                        if pole {
+                            discontinuities += 1;
+                        } else {
+                            triangles.extend_from_slice(&tri_tris);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let mesh = if vertices.len() >= 3 && !triangles.is_empty() {
+        TriMesh3DData::new(vertices, triangles)
+            .ok()
+            .and_then(|m| m.with_normals(normals).ok())
+    } else {
+        None
+    };
+    (mesh, discontinuities)
+}
+
 #[allow(clippy::too_many_arguments)]
 fn extract_tet(
     tet: [usize; 4],
@@ -203,6 +221,7 @@ fn extract_tet(
     c_pos: &[Point3D; 8],
     c_grd: &[[f64; 3]; 8],
     med_df: f64,
+    pole_guard: bool,
     edge_cache: &mut HashMap<(usize, usize), u32>,
     vertices: &mut Vec<Point3D>,
     normals: &mut Vec<[f64; 3]>,
@@ -224,13 +243,14 @@ fn extract_tet(
         return None;
     }
 
-    // Singularity/pole guard across steep opposite-sign grid edges
-    for &a in &neg[..n_neg] {
-        for &b in &pos[..n_pos] {
-            let fa = c_vals[a];
-            let fb = c_vals[b];
-            if (fb - fa).abs() > 40.0 * med_df && fa.abs().min(fb.abs()) > 10.0 * med_df {
-                return Some((Vec::new(), true));
+    if pole_guard {
+        for &a in &neg[..n_neg] {
+            for &b in &pos[..n_pos] {
+                let fa = c_vals[a];
+                let fb = c_vals[b];
+                if (fb - fa).abs() > 40.0 * med_df && fa.abs().min(fb.abs()) > 10.0 * med_df {
+                    return Some((Vec::new(), true));
+                }
             }
         }
     }

@@ -217,6 +217,7 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--networks"),
         Some("--plot3d"),
         Some("--surfaces3d"),
+        Some("--volumes3d"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
@@ -291,3 +292,6 @@ mod plot3d_tests;
 
 #[path = "surfaces3d_tests.rs"]
 mod surfaces3d_tests;
+
+#[path = "volumes3d_tests.rs"]
+mod volumes3d_tests;

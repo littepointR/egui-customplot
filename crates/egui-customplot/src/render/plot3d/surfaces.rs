@@ -10,15 +10,15 @@ use crate::{
     Surface3DData, SurfaceShading, Transform3D, TriSurf3D, model::ResolvedPlotStyle,
 };
 
-struct SurfaceAppearance {
-    shading: SurfaceShading,
-    explicit_color: Option<Color32>,
-    color_scale: Option<ColorScale>,
-    light: Option<LightSource3D>,
-    colormap_lighting: bool,
-    wireframe_stroke: Option<Stroke>,
-    alpha: f32,
-    fallback: Color32,
+pub(super) struct SurfaceAppearance {
+    pub(super) shading: SurfaceShading,
+    pub(super) explicit_color: Option<Color32>,
+    pub(super) color_scale: Option<ColorScale>,
+    pub(super) light: Option<LightSource3D>,
+    pub(super) colormap_lighting: bool,
+    pub(super) wireframe_stroke: Option<Stroke>,
+    pub(super) alpha: f32,
+    pub(super) fallback: Color32,
 }
 
 pub(super) fn collect_surface3d(
@@ -171,7 +171,7 @@ pub(super) fn collect_trisurf3d(
     }
 }
 
-fn emit_surface_grid(
+pub(super) fn emit_surface_grid(
     scene: &mut Scene3D,
     data: &Surface3DData,
     app: &SurfaceAppearance,
@@ -310,7 +310,11 @@ fn map_scalar_opt(
     Some(fallback)
 }
 
-fn light_factor(data_norm: [f64; 3], light: LightSource3D, transform: Transform3D) -> f32 {
+pub(super) fn light_factor(
+    data_norm: [f64; 3],
+    light: LightSource3D,
+    transform: Transform3D,
+) -> f32 {
     let nu = transform
         .data_normal_to_unit_normal(data_norm)
         .unwrap_or([0.0, 0.0, 1.0]);

@@ -125,6 +125,87 @@ pub(crate) fn summarize_plot3d(
                 (None, Some(imp)) => (imp.allocation(), 0, 0, 0, imp.domain_invalid(scales)),
                 (None, None) => ((0, 0), 0, 0, 0, 0),
             },
+            Layer3D::VolumeSlice(s) => (
+                s.data.allocation(),
+                s.data.slices().iter().map(|sl| sl.points().len()).sum(),
+                s.data
+                    .slices()
+                    .iter()
+                    .map(|sl| (sl.rows() - 1) * (sl.cols() - 1))
+                    .sum(),
+                s.data
+                    .slices()
+                    .iter()
+                    .map(|sl| sl.non_finite_points())
+                    .sum(),
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::Isosurface(s) => match s.data.mesh() {
+                Some(m) => (
+                    m.allocation(),
+                    m.vertices().len(),
+                    m.triangles().len(),
+                    0,
+                    s.data.domain_invalid(scales),
+                ),
+                None => ((0, 0), 0, 0, 0, 0),
+            },
+            Layer3D::Isocaps(s) => match s.data.mesh() {
+                Some(m) => (
+                    m.allocation(),
+                    m.vertices().len(),
+                    m.triangles().len(),
+                    0,
+                    s.data.domain_invalid(scales),
+                ),
+                None => ((0, 0), 0, 0, 0, 0),
+            },
+            Layer3D::TetraMesh(s) => (
+                s.data.allocation(),
+                s.data.vertices().len(),
+                if s.boundary_only {
+                    s.data.boundary_faces().len()
+                } else {
+                    s.data.all_faces().len()
+                },
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::Streamline(s) => (
+                s.data.allocation(),
+                s.data.lines().iter().map(|l| l.points.len()).sum(),
+                s.data.lines().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::StreamParticles(s) => (
+                s.data.allocation(),
+                s.data.streamlines().lines().len() * s.data.particles_per_line(),
+                s.data.streamlines().lines().len() * s.data.particles_per_line(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::StreamRibbon(s) => (
+                s.data.allocation(),
+                s.data.strips().iter().map(|st| st.points().len()).sum(),
+                s.data.strips().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::StreamTube(s) => (
+                s.data.allocation(),
+                s.data.tubes().iter().map(|tb| tb.points().len()).sum(),
+                s.data.tubes().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::ConePlot(s) => (
+                s.data.allocation(),
+                s.data.cones().len(),
+                s.data.cones().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
         };
         diag.plot3d.input_points += pts;
         diag.plot3d.input_primitives += prims;

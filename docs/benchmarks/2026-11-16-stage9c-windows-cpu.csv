@@ -1,0 +1,10 @@
+# Stage 9C CPU; profile=bench; egui=0.37.0; canvas=2024x1124; plot=1920x1080; dpi=1; warmup=5; seconds_per_scene=30
+# preprocess_p50_ms: slice_3planes_64x64x64=0.7756, contourslice_4planes_64x64x64=1.9056, isosurface_isocaps_48x48x48_zbuffer=15.1664, tetramesh_2k_tets=0.7089, streamparticles_3d_64lines=0.9679, streamribbon_streamtube_32seeds=1.4155, coneplot_1k_cones_zbuffer=1.4228
+scene,items,frames,seconds,ui_p50_ms,ui_p95_ms,ui_p99_ms,tess_p50_ms,tess_p95_ms,tess_p99_ms,total_p50_ms,total_p95_ms,total_p99_ms,output_primitives,output_meshes,geometry_capacity_bytes,sample_bytes,visited_items
+slice_3planes_64x64x64,12288,3675,30.001,7.6527,8.2175,8.5539,0.3399,0.5917,0.6750,8.0193,8.7627,9.1248,23814,3,0,688128,11907
+contourslice_4planes_64x64x64,7176,21632,30.001,0.5255,0.6868,0.7554,0.7635,0.9276,1.0191,1.2955,1.5667,1.7119,7096,2,0,172288,80
+isosurface_isocaps_48x48x48_zbuffer,44280,1317,30.005,22.6307,23.7792,24.2658,0.0255,0.0367,0.1485,22.6628,23.8078,24.3006,44280,2,0,3105800,44280
+tetramesh_2k_tets,2058,48627,30.001,0.4333,0.5410,0.6417,0.1569,0.2165,0.3139,0.5923,0.7570,0.9274,3451,2,0,190424,588
+streamparticles_3d_64lines,384,48138,30.000,0.3115,0.3515,0.4226,0.2873,0.3332,0.4101,0.5913,0.6758,0.7881,3964,2,0,145760,4028
+streamribbon_streamtube_32seeds,10882,4004,30.006,7.1524,7.5548,7.7360,0.2539,0.2985,0.3724,7.4115,7.8267,8.0287,17832,2,0,609392,8916
+coneplot_1k_cones_zbuffer,1000,5613,30.001,5.2652,5.5622,5.7277,0.0315,0.0444,0.1210,5.2999,5.6056,5.7704,12000,2,0,816000,12000

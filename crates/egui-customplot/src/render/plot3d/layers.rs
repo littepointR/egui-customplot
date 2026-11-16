@@ -4,6 +4,11 @@ use super::meshes_contours::{collect_contour3d, collect_mesh_surface3d};
 use super::scene::{Label3D, Marker3D, Scene3D};
 use super::solid_layers::{collect_constant_plane, collect_fill3, collect_pie3, collect_quiver3};
 use super::surfaces::{collect_ribbon3d, collect_surface3d, collect_trisurf3d};
+use super::volume_flow::{
+    collect_cone_plot3d, collect_isocaps3d, collect_isosurface3d, collect_stream_ribbon3d,
+    collect_stream_tube3d, collect_streamline3d, collect_streamparticles3d, collect_tetramesh3d,
+    collect_volume_slice3d,
+};
 use crate::{
     ConstantPlane3D, Layer3D, MarkerShape, Plot3DDiagnostics, Plot3DState, Point3D, Text3D,
     Transform3D, model::ResolvedPlotStyle,
@@ -221,6 +226,54 @@ pub(super) fn collect_layers_3d(
                     diagnostics,
                 );
             }
+            Layer3D::VolumeSlice(vs) => {
+                collect_volume_slice3d(scene, vs, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::Isosurface(iso) => {
+                collect_isosurface3d(
+                    scene,
+                    iso,
+                    style.background,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::Isocaps(caps) => {
+                collect_isocaps3d(
+                    scene,
+                    caps,
+                    style.background,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::TetraMesh(tm) => {
+                collect_tetramesh3d(scene, tm, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::Streamline(sl) => {
+                collect_streamline3d(scene, sl, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::StreamParticles(sp) => {
+                collect_streamparticles3d(scene, sp, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::StreamRibbon(sr) => {
+                collect_stream_ribbon3d(scene, sr, style, transform, diagnostics);
+            }
+            Layer3D::StreamTube(st) => {
+                collect_stream_tube3d(scene, st, style, transform, diagnostics);
+            }
+            Layer3D::ConePlot(cp) => {
+                collect_cone_plot3d(
+                    scene,
+                    cp,
+                    style.background,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
         }
     }
 
@@ -238,7 +291,7 @@ pub(super) fn collect_layers_3d(
     }
 }
 
-fn collect_polyline(
+pub(super) fn collect_polyline(
     scene: &mut Scene3D,
     pts: &[Point3D],
     stroke: Stroke,
@@ -263,7 +316,7 @@ fn collect_polyline(
     }
 }
 
-fn push_marker_data(
+pub(super) fn push_marker_data(
     scene: &mut Scene3D,
     p: Point3D,
     radius: f32,

@@ -64,6 +64,22 @@ pub(super) fn pick_extra_regions(
     best_region: &mut Option<Hovered3DRegion>,
 ) {
     match layer {
+        Layer3D::Fill(fill) => {
+            for (pi, poly) in fill.data.polygons().iter().enumerate() {
+                for &[ia, ib, ic] in poly.triangles.iter() {
+                    consider_tri_region(
+                        best_region,
+                        id,
+                        li,
+                        pi,
+                        || format!("fill3[{pi}]"),
+                        [poly.vertices[ia], poly.vertices[ib], poly.vertices[ic]],
+                        transform,
+                        pointer,
+                    );
+                }
+            }
+        }
         Layer3D::Pie(pie) => {
             let h = pie.data.thickness();
             let expl = pie.data.offset();
@@ -156,7 +172,7 @@ pub(super) fn pick_extra_regions(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn pick_grid_tris(
+pub(super) fn pick_grid_tris(
     best_region: &mut Option<Hovered3DRegion>,
     id: IdSalt,
     li: usize,

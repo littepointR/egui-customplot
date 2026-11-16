@@ -1,6 +1,6 @@
-# 阶段 9：三维与体数据（Stage 9A + 9B 进行中）
+# 阶段 9：三维与体数据（Stage 9A + 9B + 9C 完成）
 
-日期：2026-11-16。**阶段 9A（三维核心坐标系、双深度引擎及点 / 线 / 柱 / 茎 / 矢量 / 饼 / 参考面等 14 项三维图型）与阶段 9B（三维曲面、网格、解析几何、隐式等值面与三维等高线等 22 项及 2 项三维分支）已实现并通过自动化测试、Gouraud `Interp` Z-buffer 逐像素插值验证、16 预设原生窗口烟雾与 30 秒 CPU 基准验证；阶段 9C（三维体切片与流可视，9 项）、阶段 10（地理图，4 项）与全量交付门槛仍未完成。**
+日期：2026-11-16。**阶段 9A（核心坐标系、双深度引擎及点 / 线 / 柱 / 茎 / 矢量 / 饼 / 参考面等 14 项三维图型）、阶段 9B（三维曲面、网格、解析几何、隐式等值面与三维等高线等 22 项及 2 项三维分支）与阶段 9C（体数据切片、四面体网格、等值面与端盖及流可视化等 9 项与 2 项三维流线分支）已全部实现并通过自动化测试、Gouraud/Z-buffer 像素测试、17 预设原生窗口烟雾与 30 秒 CPU 基准验证；阶段 10（地理图，4 项）与阶段 11 全量交付门槛仍未完成。**
 
 ## Stage 9A：三维核心坐标系、双深度模式与 14 项三维图型
 
@@ -88,7 +88,49 @@
 
 - **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建与 `egui` tessellation，不含 GPU 上传 / 硬件光栅化 / swapchain 呈现 / 真实 FPS；高精度隐式网格若每帧重采样 `48³` 体素 + 软光栅达 ~45 ms，动态视角交互依赖宿主跨帧缓存已提取的 `ImplicitSurface3DData`（静态网格渲染则仅耗时级提取一次），`meshz` 与高密 `Surface3D` 无隐式网格 LOD。
 
+## Stage 9C：三维体切片、四面体网格、等值面/端盖与流可视化（9 项 + 2 项三维流分支）
+
+- **Checklist 覆盖（9 项转为 `开发中`，并扩展 2 项既有流图型的三维分支）：**
+  - 新增 `6` 项 `ML`：`ML-054`（`contourslice`）、`ML-073`（`streamparticles`）、`ML-074`（`streamribbon`）、`ML-075`（`streamtube`）、`ML-076`（`coneplot`）、`ML-077`（`slice`）。
+  - 新增 `3` 项 `EX`：`EX-014`（`tetramesh`）、`EX-023`（`isosurface`）、`EX-024`（`isocaps`）。
+  - 扩展 2 项已有条目至三维：`ML-071`（`streamline` 3D `Streamline3DData` / `Streamline3D`）、`ML-072`（`streamslice` 3D `Streamline3DData::streamslice` + 平面投影方向 `Quiver3DData`）。
+  - 133 项对照状态由 `120 开发中` 推进至 **129 开发中（78 ML + 35 EX + 16 LG）/ 4 未实现**（仅剩 Stage 10 四项地理图），尚无条目通过完整交付门槛。
+
+- **核心模块与渲染 / 混合导出：**
+  - `data/plot3d/`：`ScalarVolume3D`（三线性插值 + 中心差分梯度）、`VolumeSliceData`（正交 `X/Y/Z` 与基于 `intersect_plane_unit_cube` 凸多边形裁剪的倾斜 `Arbitrary` 切面）与 `Contour3DData::from_volume_slices`（跨正交与倾斜切面抽取 `V(p)=level` 3D 等值线）、`Isosurface3DData`（复用 6 四面体 Kuhn Marching Tetrahedra + 次级体积场 `.with_colors_from_volume`）、`Isocaps3DData`（沿一致 Kuhn 主对角线裁剪 6 外边界面、`IsocapThreshold::{Above, Below}` 真实体标量与精确外法线）、`TetraMesh3DData`（共享内面剔除 `boundary_faces` + 单元标量 + 边去重）、`VectorField3D`（三线性采样 + Jacobian / `curl` / `divergence`）、`Streamline3DData`（3D RK4 + `streamslice`）、`StreamParticles3DData` + `StreamParticlesPlayback`（多遍幂等动画）、`StreamRibbon3DData`（Bishop 标架 + 轴向涡度 `(∇×V)·t` 扭转）、`StreamTube3DData`（按积分散度缩放管径）、`ConePlot3DData`（3D 方向圆锥网格）。
+  - `model/plot3d/`（拆分 `scene_opts.rs` 与 `volume_flow.rs`）、`render/plot3d/volume_flow.rs`（复用 `emit_surface_grid` / `collect_trisurf3d`）与 `interaction/plot3d/volume_hover.rs`（切片/等值面/端盖/四面体 `"tet[i]"` / 流带 / 流管 / 锥面区域及流线/粒子实时动态位置拾取）。
+  - 混合 SVG 导出仍适用与 Stage 9A/9B 一致的边界：彩色体积曲面与 Z-buffer 图层以 base64 PNG `<image>` 嵌入 SVG（无 `<text>`）。
+
+### Stage 9C 正确性与生命周期证据
+
+- 新增 8 项 Stage 9C 集成测试与 1 项 demo 测试（均在 `--all-features` 与默认特性下验证）：
+  - `tests/plot3d_volumes_slices.rs`（3 项：`ScalarVolume3D` 线性场三线性插值/梯度精确度、越界 `None` 与 `NaN` 隔离；`slice` 正交 + 倾斜切面渲染与 `"slice["` 区域拾取；`contourslice` 在正交 `X(0.5)` 与倾斜切面上抽取满足 `|V(p) - level| < 0.08` 的等值线）。
+  - `tests/plot3d_isosurface_tetramesh.rs`（2 项：边界截断单位球 `isosurface` + `.with_colors_from_volume` 与 `isocaps` 仅落于外边界面且标量满足阈值约束；`tetramesh` 验证共面双四面体剔除内部共享面 `8 → 6`、`boundary_only` 开关与 `"tet["` 拾取）。
+  - `tests/plot3d_flow_volumes.rs`（2 项：3D 螺旋流场 `streamline` 半径守恒、`streamslice` 保持 `z = 0`、`streamparticles` 多遍幂等推进与实时粒子拾取；对比有旋/无旋验证 `streamribbon` 扭转角差异、对比正散度/无散场验证 `streamtube` 管径扩张、验证 `coneplot` 渲染与拾取）。
+  - `tests/export_stage9c.rs`（1 项：`SortedPainter` `slice`+`contourslice`+`ColorBar` 与 `ZBuffer` `isosurface`+`isocaps`+`streamtube`+`coneplot` 双子图 `Figure` 释放宿主数据后 SVG 无 `<text` / PNG 导出）。
+  - `examples/demo/src/volumes3d.rs`（`--volumes3d` 6 单元 `Figure` 及 `volumes3d_tests`）。
+- 全部 7 项工作区最终检查（含 `--all-features` 下 78 个测试套件共 307 项测试全部通过、`fmt`、`--no-default-features check`、默认/全特性严格 `clippy` 与 Release demo SHA256 一致性校验）见 [Stage 9C 最终检查记录](benchmarks/2026-11-16-stage9c-windows-final-checks.txt)。
+- Release `customplot-demo.exe`（SHA256 `BAE03F45F73B5BB39FFD8E0F59E3EB82FFF8D76B337EBF0D3344ACCDB37BFEE9`）经 [十七预设 Windows 原生生命周期记录](benchmarks/2026-11-16-stage9c-windows-gallery-smoke.txt) 验证，含 `--volumes3d` 在内的全部 17 个预设均达到 `input_idle=True`、`responsive=true`、`close_requested=True` 且退出码 `0`。不代表跨平台显示实机、硬件 GPU 光栅化或长时运行内存回归。
+
+### Stage 9C CPU 基准测量
+
+`stage9c_performance`（binary SHA256 `67761706D0ED428A51E0AA32D0DEA288EA9E5EE9FC526ED08781FB8BA45D1E30`，基于 `b1b23ac` + Stage 9C 实现）在共享 Windows 10.0.26300 / `i9-14900KF` / Rust 1.100.0 / `egui 0.37.0` / canvas `2024×1124`（`Plot3D` `height=1080`、DPI=1、`show_legend=false`、`show_hover=false`）下对 7 项预处理测 p50（5 次）、7 场景各预热 5 帧并采集 30 秒，退出码 0、stderr 为空（[原始 CSV](benchmarks/2026-11-16-stage9c-windows-cpu.csv)、[环境记录](benchmarks/2026-11-16-stage9c-windows-environment.txt)、[空 stderr](benchmarks/2026-11-16-stage9c-windows-cpu.stderr.txt)）。
+
+- **预处理中位耗时（p50 ms）：** `slice_3planes_64x64x64=0.7756`、`contourslice_4planes_64x64x64=1.9056`、`isosurface_isocaps_48x48x48_zbuffer=15.1664`、`tetramesh_2k_tets=0.7089`、`streamparticles_3d_64lines=0.9679`、`streamribbon_streamtube_32seeds=1.4155`、`coneplot_1k_cones_zbuffer=1.4228`。
+
+| 场景 | items | frames | UI p95 (ms) | Tess p95 (ms) | 合计 p50 / p95 / p99 (ms) | 输出图元 / meshes | 样本字节 | 访问项 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `slice_3planes_64x64x64` | 12,288 | 3,675 | 8.2175 | 0.5917 | 8.0193 / 8.7627 / 9.1248 | 23,814 / 3 | 688,128 | 11,907 |
+| `contourslice_4planes_64x64x64` | 7,176 | 21,632 | 0.6868 | 0.9276 | 1.2955 / 1.5667 / 1.7119 | 7,096 / 2 | 172,288 | 80 |
+| `isosurface_isocaps_48x48x48_zbuffer` | 44,280 | 1,317 | 23.7792 | 0.0367 | 22.6628 / 23.8078 / 24.3006 | 44,280 / 2 | 3,105,800 | 44,280 |
+| `tetramesh_2k_tets` | 2,058 | 48,627 | 0.5410 | 0.2165 | 0.5923 / 0.7570 / 0.9274 | 3,451 / 2 | 190,424 | 588 |
+| `streamparticles_3d_64lines` | 384 | 48,138 | 0.3515 | 0.3332 | 0.5913 / 0.6758 / 0.7881 | 3,964 / 2 | 145,760 | 4,028 |
+| `streamribbon_streamtube_32seeds` | 10,882 | 4,004 | 7.5548 | 0.2985 | 7.4115 / 7.8267 / 8.0287 | 17,832 / 2 | 609,392 | 8,916 |
+| `coneplot_1k_cones_zbuffer` | 1,000 | 5,613 | 5.5622 | 0.0444 | 5.2999 / 5.6056 / 5.7704 | 12,000 / 2 | 816,000 | 12,000 |
+
+- **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建与 `egui` tessellation，不含 GPU 上传 / 硬件光栅化 / swapchain 呈现 / 真实 FPS；`48³` 等值面 + `ZBuffer` 在 CPU 下为 ~23.8 ms p95，若切开大型体数据全内部四面体面片（`boundary_only=false`）将线性增大三角输出量且无硬件 GPU 加速。
+
 ## 后续范围
 
-- **Stage 9C（9 项）：** 三维体切片与流可视化（`contourslice`、`streamparticles`/`streamribbon`/`streamtube`/`coneplot`/`slice`、`tetramesh`、`isosurface`/`isocaps`）。
-- **Stage 10（4 项）与 Stage 11：** 地理绘图与全量 133 项逐项核销验收。
+- **Stage 10（4 项）：** 地理绘图（`geoplot`、`geoscatter`、`geodensityplot`、`geobubble` 与投影 / 跨日期变更线 / 底图署名缓存与离线契约）。
+- **Stage 11：** 全量 133 项与 `CAP` / `EGUI` / `PERF` 逐项核销验收。

@@ -1,0 +1,1588 @@
+date=2026-11-16T13:39:35.0598261+08:00
+git_head=b1b23acdeb4e0783688206c5d117a21b0e80e103
+===== 1_fmt =====
+cmd=cargo fmt --all -- --check
+exit_code=0
+===== 2_check_no_default =====
+cmd=cargo check --workspace --no-default-features --locked
+    Checking egui-customplot v0.1.0-dev (D:\littepoint\Documents\WorkingSpace\things\egui-customplot\crates\egui-customplot)
+    Checking customplot-demo v0.1.0-dev (D:\littepoint\Documents\WorkingSpace\things\egui-customplot\examples\demo)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.92s
+exit_code=0
+===== 3_test_default =====
+cmd=cargo test --workspace --locked
+   Compiling egui-customplot v0.1.0-dev (D:\littepoint\Documents\WorkingSpace\things\egui-customplot\crates\egui-customplot)
+   Compiling customplot-demo v0.1.0-dev (D:\littepoint\Documents\WorkingSpace\things\egui-customplot\examples\demo)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 26.64s
+     Running unittests src\main.rs (target\debug\build\customplot-demo/cd61a65ba12cbea1\out\customplot_demo-cd61a65ba12cbea1.exe)
+
+running 23 tests
+test data::tests::power_law_data_is_log_valid_and_styles_match_samples ... ok
+test stream::tests::live_demo_publishes_once_per_tick_even_with_discarded_layout ... ok
+test data::tests::gaps_are_explicit_and_tiny_requests_are_safe ... ok
+test app::tests::statistical_gallery_keeps_preprocessing_and_geometry_across_layout_retries ... ok
+test app::tests::figure_linked_dual_y_demo_and_scalar_gallery_survive_layout_retries ... ok
+test app::tests::multivariate_tests::multivariate_gallery_renders_overview_and_composite_modes_cleanly ... ok
+test app::tests::geometry_tests::geometry_flow_and_spy_gallery_renders_across_layout_retries ... ok
+test app::tests::polar_tests::polar_gallery_renders_across_layout_retries ... ok
+test app::tests::polygons_tests::polygon_gallery_preserves_host_samples_and_renders_across_layout_retries ... ok
+test app::tests::stems_tests::stems_gallery_keeps_raw_samples_and_final_geometry_across_layout_retries ... ok
+test app::tests::contours_tests::contour_and_image_gallery_survives_layout_retries_in_contourf_and_pcolor_modes ... ok
+test app::tests::functions_tests::functions_and_animation_gallery_renders_across_layout_retries ... ok
+test app::tests::distributions_tests::distributions_gallery_renders_all_eight_panels_across_layout_retries ... ok
+test app::tests::plot3d_tests::plot3d_gallery_renders_across_layout_retries_and_toggles_modes ... ok
+test app::tests::demo_scenes_embed_in_headless_egui_with_independent_views ... ok
+test app::tests::quiver_tests::vector_gallery_reuses_original_payloads_across_style_and_layout_passes ... ok
+test app::tests::volumes3d_tests::volumes3d_gallery_renders_across_layout_retries_and_toggles_modes ... ok
+test app::tests::stairs_tests::stairs_preset_and_live_updates_keep_interpolation_and_samples_across_layout_retries ... ok
+test app::tests::networks_tests::networks_graphs_and_trees_gallery_renders_across_layout_retries ... ok
+test app::tests::live_indexed_cached_demo_survives_repeated_layout_without_duplicate_batches ... ok
+test app::tests::surfaces3d_tests::surfaces3d_gallery_renders_across_layout_retries_and_toggles_modes ... ok
+test app::tests::export_file_side_effect_waits_for_the_final_pass_and_refuses_overwrite ... ok
+test app::tests::every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 31.09s
+
+     Running unittests src\lib.rs (target\debug\build\egui-customplot/2fe3959e3f676d8b\out\egui_customplot-2fe3959e3f676d8b.exe)
+
+running 41 tests
+test axis::aspect::tests::expands_only_the_short_dimension_and_is_idempotent ... ok
+test axis::aspect::tests::rejects_invalid_or_unrepresentable_aspect ... ok
+test axis::polar::tests::orientations_and_inverse_roundtrip_match ... ok
+test data::delaunay::tests::voronoi_handles_collinear_and_duplicate_sites ... ok
+test data::delaunay::tests::delaunay_triangles_satisfy_empty_circumcircle_and_deduplicated_edges ... ok
+test data::index::tests::run_tables_match_each_domain_and_allow_restarts_only_at_nonfinite_points ... ok
+test data::triangulate::tests::rejects_degenerate_or_log_invalid_rings ... ok
+test model::scatter::tests::per_point_style_validation_rejects_mismatches_and_invalid_radii ... ok
+test axis::transform::tests::rejects_invalid_bounds ... ok
+test axis::transform::tests::zoom_keeps_anchor_and_pan_has_correct_direction ... ok
+test axis::plot3d::clip::tests::clip_helpers_produce_hexagon_for_diagonal_plane_and_clip_segments ... ok
+test data::index::tests::budget_boundary_failure_preservation_sharing_and_release_are_explicit ... ok
+test axis::ticks::tests::log_ticks_and_minor_grid_use_real_positive_values ... ok
+test axis::transform::tests::log_transform_roundtrips_and_respects_reversal ... ok
+test data::points::tests::finite_bounds_are_cached_and_clones_share_samples ... ok
+test data::triangulate::tests::triangulates_convex_concave_and_cw_rings_with_exact_area ... ok
+test axis::ticks::tests::formatter_only_runs_for_major_ticks ... ok
+test axis::plot3d::camera::tests::view2d_xy_and_perspective_projection_preserve_orientation_and_depth ... ok
+test data::points::tests::empty_and_constant_data ... ok
+test render::line::tests::clips_crossing_segment_with_both_endpoints_outside ... ok
+test axis::transform::tests::mapping_roundtrip_preserves_large_local_origin ... ok
+test data::index::tests::empty_singleton_and_all_invalid_indexes_query_without_paths ... ok
+test render::line::tests::never_bridges_nan_inf_or_offscreen_excursions ... ok
+test data::points::tests::cached_log_bounds_exclude_invalid_pairs_not_independent_components ... ok
+test data::stream::tests::exhausted_revision_does_not_consume_batch_or_mutate_samples ... ok
+test data::triangulate::tests::triangulates_polygon_with_multiple_holes_preserving_net_area ... ok
+test render::line::tests::empty_singleton_and_invisible_lines_emit_no_paths ... ok
+test render::line::tests::nonpositive_log_samples_break_paths_instead_of_connecting_neighbors ... ok
+test axis::ticks::tests::nice_ticks_are_bounded_ordered_and_distinct ... ok
+test render::markers::tests::antialias_fringe_is_one_physical_pixel_not_one_logical_point ... ok
+test data::points::tests::index_is_released_by_last_owner_and_does_not_retain_samples ... ok
+test axis::transform::tests::logarithmic_pan_is_multiplicative_and_reversed_pan_flips_direction ... ok
+test render::markers::tests::per_point_styles_control_geometry_and_preserve_original_colors ... ok
+test render::markers::tests::all_shapes_emit_finite_valid_triangles_with_positive_area ... ok
+test data::index::tests::tree_extrema_match_raw_scan_for_partial_blocks_ties_and_gaps ... ok
+test render::markers::tests::invalid_log_samples_and_far_offscreen_centers_do_not_emit_geometry ... ok
+test render::pattern::tests::dash_phase_continues_across_vertices_but_resets_at_breaks ... ok
+test data::index::tests::queries_keep_crossing_neighbors_duplicate_x_and_report_break_heavy_cost ... ok
+test data::index::tests::minmax_keeps_order_boundaries_peaks_and_domain_breaks_at_multiple_dpis ... ok
+test render::pattern::tests::zero_length_segments_are_safe_and_work_is_bounded ... ok
+test data::delaunay::tests::alpha_shape_small_alpha_carves_inner_hole ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests\animation_annotations.rs (target\debug\build\egui-customplot/fc7e6071047afd47\out\animation_annotations-fc7e6071047afd47.exe)
+
+running 3 tests
+test animated_line_multipass_pause_clear_and_idle_repaint ... ok
+test comet_frame_idempotency_time_consistency_repaint_and_picking ... ok
+test ex027_annotations_and_figure_annotations_render_without_affecting_bounds ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\annotations.rs (target\debug\build\egui-customplot/205ffcb27dcacacc\out\annotations-205ffcb27dcacacc.exe)
+
+running 4 tests
+test invalid_annotations_are_rejected_while_empty_and_offscreen_ones_are_skipped ... ok
+test annotations_never_expand_auto_bounds_and_release_shared_labels ... ok
+test reference_lines_and_infinite_regions_follow_log_and_reversed_axes ... ok
+test annotations_respect_parent_clip_submission_order_and_hidden_widgets ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\architecture.rs (target\debug\build\egui-customplot/18ec7a81faac5c9d\out\architecture-18ec7a81faac5c9d.exe)
+
+running 1 test
+test source_domains_are_explicit_and_files_remain_focused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\area.rs (target\debug\build\egui-customplot/686345d3a43d1ae2\out\area-686345d3a43d1ae2.exe)
+
+running 4 tests
+test non_monotonic_area_band_renders_and_hits_safely_and_is_multipass_idempotent ... ok
+test stacked_bands_share_x_allocation_and_support_pos_neg_split ... ok
+test area_hover_picks_body_or_stroke_and_top_fill_occludes ... ok
+test single_curve_crosses_baseline_respects_gaps_and_rejects_invalid_log_baseline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\aspect.rs (target\debug\build\egui-customplot/d28bcf35bf85669a\out\aspect-d28bcf35bf85669a.exe)
+
+running 3 tests
+test unrepresentable_aspect_falls_back_with_diagnostic_not_a_panic ... ok
+test equal_aspect_wheel_preserves_anchor_and_respects_zoom_axis_locks ... ok
+test equal_aspect_uses_data_units_or_log_decades_and_preserves_explicit_state ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\bars.rs (target\debug\build\egui-customplot/b07dfa6c4dd45f2c\out\bars-b07dfa6c4dd45f2c.exe)
+
+running 6 tests
+test fills_and_original_borders_are_clipped_without_fabricating_view_edges ... ok
+test signed_rectangles_keep_data_width_baselines_direction_and_original_order ... ok
+test invalid_records_keep_raw_indices_and_log_domain_rejects_the_whole_bar ... ok
+test horizontal_bars_use_right_log_axis_for_bounds_raw_hover_and_formatter ... ok
+test filled_layer_arbitration_keeps_topmost_bars_cells_and_later_point_ties ... ok
+test transparent_outline_hidden_and_invalid_styles_match_picking ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\bars_pareto_hist.rs (target\debug\build\egui-customplot/fb6851272cbdb18a\out\bars_pareto_hist-fb6851272cbdb18a.exe)
+
+running 3 tests
+test grouped_and_stacked_bars_preserve_offsets_and_signs ... ok
+test legacy_hist_bins_include_extrema_and_respect_explicit_centers ... ok
+test pareto_and_plotyy_render_dual_y_axes_in_multipass_ui ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\bubbles_swarm_bivariate.rs (target\debug\build\egui-customplot/ad200b2f30ca6645\out\bubbles_swarm_bivariate-ad200b2f30ca6645.exe)
+
+running 2 tests
+test bubble_swarm_and_legend_render_and_pick_accurately ... ok
+test histogram2_normalizations_and_binscatter_shapes_render_and_pick ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\checklist.rs (target\debug\build\egui-customplot/86ba97e20a54da2e\out\checklist-86ba97e20a54da2e.exe)
+
+running 2 tests
+test matlab_status_summary_matches_all_133_rows_without_counting_toolboxes ... ok
+test matlab_checklist_retains_every_frozen_id_and_official_function ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\color_bar.rs (target\debug\build\egui-customplot/30b836e36cddbd6e\out\color_bar-30b836e36cddbd6e.exe)
+
+running 2 tests
+test hidden_color_bar_skips_geometry_and_invalid_heights_stay_finite ... ok
+test color_bar_uses_the_shared_scale_ticks_and_native_parent_clip ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\contours.rs (target\debug\build\egui-customplot/09fd13d25c207592\out\contours-09fd13d25c207592.exe)
+
+running 3 tests
+test scalar_field_validates_budget_and_contours_extract_isolines_and_labels ... ok
+test filled_contours_render_bands_borders_colorbar_and_capture_hover ... ok
+test ezcontour_and_ezcontourf_use_default_two_pi_domain ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\distributions_pie_clouds.rs (target\debug\build\egui-customplot/314a4ce990ad63fd\out\distributions_pie_clouds-314a4ce990ad63fd.exe)
+
+running 2 tests
+test boxplot_violin_and_raincloud_compute_stats_and_render ... ok
+test pie_donut_wordcloud_and_bubblecloud_render_with_canvas_axes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\dual_y_axes.rs (target\debug\build\egui-customplot/6571d36d8dee6afc\out\dual_y_axes-6571d36d8dee6afc.exe)
+
+running 6 tests
+test cached_geometry_keys_follow_each_series_axis_and_right_scale_changes_only_its_side ... ok
+test right_log_domain_indexed_pick_and_highlight_use_the_right_raw_coordinates ... ok
+test independent_y_bounds_share_x_and_reach_the_actual_painter ... ok
+test invalid_manual_secondary_range_falls_back_and_home_resets_both_sides ... ok
+test right_only_series_fit_shared_x_and_hidden_series_do_not_expand_ranges ... ok
+test wheel_preserves_each_y_anchor_reversal_and_multipass_baseline ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\dual_y_navigation.rs (target\debug\build\egui-customplot/209d665d2c4df4d7\out\dual_y_navigation-209d665d2c4df4d7.exe)
+
+running 2 tests
+test equal_screen_distance_across_y_axes_keeps_submission_order ... ok
+test drag_replays_in_both_y_coordinates_once_and_y_lock_applies_to_both ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\egui_integration.rs (target\debug\build\egui-customplot/88d613034bc30117\out\egui_integration-88d613034bc30117.exe)
+
+running 12 tests
+test empty_invalid_and_tiny_plots_remain_finite ... ok
+test focused_home_resets_without_reapplying_pan_or_zoom ... ok
+test final_layout_changes_recompute_the_zoom_anchor ... ok
+test horizontally_unbounded_parent_still_gets_finite_plot_geometry ... ok
+test default_plot_leaves_wheel_for_parent_scroll_area ... ok
+test respects_parent_clipping_and_skips_hidden_geometry ... ok
+test drag_multipass_matches_single_pass ... ok
+test settled_static_plot_does_not_schedule_continuous_repaints ... ok
+test stable_ids_and_separate_states_share_only_samples ... ok
+test wheel_anchor_and_multipass_match_single_pass ... ok
+test disabled_outside_and_default_wheel_do_not_navigate ... ok
+test repeated_data_destruction_leaves_no_sample_references_in_egui_or_state ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\error_bars.rs (target\debug\build\egui-customplot/e15afdd7cf201c82\out\error_bars-e15afdd7cf201c82.exe)
+
+running 5 tests
+test invalid_cap_width_omits_caps_not_valid_stems_and_never_connects_centers ... ok
+test large_crossing_stems_clip_before_projection_without_false_boundary_caps ... ok
+test center_picking_keeps_submission_ties_and_ignores_zero_or_invisible_records ... ok
+test invalid_offsets_overflow_and_log_crossings_are_omitted_as_whole_records ... ok
+test asymmetric_xy_whiskers_have_independent_stems_and_logical_point_caps ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\export_contract.rs (target\debug\build\egui-customplot/10cb894e8821540d\out\export_contract-10cb894e8821540d.exe)
+
+running 4 tests
+test unsupported_textures_callbacks_additive_and_malformed_meshes_fail_explicitly ... ok
+test invalid_export_size_output_and_work_limits_fail_without_mutating_snapshot ... ok
+test scope_excludes_other_layers_and_earlier_later_ui_and_files_are_real ... ok
+test capture_limits_reject_without_replaying_draw_or_consuming_host_texture_uploads ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\export_fonts.rs (target\debug\build\egui-customplot/3f082be625c73ae0\out\export_fonts-3f082be625c73ae0.exe)
+
+running 1 test
+test rotated_host_glyphs_overrides_and_clipping_survive_without_installed_svg_fonts ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\export_pixels.rs (target\debug\build\egui-customplot/b62ffd68098bd877\out\export_pixels-b62ffd68098bd877.exe)
+
+running 4 tests
+test clipping_layer_order_and_background_apply_to_both_real_backends ... ok
+test vector_paths_and_inside_borders_are_not_a_whole_plot_screenshot ... ok
+test mixed_winding_gradient_triangles_keep_interpolation_and_svg_raster_fallback ... ok
+test png_dimensions_dpi_srgb_transparency_and_shared_edges_are_real_pixels ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\export_polygons_contours.rs (target\debug\build\egui-customplot/17afe21435909b65\out\export_polygons_contours-17afe21435909b65.exe)
+
+running 2 tests
+test polyshape_hole_is_white_in_png_and_resvg_and_emits_svg_vectors_without_text ... ok
+test gouraud_patch_and_interp_pcolor_use_svg_raster_fallback_while_flat_contourf_uses_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.45s
+
+     Running tests\export_quiver.rs (target\debug\build\egui-customplot/37cf92b1d07cd87e\out\export_quiver-37cf92b1d07cd87e.exe)
+
+running 1 test
+test real_svg_paths_and_two_pixel_backends_preserve_shafts_heads_and_no_false_clipped_tip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.08s
+
+     Running tests\export_sampling.rs (target\debug\build\egui-customplot/999a79d96273bbd9\out\export_sampling-999a79d96273bbd9.exe)
+
+running 2 tests
+test fractional_rectangles_do_not_stretch_svg_contents_to_ceil_pixel_size ... ok
+test snapshot_keeps_displayed_lod_without_retaining_samples_or_promising_recovery ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests\export_stage8b.rs (target\debug\build\egui-customplot/bb7293f21e852c27\out\export_stage8b-bb7293f21e852c27.exe)
+
+running 2 tests
+test functions_triplot_voronoi_flow_spy_comet_and_ex027_annotations_export_as_valid_svg_and_png ... ok
+test alphashape_hole_exports_cleanly_to_png_svg_and_resvg ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests\export_stage8c.rs (target\debug\build\egui-customplot/235be2abdc73b2a8\out\export_stage8c-235be2abdc73b2a8.exe)
+
+running 1 test
+test stage8c_charts_export_self_contained_svg_and_png ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\export_stage8d.rs (target\debug\build\egui-customplot/9401850be755efb6\out\export_stage8d-9401850be755efb6.exe)
+
+running 1 test
+test stage8d_polar_and_network_charts_export_self_contained_svg_and_png_after_host_drop ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\export_stage9a.rs (target\debug\build\egui-customplot/2dfa8cab314dbad2\out\export_stage9a-2dfa8cab314dbad2.exe)
+
+running 2 tests
+test zbuffer_resolves_mutually_intersecting_3d_quads_per_pixel ... ok
+test stage9a_3d_sorted_and_zbuffer_figures_export_svg_and_png_after_host_drop ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests\export_stage9b.rs (target\debug\build\egui-customplot/64e6f56c21bf014e\out\export_stage9b-64e6f56c21bf014e.exe)
+
+running 2 tests
+test gouraud_interp_shading_smoothly_interpolates_vertex_colors_in_zbuffer ... ok
+test stage9b_sorted_and_zbuffer_surface_figures_export_after_host_drop ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.42s
+
+     Running tests\export_stage9c.rs (target\debug\build\egui-customplot/f60685a5a1df7d28\out\export_stage9c-f60685a5a1df7d28.exe)
+
+running 1 test
+test stage9c_sorted_and_zbuffer_volume_flow_figures_export_after_host_drop ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+     Running tests\export_stairs.rs (target\debug\build\egui-customplot/229cbbe0e15e2cdd\out\export_stairs-229cbbe0e15e2cdd.exe)
+
+running 1 test
+test exported_steps_keep_the_vector_corner_and_real_raster_ink_without_a_diagonal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests\export_stems.rs (target\debug\build\egui-customplot/a7fdd1af474867f9\out\export_stems-a7fdd1af474867f9.exe)
+
+running 1 test
+test both_exports_keep_independent_rods_baseline_and_raw_endpoint_markers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests\figure.rs (target\debug\build\egui-customplot/bd4f0f2c4d85fe27\out\figure-bd4f0f2c4d85fe27.exe)
+
+running 4 tests
+test cells_follow_the_allocated_rectangle_in_directional_and_justified_parents ... ok
+test cells_obey_parent_clip_and_do_not_prepare_fully_hidden_plots ... ok
+test row_major_layout_shares_defaults_not_view_state_or_widget_ids ... ok
+test empty_limits_small_parents_and_layout_retries_are_explicit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\flow_spy.rs (target\debug\build\egui-customplot/49d9f37c1b0cabb5\out\flow_spy-49d9f37c1b0cabb5.exe)
+
+running 3 tests
+test spy_csr_window_culling_spy_axes_and_picking ... ok
+test feather_constructors_baseline_and_vector_picking ... ok
+test streamline_rk4_circular_orbit_and_streamslice_arrows ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\functions.rs (target\debug\build\egui-customplot/313da1b1e8a00bd8\out\functions-313da1b1e8a00bd8.exe)
+
+running 4 tests
+test fplot_budget_limits_and_ezplot_defaults ... ok
+test fplot_poles_and_step_discontinuities_split_at_nan_without_vertical_chord ... ok
+test fplot_adaptive_chirp_and_parametric_lissajous ... ok
+test fimplicit_extracts_cassini_branches_and_guards_singularities ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\graphs_networks.rs (target\debug\build\egui-customplot/dc29466a05078a52\out\graphs_networks-dc29466a05078a52.exe)
+
+running 2 tests
+test directed_layered_dag_renders_arrows_bidirectional_curves_and_picks_nodes_and_edges ... ok
+test undirected_force_multi_edges_self_loops_and_gplot_render ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\grid_data.rs (target\debug\build\egui-customplot/1383852202411e31\out\grid_data-1383852202411e31.exe)
+
+running 3 tests
+test color_limits_are_shared_clamped_and_domain_aware ... ok
+test grid_validates_shape_edges_precision_and_row_major_values ... ok
+test grids_share_payload_and_cache_finite_and_positive_color_ranges ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\heatmap.rs (target\debug\build\egui-customplot/db7b2409f55a8276\out\heatmap-db7b2409f55a8276.exe)
+
+running 5 tests
+test log_coordinates_color_domains_reversal_and_right_axis_remain_independent ... ok
+test hidden_grids_share_bytes_and_never_freeze_point_series_visibility ... ok
+test grid_hover_is_half_open_and_filled_layers_occlude_only_earlier_points ... ok
+test row_major_rectangles_colors_and_missing_cells_reach_the_painter ... ok
+test small_view_queries_only_visible_cells_and_meshes_are_chunked_without_lod ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\heatmap_lifecycle.rs (target\debug\build\egui-customplot/9cf880f646e87872\out\heatmap_lifecycle-9cf880f646e87872.exe)
+
+running 3 tests
+test changed_color_mapping_is_fresh_and_data_is_not_retained_by_state_or_context ... ok
+test high_dpi_and_extreme_offscreen_cells_stay_finite_and_hover_can_be_disabled ... ok
+test parent_clip_bounds_work_and_hidden_widgets_do_no_cell_work ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\histogram.rs (target\debug\build\egui-customplot/b252160bd21fa703\out\histogram-b252160bd21fa703.exe)
+
+running 3 tests
+test explicit_bins_use_half_open_edges_and_keep_last_edge_missing_and_outside_counts ... ok
+test malformed_edges_and_unrepresentable_density_are_explicit_errors ... ok
+test normalization_handles_unequal_bins_cumulative_and_empty_observations ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\indexed_picking.rs (target\debug\build\egui-customplot/7c61b8b4bfac2427\out\indexed_picking-7c61b8b4bfac2427.exe)
+
+running 3 tests
+test just_outside_samples_that_round_to_screen_edges_remain_pickable ... ok
+test indexed_hover_reduces_x_candidates_but_dense_equal_x_is_reported_honestly ... ok
+test indexed_picking_matches_raw_scan_with_log_reversal_duplicates_gaps_and_lod ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.11s
+
+     Running tests\legend.rs (target\debug\build\egui-customplot/5b6e89b2760c4ca8\out\legend-5b6e89b2760c4ca8.exe)
+
+running 3 tests
+test duplicate_implicit_ids_are_reported_instead_of_claiming_independent_visibility ... ok
+test explicit_ids_survive_reordering_and_removed_visibility_state_is_pruned ... ok
+test legend_click_toggles_once_with_discarded_layout_and_does_not_pan ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\line_cache.rs (target\debug\build\egui-customplot/5559611581a6c21e\out\line_cache-5559611581a6c21e.exe)
+
+running 5 tests
+test dpi_changes_miss_even_with_identical_logical_transform ... ok
+test data_transform_dpi_sampling_and_index_changes_cannot_reuse_stale_geometry ... ok
+test hits_skip_query_and_clip_work_but_keep_geometry_and_fresh_style ... ok
+test lru_promotes_hits_and_entry_count_caps_even_empty_results ... ok
+test budgets_evict_lru_reject_oversize_and_release_samples_independently ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests\line_sampling.rs (target\debug\build\egui-customplot/213ceb58936d4210\out\line_sampling-213ceb58936d4210.exe)
+
+running 4 tests
+test fallback_is_exact_and_cloned_index_bytes_are_deduplicated ... ok
+test unsorted_input_rejects_index_without_disabling_the_reference_renderer ... ok
+test indexed_visible_paths_equal_exact_across_domains_bounds_and_reversal ... ok
+test million_point_minmax_has_bounded_work_while_markers_still_visit_raw_data ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.32s
+
+     Running tests\line_styles.rs (target\debug\build\egui-customplot/1308d23c2689c865\out\line_styles-1308d23c2689c865.exe)
+
+running 2 tests
+test invalid_dash_patterns_skip_stroke_but_do_not_hide_markers ... ok
+test dashed_strokes_are_screen_spaced_and_keep_line_markers ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\linked_axes.rs (target\debug\build\egui-customplot/8ba6412627bff5de\out\linked_axes-8ba6412627bff5de.exe)
+
+running 4 tests
+test home_resets_the_group_to_auto_union_not_just_the_active_member ... ok
+test validation_is_transactional_for_scales_aspect_domains_context_and_stale_views ... ok
+test auto_union_follows_data_and_unlinked_axes_remain_independent ... ok
+test navigation_from_either_submission_order_shares_data_ranges_without_double_zoom ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\log_axes.rs (target\debug\build\egui-customplot/32d103c266d039b9\out\log_axes-32d103c266d039b9.exe)
+
+running 3 tests
+test log_domain_diagnostics_default_bounds_and_invalid_manual_bounds_are_explicit ... ok
+test log_zoom_uses_final_layout_rectangle_not_discarded_geometry ... ok
+test reversed_log_zoom_preserves_anchor_and_locked_axis_across_layout_passes ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\multivariate_composite.rs (target\debug\build\egui-customplot/335eb197fa0fc60d\out\multivariate_composite-335eb197fa0fc60d.exe)
+
+running 2 tests
+test categorical_heatmap_and_parallel_plot_support_table_ops_and_norms ... ok
+test stacked_scatterhistogram_and_plotmatrix_synchronize_views ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\pcolor_image.rs (target\debug\build\egui-customplot/42fd28c62e7c8bfe\out\pcolor_image-42fd28c62e7c8bfe.exe)
+
+running 2 tests
+test image_constructors_imshow_axes_and_transparent_pixel_hover_passthrough ... ok
+test pcolor_uses_nx_minus_1_cells_and_supports_flat_and_interp_shading ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\plot3d_analytic_implicit.rs (target\debug\build\egui-customplot/f8a5d4d08d509d5f\out\plot3d_analytic_implicit-f8a5d4d08d509d5f.exe)
+
+running 3 tests
+test trisurf_and_3d_trimesh_validate_pick_and_respect_hidden_line ... ok
+test fsurf_parametric_and_sphere_cylinder_ellipsoid_geometries_are_exact ... ok
+test fimplicit3_extracts_unit_sphere_handles_empty_and_guards_poles ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests\plot3d_core_lines.rs (target\debug\build\egui-customplot/5a3bcdb72fc241b7\out\plot3d_core_lines-5a3bcdb72fc241b7.exe)
+
+running 4 tests
+test fplot3_and_ezplot3_sample_parametrics_and_report_errors ... ok
+test comet3_and_animated_line3d_stay_idempotent_across_multipass_frames ... ok
+test plot3_validation_nan_breaks_log_reversed_axes_primitive_and_text3d ... ok
+test perspective_projection_and_multipass_navigation_and_legend_work_identically ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\plot3d_flow_volumes.rs (target\debug\build\egui-customplot/dca9ce30bffa62cf\out\plot3d_flow_volumes-dca9ce30bffa62cf.exe)
+
+running 2 tests
+test streamline3d_streamslice_and_streamparticles_stay_accurate_and_idempotent ... ok
+test streamribbon_twists_under_curl_streamtube_scales_under_divergence_and_coneplot_renders ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\plot3d_isosurface_tetramesh.rs (target\debug\build\egui-customplot/0d8bab321960764c\out\plot3d_isosurface_tetramesh-0d8bab321960764c.exe)
+
+running 2 tests
+test tetramesh_culls_shared_interior_faces_and_picks_tetrahedra ... ok
+test isosurface_and_isocaps_align_at_volume_boundaries_and_color_from_secondary_field ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\plot3d_meshes_contours.rs (target\debug\build\egui-customplot/212dfed6beb44d36\out\plot3d_meshes_contours-212dfed6beb44d36.exe)
+
+running 2 tests
+test contour3_extracts_exact_height_isolines_from_field_and_surface ... ok
+test mesh_meshc_meshz_waterfall_and_ezmesh_match_topology_expectations ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\plot3d_scatter_discrete.rs (target\debug\build\egui-customplot/6fdd7010e6cb245c\out\plot3d_scatter_discrete-6fdd7010e6cb245c.exe)
+
+running 4 tests
+test scatter3_picks_foreground_point_along_same_viewing_ray ... ok
+test bubblechart3_and_swarmchart3_render_and_preserve_raw_indices ... ok
+test pie3_renders_extruded_cylinder_wedges_and_picks_hovered_slice ... ok
+test bar3_bar3h_and_stem3_render_all_modes_and_support_hover ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\plot3d_surfaces.rs (target\debug\build\egui-customplot/c6c4af773204ca18\out\plot3d_surfaces-c6c4af773204ca18.exe)
+
+running 3 tests
+test ribbon_and_surfnorm_emit_strips_normals_and_outward_quivers ... ok
+test surf_validates_renders_shadings_nan_holes_colorbar_and_primitive ... ok
+test surfc_ezsurfc_and_surfl_react_to_contours_and_lighting ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\plot3d_vectors_planes_depth.rs (target\debug\build\egui-customplot/9b1b12294814b82f\out\plot3d_vectors_planes_depth-9b1b12294814b82f.exe)
+
+running 3 tests
+test fill3_validates_triangulates_and_picks_3d_polygons ... ok
+test quiver3_renders_shafts_and_pyramid_heads_and_picks_endpoints ... ok
+test constantplane_clips_axial_and_diagonal_planes_against_axis_box ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\plot3d_volumes_slices.rs (target\debug\build\egui-customplot/8fb8f550f586fa74\out\plot3d_volumes_slices-8fb8f550f586fa74.exe)
+
+running 3 tests
+test scalar_volume_trilinear_sampling_gradients_bounds_and_nan_safety ... ok
+test contourslice_extracts_isolines_on_orthogonal_and_tilted_volume_planes ... ok
+test slice_orthogonal_and_arbitrary_planes_render_and_pick_regions ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\polar_hist_regions.rs (target\debug\build\egui-customplot/b9ead3c49f40f172\out\polar_hist_regions-b9ead3c49f40f172.exe)
+
+running 2 tests
+test polarhistogram_normalizations_and_rose_petals_are_consistent ... ok
+test polar_regions_wrap_around_and_hover_picking_hits_points_and_bins ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\polar_plots.rs (target\debug\build\egui-customplot/df8f1a1827427c96\out\polar_plots-df8f1a1827427c96.exe)
+
+running 3 tests
+test negative_radius_modes_and_orientations_behave_distinctly ... ok
+test polar_line_scatter_bubble_compass_and_functions_render_cleanly ... ok
+test polar_state_navigation_and_legend_toggle_are_idempotent_across_multipass ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\polygons_patches.rs (target\debug\build\egui-customplot/d0a7252824c1c0ba\out\polygons_patches-d0a7252824c1c0ba.exe)
+
+running 5 tests
+test rectangles_and_ellipses_hit_test_rounded_geometry ... ok
+test line_primitive_composes_additively_and_reflects_host_data_replacement ... ok
+test concave_fill_and_confidence_band_skip_notch_and_split_nan_gaps ... ok
+test patch_supports_face_and_gouraud_coloring_and_validates_lengths ... ok
+test polyshape_hole_does_not_capture_hover_while_outer_ring_does ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\primitive_lifecycle.rs (target\debug\build\egui-customplot/2c5bbcea47c2ec91\out\primitive_lifecycle-2c5bbcea47c2ec91.exe)
+
+running 3 tests
+test hidden_and_parent_clipped_primitives_do_no_geometry_work ... ok
+test transparent_bar_composition_preserves_fill_outline_then_next_record_order ... ok
+test primitive_payloads_are_shared_deduplicated_and_not_retained_by_plot_state_or_cache ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\quiver.rs (target\debug\build\egui-customplot/c11cf504594ee952\out\quiver-c11cf504594ee952.exe)
+
+running 6 tests
+test clipping_never_fabricates_heads_at_intersections_and_uses_full_length_for_head_size ... ok
+test ill_conditioned_extreme_crossings_diagnose_instead_of_inventing_edge_geometry ... ok
+test joint_domains_nonfinite_and_endpoint_overflow_reject_whole_records_without_reindexing ... ok
+test head_validation_and_dashes_are_explicit_and_heads_stay_solid ... ok
+test subpixel_zero_empty_and_short_vectors_never_create_arbitrary_full_size_heads ... ok
+test true_endpoints_bounds_and_screen_heads_follow_linear_log_reversed_axes ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\quiver_dpi.rs (target\debug\build\egui-customplot/8607d655a748e2fc\out\quiver_dpi-8607d655a748e2fc.exe)
+
+running 2 tests
+test theme_parent_plot_and_vector_overrides_style_both_parts_without_adding_point_markers ... ok
+test head_dimensions_are_logical_points_at_multiple_host_dpi_and_resized_views ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\quiver_lifecycle.rs (target\debug\build\egui-customplot/45074656ea3db407\out\quiver_lifecycle-45074656ea3db407.exe)
+
+running 3 tests
+test log_reversed_zoom_and_vector_geometry_match_with_layout_retries ... ok
+test parent_clip_visibility_and_legend_once_per_frame_cover_all_vector_parts ... ok
+test payloads_are_shared_deduplicated_and_released_while_state_context_and_line_cache_survive ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\quiver_picking.rs (target\debug\build\egui-customplot/5afd609243846740\out\quiver_picking-5afd609243846740.exe)
+
+running 4 tests
+test right_log_reversed_raw_anchors_keep_joint_domain_and_existing_formatter_contract ... ok
+test origin_and_true_endpoint_pick_original_vector_record_not_shaft_wing_or_clip_intersection ... ok
+test nearest_distance_and_first_submission_ties_respect_filled_layer_occlusion ... ok
+test visibility_and_numeric_rejections_match_rendering_even_when_heads_are_disabled ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\series.rs (target\debug\build\egui-customplot/cbf3a15a2473e089\out\series-cbf3a15a2473e089.exe)
+
+running 6 tests
+test hidden_series_do_not_affect_auto_bounds_or_scan_geometry ... ok
+test hover_disabled_avoids_linear_pick_scan ... ok
+test mixed_series_share_samples_and_batch_markers_in_one_mesh_per_series ... ok
+test hover_reports_original_sample_and_skips_transparent_zero_and_hidden_points ... ok
+test all_marker_shapes_support_singletons_and_hidpi ... ok
+test invalid_scalar_marker_radius_is_neither_rendered_nor_picked ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\stairs.rs (target\debug\build\egui-customplot/a4a9979c592edbaf\out\stairs-a4a9979c592edbaf.exe)
+
+running 6 tests
+test no_plateaus_are_fabricated_next_to_nonfinite_or_log_invalid_samples ... ok
+test clipped_steps_do_not_connect_along_view_edges_or_create_diagonals ... ok
+test empty_singleton_duplicates_and_unsorted_steps_keep_the_raw_series_contract ... ok
+test nonuniform_steps_use_raw_corners_endpoints_order_log_and_reversal ... ok
+test visible_matches_exact_with_nonuniform_duplicate_x_and_boundary_neighbors ... ok
+test minmax_reduces_raw_selection_before_step_expansion_without_diagonal_shortcuts ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\stairs_lifecycle.rs (target\debug\build\egui-customplot/704d457340a81e49\out\stairs_lifecycle-704d457340a81e49.exe)
+
+running 4 tests
+test zooming_steps_keeps_single_and_repeated_layout_navigation_identical ... ok
+test cache_keys_include_interpolation_while_styles_visibility_and_layout_remain_independent ... ok
+test minmax_omitted_raw_sample_is_still_pickable_and_snapshots_invalidate_step_geometry ... ok
+test raw_markers_and_right_axis_hover_never_treat_synthetic_corners_as_samples ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\stems.rs (target\debug\build\egui-customplot/752e21b1feae7903\out\stems-752e21b1feae7903.exe)
+
+running 5 tests
+test signed_dashes_restart_at_each_baseline_and_never_join_rod_endpoints ... ok
+test huge_crossing_rods_clip_in_data_space_without_false_baseline_or_endpoint_markers ... ok
+test invalid_baselines_reject_the_whole_layer_and_log_invalid_endpoints_stay_raw ... ok
+test empty_singleton_duplicate_positions_and_hidden_baseline_have_defined_geometry ... ok
+test rods_keep_raw_order_and_baseline_without_connecting_neighbors_in_each_domain ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\stems_lifecycle.rs (target\debug\build\egui-customplot/5afa51047b240f07\out\stems_lifecycle-5afa51047b240f07.exe)
+
+running 5 tests
+test hidden_and_parent_clipped_stems_skip_geometry_and_leave_no_stale_visibility ... ok
+test visibility_styles_zero_rods_and_baseline_only_match_raw_endpoint_picking ... ok
+test indexed_right_log_hover_preserves_raw_indices_axes_and_submission_ties ... ok
+test optional_index_narrows_endpoint_picking_but_rendering_still_scans_all_rods ... ok
+test samples_and_indexes_are_deduplicated_and_not_retained_by_state_context_or_line_cache ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\stems_navigation.rs (target\debug\build\egui-customplot/27d49af1f2fa6161\out\stems_navigation-27d49af1f2fa6161.exe)
+
+running 2 tests
+test log_reversed_navigation_and_stem_geometry_are_identical_with_layout_retries ... ok
+test legend_click_toggles_all_stem_components_once_without_navigating ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\stream.rs (target\debug\build\egui-customplot/d2bcb10b55642e17\out\stream-d2bcb10b55642e17.exe)
+
+running 4 tests
+test invalid_capacity_and_budget_fail_before_large_allocation ... ok
+test ring_wrap_oversize_reports_and_immutable_snapshots_match_chronology ... ok
+test multipass_applies_batch_once_and_each_published_snapshot_has_a_new_version ... ok
+test ring_matches_reference_over_many_wraps_and_keeps_domain_breaks ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests\styles.rs (target\debug\build\egui-customplot/89d44de2b807f711\out\styles-89d44de2b807f711.exe)
+
+running 7 tests
+test invalid_plot_stroke_widths_do_not_reach_the_painter ... ok
+test optional_layers_preserve_explicit_plot_values_and_builder_order ... ok
+test theme_parent_plot_and_series_precedence_reaches_painter ... ok
+test scatter_point_overrides_take_priority_over_transparent_zero_defaults ... ok
+test width_only_preserves_palette_and_empty_palette_is_safe ... ok
+test themes_do_not_mutate_host_or_neighbor_plot_style ... ok
+test transparent_zero_and_false_override_inherited_values_for_render_and_pick ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\tooltip.rs (target\debug\build\egui-customplot/2899d79e22a0c6ea\out\tooltip-2899d79e22a0c6ea.exe)
+
+running 3 tests
+test cursor_formatter_runs_without_a_hit_but_not_when_hover_is_disabled_or_clipped ... ok
+test custom_formatter_receives_raw_pick_and_can_read_context_outside_locks ... ok
+test default_text_includes_series_and_original_index ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\trees_elimination.rs (target\debug\build\egui-customplot/58203cf5841eef49\out\trees_elimination-58203cf5841eef49.exe)
+
+running 2 tests
+test treeplot_forest_layout_centers_parents_and_rejects_cycles ... ok
+test etreeplot_liu_algorithm_matches_known_sparse_matrices_and_scales_to_10k_chain ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\triangulation_voronoi.rs (target\debug\build\egui-customplot/255686258bf6506c\out\triangulation_voronoi-255686258bf6506c.exe)
+
+running 3 tests
+test triplot_and_trimesh_dedup_edges_render_scalars_and_pick_vertices ... ok
+test voronoi_clips_rays_handles_collinear_and_picks_sites ... ok
+test alphashape_hole_vs_critical_alpha_and_region_picking ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests egui_customplot
+
+running 2 tests
+test crates\egui-customplot\src\lib.rs - (line 8) ... ok
+test crates\egui-customplot\src\lib.rs - (line 19) ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+all doctests ran in 1.28s; merged doctests compilation took 0.82s
+exit_code=0
+===== 4_test_all_features =====
+cmd=cargo test --workspace --all-features --locked
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.17s
+     Running unittests src\main.rs (target\debug\build\customplot-demo/cd61a65ba12cbea1\out\customplot_demo-cd61a65ba12cbea1.exe)
+
+running 23 tests
+test data::tests::power_law_data_is_log_valid_and_styles_match_samples ... ok
+test data::tests::gaps_are_explicit_and_tiny_requests_are_safe ... ok
+test stream::tests::live_demo_publishes_once_per_tick_even_with_discarded_layout ... ok
+test app::tests::statistical_gallery_keeps_preprocessing_and_geometry_across_layout_retries ... ok
+test app::tests::multivariate_tests::multivariate_gallery_renders_overview_and_composite_modes_cleanly ... ok
+test app::tests::figure_linked_dual_y_demo_and_scalar_gallery_survive_layout_retries ... ok
+test app::tests::distributions_tests::distributions_gallery_renders_all_eight_panels_across_layout_retries ... ok
+test app::tests::polygons_tests::polygon_gallery_preserves_host_samples_and_renders_across_layout_retries ... ok
+test app::tests::contours_tests::contour_and_image_gallery_survives_layout_retries_in_contourf_and_pcolor_modes ... ok
+test app::tests::functions_tests::functions_and_animation_gallery_renders_across_layout_retries ... ok
+test app::tests::polar_tests::polar_gallery_renders_across_layout_retries ... ok
+test app::tests::demo_scenes_embed_in_headless_egui_with_independent_views ... ok
+test app::tests::networks_tests::networks_graphs_and_trees_gallery_renders_across_layout_retries ... ok
+test app::tests::stems_tests::stems_gallery_keeps_raw_samples_and_final_geometry_across_layout_retries ... ok
+test app::tests::quiver_tests::vector_gallery_reuses_original_payloads_across_style_and_layout_passes ... ok
+test app::tests::plot3d_tests::plot3d_gallery_renders_across_layout_retries_and_toggles_modes ... ok
+test app::tests::geometry_tests::geometry_flow_and_spy_gallery_renders_across_layout_retries ... ok
+test app::tests::live_indexed_cached_demo_survives_repeated_layout_without_duplicate_batches ... ok
+test app::tests::stairs_tests::stairs_preset_and_live_updates_keep_interpolation_and_samples_across_layout_retries ... ok
+test app::tests::volumes3d_tests::volumes3d_gallery_renders_across_layout_retries_and_toggles_modes ... ok
+test app::tests::surfaces3d_tests::surfaces3d_gallery_renders_across_layout_retries_and_toggles_modes ... ok
+test app::tests::export_file_side_effect_waits_for_the_final_pass_and_refuses_overwrite ... ok
+test app::tests::every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop ... ok
+
+test result: ok. 23 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 30.36s
+
+     Running unittests src\lib.rs (target\debug\build\egui-customplot/2fe3959e3f676d8b\out\egui_customplot-2fe3959e3f676d8b.exe)
+
+running 41 tests
+test axis::aspect::tests::expands_only_the_short_dimension_and_is_idempotent ... ok
+test axis::aspect::tests::rejects_invalid_or_unrepresentable_aspect ... ok
+test axis::transform::tests::logarithmic_pan_is_multiplicative_and_reversed_pan_flips_direction ... ok
+test axis::plot3d::clip::tests::clip_helpers_produce_hexagon_for_diagonal_plane_and_clip_segments ... ok
+test axis::transform::tests::zoom_keeps_anchor_and_pan_has_correct_direction ... ok
+test axis::transform::tests::log_transform_roundtrips_and_respects_reversal ... ok
+test axis::ticks::tests::nice_ticks_are_bounded_ordered_and_distinct ... ok
+test axis::ticks::tests::formatter_only_runs_for_major_ticks ... ok
+test data::points::tests::empty_and_constant_data ... ok
+test data::stream::tests::exhausted_revision_does_not_consume_batch_or_mutate_samples ... ok
+test data::triangulate::tests::triangulates_convex_concave_and_cw_rings_with_exact_area ... ok
+test data::delaunay::tests::voronoi_handles_collinear_and_duplicate_sites ... ok
+test render::line::tests::clips_crossing_segment_with_both_endpoints_outside ... ok
+test axis::polar::tests::orientations_and_inverse_roundtrip_match ... ok
+test axis::plot3d::camera::tests::view2d_xy_and_perspective_projection_preserve_orientation_and_depth ... ok
+test data::index::tests::empty_singleton_and_all_invalid_indexes_query_without_paths ... ok
+test axis::transform::tests::mapping_roundtrip_preserves_large_local_origin ... ok
+test data::points::tests::cached_log_bounds_exclude_invalid_pairs_not_independent_components ... ok
+test data::index::tests::tree_extrema_match_raw_scan_for_partial_blocks_ties_and_gaps ... ok
+test axis::transform::tests::rejects_invalid_bounds ... ok
+test data::points::tests::finite_bounds_are_cached_and_clones_share_samples ... ok
+test data::triangulate::tests::triangulates_polygon_with_multiple_holes_preserving_net_area ... ok
+test data::triangulate::tests::rejects_degenerate_or_log_invalid_rings ... ok
+test model::scatter::tests::per_point_style_validation_rejects_mismatches_and_invalid_radii ... ok
+test data::delaunay::tests::delaunay_triangles_satisfy_empty_circumcircle_and_deduplicated_edges ... ok
+test data::points::tests::index_is_released_by_last_owner_and_does_not_retain_samples ... ok
+test axis::ticks::tests::log_ticks_and_minor_grid_use_real_positive_values ... ok
+test data::index::tests::run_tables_match_each_domain_and_allow_restarts_only_at_nonfinite_points ... ok
+test render::line::tests::empty_singleton_and_invisible_lines_emit_no_paths ... ok
+test render::line::tests::never_bridges_nan_inf_or_offscreen_excursions ... ok
+test render::line::tests::nonpositive_log_samples_break_paths_instead_of_connecting_neighbors ... ok
+test render::markers::tests::invalid_log_samples_and_far_offscreen_centers_do_not_emit_geometry ... ok
+test render::markers::tests::all_shapes_emit_finite_valid_triangles_with_positive_area ... ok
+test data::index::tests::budget_boundary_failure_preservation_sharing_and_release_are_explicit ... ok
+test render::markers::tests::antialias_fringe_is_one_physical_pixel_not_one_logical_point ... ok
+test render::pattern::tests::dash_phase_continues_across_vertices_but_resets_at_breaks ... ok
+test render::markers::tests::per_point_styles_control_geometry_and_preserve_original_colors ... ok
+test data::index::tests::minmax_keeps_order_boundaries_peaks_and_domain_breaks_at_multiple_dpis ... ok
+test data::index::tests::queries_keep_crossing_neighbors_duplicate_x_and_report_break_heavy_cost ... ok
+test render::pattern::tests::zero_length_segments_are_safe_and_work_is_bounded ... ok
+test data::delaunay::tests::alpha_shape_small_alpha_carves_inner_hole ... ok
+
+test result: ok. 41 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.31s
+
+     Running tests\animation_annotations.rs (target\debug\build\egui-customplot/fc7e6071047afd47\out\animation_annotations-fc7e6071047afd47.exe)
+
+running 3 tests
+test animated_line_multipass_pause_clear_and_idle_repaint ... ok
+test comet_frame_idempotency_time_consistency_repaint_and_picking ... ok
+test ex027_annotations_and_figure_annotations_render_without_affecting_bounds ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\annotations.rs (target\debug\build\egui-customplot/205ffcb27dcacacc\out\annotations-205ffcb27dcacacc.exe)
+
+running 4 tests
+test invalid_annotations_are_rejected_while_empty_and_offscreen_ones_are_skipped ... ok
+test annotations_never_expand_auto_bounds_and_release_shared_labels ... ok
+test annotations_respect_parent_clip_submission_order_and_hidden_widgets ... ok
+test reference_lines_and_infinite_regions_follow_log_and_reversed_axes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\architecture.rs (target\debug\build\egui-customplot/18ec7a81faac5c9d\out\architecture-18ec7a81faac5c9d.exe)
+
+running 1 test
+test source_domains_are_explicit_and_files_remain_focused ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\area.rs (target\debug\build\egui-customplot/686345d3a43d1ae2\out\area-686345d3a43d1ae2.exe)
+
+running 4 tests
+test non_monotonic_area_band_renders_and_hits_safely_and_is_multipass_idempotent ... ok
+test stacked_bands_share_x_allocation_and_support_pos_neg_split ... ok
+test area_hover_picks_body_or_stroke_and_top_fill_occludes ... ok
+test single_curve_crosses_baseline_respects_gaps_and_rejects_invalid_log_baseline ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\aspect.rs (target\debug\build\egui-customplot/d28bcf35bf85669a\out\aspect-d28bcf35bf85669a.exe)
+
+running 3 tests
+test unrepresentable_aspect_falls_back_with_diagnostic_not_a_panic ... ok
+test equal_aspect_wheel_preserves_anchor_and_respects_zoom_axis_locks ... ok
+test equal_aspect_uses_data_units_or_log_decades_and_preserves_explicit_state ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\bars.rs (target\debug\build\egui-customplot/b07dfa6c4dd45f2c\out\bars-b07dfa6c4dd45f2c.exe)
+
+running 6 tests
+test invalid_records_keep_raw_indices_and_log_domain_rejects_the_whole_bar ... ok
+test signed_rectangles_keep_data_width_baselines_direction_and_original_order ... ok
+test fills_and_original_borders_are_clipped_without_fabricating_view_edges ... ok
+test horizontal_bars_use_right_log_axis_for_bounds_raw_hover_and_formatter ... ok
+test filled_layer_arbitration_keeps_topmost_bars_cells_and_later_point_ties ... ok
+test transparent_outline_hidden_and_invalid_styles_match_picking ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\bars_pareto_hist.rs (target\debug\build\egui-customplot/fb6851272cbdb18a\out\bars_pareto_hist-fb6851272cbdb18a.exe)
+
+running 3 tests
+test grouped_and_stacked_bars_preserve_offsets_and_signs ... ok
+test legacy_hist_bins_include_extrema_and_respect_explicit_centers ... ok
+test pareto_and_plotyy_render_dual_y_axes_in_multipass_ui ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\bubbles_swarm_bivariate.rs (target\debug\build\egui-customplot/ad200b2f30ca6645\out\bubbles_swarm_bivariate-ad200b2f30ca6645.exe)
+
+running 2 tests
+test bubble_swarm_and_legend_render_and_pick_accurately ... ok
+test histogram2_normalizations_and_binscatter_shapes_render_and_pick ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\checklist.rs (target\debug\build\egui-customplot/86ba97e20a54da2e\out\checklist-86ba97e20a54da2e.exe)
+
+running 2 tests
+test matlab_status_summary_matches_all_133_rows_without_counting_toolboxes ... ok
+test matlab_checklist_retains_every_frozen_id_and_official_function ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\color_bar.rs (target\debug\build\egui-customplot/30b836e36cddbd6e\out\color_bar-30b836e36cddbd6e.exe)
+
+running 2 tests
+test hidden_color_bar_skips_geometry_and_invalid_heights_stay_finite ... ok
+test color_bar_uses_the_shared_scale_ticks_and_native_parent_clip ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\contours.rs (target\debug\build\egui-customplot/09fd13d25c207592\out\contours-09fd13d25c207592.exe)
+
+running 3 tests
+test scalar_field_validates_budget_and_contours_extract_isolines_and_labels ... ok
+test filled_contours_render_bands_borders_colorbar_and_capture_hover ... ok
+test ezcontour_and_ezcontourf_use_default_two_pi_domain ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\distributions_pie_clouds.rs (target\debug\build\egui-customplot/314a4ce990ad63fd\out\distributions_pie_clouds-314a4ce990ad63fd.exe)
+
+running 2 tests
+test boxplot_violin_and_raincloud_compute_stats_and_render ... ok
+test pie_donut_wordcloud_and_bubblecloud_render_with_canvas_axes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\dual_y_axes.rs (target\debug\build\egui-customplot/6571d36d8dee6afc\out\dual_y_axes-6571d36d8dee6afc.exe)
+
+running 6 tests
+test cached_geometry_keys_follow_each_series_axis_and_right_scale_changes_only_its_side ... ok
+test right_log_domain_indexed_pick_and_highlight_use_the_right_raw_coordinates ... ok
+test invalid_manual_secondary_range_falls_back_and_home_resets_both_sides ... ok
+test right_only_series_fit_shared_x_and_hidden_series_do_not_expand_ranges ... ok
+test independent_y_bounds_share_x_and_reach_the_actual_painter ... ok
+test wheel_preserves_each_y_anchor_reversal_and_multipass_baseline ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\dual_y_navigation.rs (target\debug\build\egui-customplot/209d665d2c4df4d7\out\dual_y_navigation-209d665d2c4df4d7.exe)
+
+running 2 tests
+test equal_screen_distance_across_y_axes_keeps_submission_order ... ok
+test drag_replays_in_both_y_coordinates_once_and_y_lock_applies_to_both ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\egui_integration.rs (target\debug\build\egui-customplot/88d613034bc30117\out\egui_integration-88d613034bc30117.exe)
+
+running 12 tests
+test default_plot_leaves_wheel_for_parent_scroll_area ... ok
+test horizontally_unbounded_parent_still_gets_finite_plot_geometry ... ok
+test focused_home_resets_without_reapplying_pan_or_zoom ... ok
+test respects_parent_clipping_and_skips_hidden_geometry ... ok
+test empty_invalid_and_tiny_plots_remain_finite ... ok
+test final_layout_changes_recompute_the_zoom_anchor ... ok
+test settled_static_plot_does_not_schedule_continuous_repaints ... ok
+test wheel_anchor_and_multipass_match_single_pass ... ok
+test drag_multipass_matches_single_pass ... ok
+test stable_ids_and_separate_states_share_only_samples ... ok
+test disabled_outside_and_default_wheel_do_not_navigate ... ok
+test repeated_data_destruction_leaves_no_sample_references_in_egui_or_state ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\error_bars.rs (target\debug\build\egui-customplot/e15afdd7cf201c82\out\error_bars-e15afdd7cf201c82.exe)
+
+running 5 tests
+test invalid_cap_width_omits_caps_not_valid_stems_and_never_connects_centers ... ok
+test large_crossing_stems_clip_before_projection_without_false_boundary_caps ... ok
+test center_picking_keeps_submission_ties_and_ignores_zero_or_invisible_records ... ok
+test invalid_offsets_overflow_and_log_crossings_are_omitted_as_whole_records ... ok
+test asymmetric_xy_whiskers_have_independent_stems_and_logical_point_caps ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\export_contract.rs (target\debug\build\egui-customplot/10cb894e8821540d\out\export_contract-10cb894e8821540d.exe)
+
+running 4 tests
+test unsupported_textures_callbacks_additive_and_malformed_meshes_fail_explicitly ... ok
+test invalid_export_size_output_and_work_limits_fail_without_mutating_snapshot ... ok
+test scope_excludes_other_layers_and_earlier_later_ui_and_files_are_real ... ok
+test capture_limits_reject_without_replaying_draw_or_consuming_host_texture_uploads ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\export_fonts.rs (target\debug\build\egui-customplot/3f082be625c73ae0\out\export_fonts-3f082be625c73ae0.exe)
+
+running 1 test
+test rotated_host_glyphs_overrides_and_clipping_survive_without_installed_svg_fonts ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\export_pixels.rs (target\debug\build\egui-customplot/b62ffd68098bd877\out\export_pixels-b62ffd68098bd877.exe)
+
+running 4 tests
+test vector_paths_and_inside_borders_are_not_a_whole_plot_screenshot ... ok
+test clipping_layer_order_and_background_apply_to_both_real_backends ... ok
+test mixed_winding_gradient_triangles_keep_interpolation_and_svg_raster_fallback ... ok
+test png_dimensions_dpi_srgb_transparency_and_shared_edges_are_real_pixels ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\export_polygons_contours.rs (target\debug\build\egui-customplot/17afe21435909b65\out\export_polygons_contours-17afe21435909b65.exe)
+
+running 2 tests
+test polyshape_hole_is_white_in_png_and_resvg_and_emits_svg_vectors_without_text ... ok
+test gouraud_patch_and_interp_pcolor_use_svg_raster_fallback_while_flat_contourf_uses_paths ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.46s
+
+     Running tests\export_quiver.rs (target\debug\build\egui-customplot/37cf92b1d07cd87e\out\export_quiver-37cf92b1d07cd87e.exe)
+
+running 1 test
+test real_svg_paths_and_two_pixel_backends_preserve_shafts_heads_and_no_false_clipped_tip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.06s
+
+     Running tests\export_sampling.rs (target\debug\build\egui-customplot/999a79d96273bbd9\out\export_sampling-999a79d96273bbd9.exe)
+
+running 2 tests
+test fractional_rectangles_do_not_stretch_svg_contents_to_ceil_pixel_size ... ok
+test snapshot_keeps_displayed_lod_without_retaining_samples_or_promising_recovery ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests\export_stage8b.rs (target\debug\build\egui-customplot/bb7293f21e852c27\out\export_stage8b-bb7293f21e852c27.exe)
+
+running 2 tests
+test functions_triplot_voronoi_flow_spy_comet_and_ex027_annotations_export_as_valid_svg_and_png ... ok
+test alphashape_hole_exports_cleanly_to_png_svg_and_resvg ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests\export_stage8c.rs (target\debug\build\egui-customplot/235be2abdc73b2a8\out\export_stage8c-235be2abdc73b2a8.exe)
+
+running 1 test
+test stage8c_charts_export_self_contained_svg_and_png ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\export_stage8d.rs (target\debug\build\egui-customplot/9401850be755efb6\out\export_stage8d-9401850be755efb6.exe)
+
+running 1 test
+test stage8d_polar_and_network_charts_export_self_contained_svg_and_png_after_host_drop ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\export_stage9a.rs (target\debug\build\egui-customplot/2dfa8cab314dbad2\out\export_stage9a-2dfa8cab314dbad2.exe)
+
+running 2 tests
+test zbuffer_resolves_mutually_intersecting_3d_quads_per_pixel ... ok
+test stage9a_3d_sorted_and_zbuffer_figures_export_svg_and_png_after_host_drop ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s
+
+     Running tests\export_stage9b.rs (target\debug\build\egui-customplot/64e6f56c21bf014e\out\export_stage9b-64e6f56c21bf014e.exe)
+
+running 2 tests
+test gouraud_interp_shading_smoothly_interpolates_vertex_colors_in_zbuffer ... ok
+test stage9b_sorted_and_zbuffer_surface_figures_export_after_host_drop ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.42s
+
+     Running tests\export_stage9c.rs (target\debug\build\egui-customplot/f60685a5a1df7d28\out\export_stage9c-f60685a5a1df7d28.exe)
+
+running 1 test
+test stage9c_sorted_and_zbuffer_volume_flow_figures_export_after_host_drop ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+
+     Running tests\export_stairs.rs (target\debug\build\egui-customplot/229cbbe0e15e2cdd\out\export_stairs-229cbbe0e15e2cdd.exe)
+
+running 1 test
+test exported_steps_keep_the_vector_corner_and_real_raster_ink_without_a_diagonal ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
+
+     Running tests\export_stems.rs (target\debug\build\egui-customplot/a7fdd1af474867f9\out\export_stems-a7fdd1af474867f9.exe)
+
+running 1 test
+test both_exports_keep_independent_rods_baseline_and_raw_endpoint_markers ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+
+     Running tests\figure.rs (target\debug\build\egui-customplot/bd4f0f2c4d85fe27\out\figure-bd4f0f2c4d85fe27.exe)
+
+running 4 tests
+test cells_follow_the_allocated_rectangle_in_directional_and_justified_parents ... ok
+test cells_obey_parent_clip_and_do_not_prepare_fully_hidden_plots ... ok
+test row_major_layout_shares_defaults_not_view_state_or_widget_ids ... ok
+test empty_limits_small_parents_and_layout_retries_are_explicit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\flow_spy.rs (target\debug\build\egui-customplot/49d9f37c1b0cabb5\out\flow_spy-49d9f37c1b0cabb5.exe)
+
+running 3 tests
+test spy_csr_window_culling_spy_axes_and_picking ... ok
+test feather_constructors_baseline_and_vector_picking ... ok
+test streamline_rk4_circular_orbit_and_streamslice_arrows ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\functions.rs (target\debug\build\egui-customplot/313da1b1e8a00bd8\out\functions-313da1b1e8a00bd8.exe)
+
+running 4 tests
+test fplot_budget_limits_and_ezplot_defaults ... ok
+test fplot_poles_and_step_discontinuities_split_at_nan_without_vertical_chord ... ok
+test fplot_adaptive_chirp_and_parametric_lissajous ... ok
+test fimplicit_extracts_cassini_branches_and_guards_singularities ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\graphs_networks.rs (target\debug\build\egui-customplot/dc29466a05078a52\out\graphs_networks-dc29466a05078a52.exe)
+
+running 2 tests
+test directed_layered_dag_renders_arrows_bidirectional_curves_and_picks_nodes_and_edges ... ok
+test undirected_force_multi_edges_self_loops_and_gplot_render ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\grid_data.rs (target\debug\build\egui-customplot/1383852202411e31\out\grid_data-1383852202411e31.exe)
+
+running 3 tests
+test color_limits_are_shared_clamped_and_domain_aware ... ok
+test grid_validates_shape_edges_precision_and_row_major_values ... ok
+test grids_share_payload_and_cache_finite_and_positive_color_ranges ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\heatmap.rs (target\debug\build\egui-customplot/db7b2409f55a8276\out\heatmap-db7b2409f55a8276.exe)
+
+running 5 tests
+test log_coordinates_color_domains_reversal_and_right_axis_remain_independent ... ok
+test grid_hover_is_half_open_and_filled_layers_occlude_only_earlier_points ... ok
+test hidden_grids_share_bytes_and_never_freeze_point_series_visibility ... ok
+test row_major_rectangles_colors_and_missing_cells_reach_the_painter ... ok
+test small_view_queries_only_visible_cells_and_meshes_are_chunked_without_lod ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\heatmap_lifecycle.rs (target\debug\build\egui-customplot/9cf880f646e87872\out\heatmap_lifecycle-9cf880f646e87872.exe)
+
+running 3 tests
+test changed_color_mapping_is_fresh_and_data_is_not_retained_by_state_or_context ... ok
+test high_dpi_and_extreme_offscreen_cells_stay_finite_and_hover_can_be_disabled ... ok
+test parent_clip_bounds_work_and_hidden_widgets_do_no_cell_work ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\histogram.rs (target\debug\build\egui-customplot/b252160bd21fa703\out\histogram-b252160bd21fa703.exe)
+
+running 3 tests
+test malformed_edges_and_unrepresentable_density_are_explicit_errors ... ok
+test explicit_bins_use_half_open_edges_and_keep_last_edge_missing_and_outside_counts ... ok
+test normalization_handles_unequal_bins_cumulative_and_empty_observations ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\indexed_picking.rs (target\debug\build\egui-customplot/7c61b8b4bfac2427\out\indexed_picking-7c61b8b4bfac2427.exe)
+
+running 3 tests
+test just_outside_samples_that_round_to_screen_edges_remain_pickable ... ok
+test indexed_hover_reduces_x_candidates_but_dense_equal_x_is_reported_honestly ... ok
+test indexed_picking_matches_raw_scan_with_log_reversal_duplicates_gaps_and_lod ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.12s
+
+     Running tests\legend.rs (target\debug\build\egui-customplot/5b6e89b2760c4ca8\out\legend-5b6e89b2760c4ca8.exe)
+
+running 3 tests
+test duplicate_implicit_ids_are_reported_instead_of_claiming_independent_visibility ... ok
+test explicit_ids_survive_reordering_and_removed_visibility_state_is_pruned ... ok
+test legend_click_toggles_once_with_discarded_layout_and_does_not_pan ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\line_cache.rs (target\debug\build\egui-customplot/5559611581a6c21e\out\line_cache-5559611581a6c21e.exe)
+
+running 5 tests
+test dpi_changes_miss_even_with_identical_logical_transform ... ok
+test data_transform_dpi_sampling_and_index_changes_cannot_reuse_stale_geometry ... ok
+test hits_skip_query_and_clip_work_but_keep_geometry_and_fresh_style ... ok
+test lru_promotes_hits_and_entry_count_caps_even_empty_results ... ok
+test budgets_evict_lru_reject_oversize_and_release_samples_independently ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running tests\line_sampling.rs (target\debug\build\egui-customplot/213ceb58936d4210\out\line_sampling-213ceb58936d4210.exe)
+
+running 4 tests
+test fallback_is_exact_and_cloned_index_bytes_are_deduplicated ... ok
+test unsorted_input_rejects_index_without_disabling_the_reference_renderer ... ok
+test indexed_visible_paths_equal_exact_across_domains_bounds_and_reversal ... ok
+test million_point_minmax_has_bounded_work_while_markers_still_visit_raw_data ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.31s
+
+     Running tests\line_styles.rs (target\debug\build\egui-customplot/1308d23c2689c865\out\line_styles-1308d23c2689c865.exe)
+
+running 2 tests
+test dashed_strokes_are_screen_spaced_and_keep_line_markers ... ok
+test invalid_dash_patterns_skip_stroke_but_do_not_hide_markers ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\linked_axes.rs (target\debug\build\egui-customplot/8ba6412627bff5de\out\linked_axes-8ba6412627bff5de.exe)
+
+running 4 tests
+test home_resets_the_group_to_auto_union_not_just_the_active_member ... ok
+test validation_is_transactional_for_scales_aspect_domains_context_and_stale_views ... ok
+test auto_union_follows_data_and_unlinked_axes_remain_independent ... ok
+test navigation_from_either_submission_order_shares_data_ranges_without_double_zoom ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\log_axes.rs (target\debug\build\egui-customplot/32d103c266d039b9\out\log_axes-32d103c266d039b9.exe)
+
+running 3 tests
+test log_domain_diagnostics_default_bounds_and_invalid_manual_bounds_are_explicit ... ok
+test log_zoom_uses_final_layout_rectangle_not_discarded_geometry ... ok
+test reversed_log_zoom_preserves_anchor_and_locked_axis_across_layout_passes ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\multivariate_composite.rs (target\debug\build\egui-customplot/335eb197fa0fc60d\out\multivariate_composite-335eb197fa0fc60d.exe)
+
+running 2 tests
+test categorical_heatmap_and_parallel_plot_support_table_ops_and_norms ... ok
+test stacked_scatterhistogram_and_plotmatrix_synchronize_views ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\pcolor_image.rs (target\debug\build\egui-customplot/42fd28c62e7c8bfe\out\pcolor_image-42fd28c62e7c8bfe.exe)
+
+running 2 tests
+test image_constructors_imshow_axes_and_transparent_pixel_hover_passthrough ... ok
+test pcolor_uses_nx_minus_1_cells_and_supports_flat_and_interp_shading ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\plot3d_analytic_implicit.rs (target\debug\build\egui-customplot/f8a5d4d08d509d5f\out\plot3d_analytic_implicit-f8a5d4d08d509d5f.exe)
+
+running 3 tests
+test trisurf_and_3d_trimesh_validate_pick_and_respect_hidden_line ... ok
+test fsurf_parametric_and_sphere_cylinder_ellipsoid_geometries_are_exact ... ok
+test fimplicit3_extracts_unit_sphere_handles_empty_and_guards_poles ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests\plot3d_core_lines.rs (target\debug\build\egui-customplot/5a3bcdb72fc241b7\out\plot3d_core_lines-5a3bcdb72fc241b7.exe)
+
+running 4 tests
+test fplot3_and_ezplot3_sample_parametrics_and_report_errors ... ok
+test comet3_and_animated_line3d_stay_idempotent_across_multipass_frames ... ok
+test plot3_validation_nan_breaks_log_reversed_axes_primitive_and_text3d ... ok
+test perspective_projection_and_multipass_navigation_and_legend_work_identically ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\plot3d_flow_volumes.rs (target\debug\build\egui-customplot/dca9ce30bffa62cf\out\plot3d_flow_volumes-dca9ce30bffa62cf.exe)
+
+running 2 tests
+test streamline3d_streamslice_and_streamparticles_stay_accurate_and_idempotent ... ok
+test streamribbon_twists_under_curl_streamtube_scales_under_divergence_and_coneplot_renders ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\plot3d_isosurface_tetramesh.rs (target\debug\build\egui-customplot/0d8bab321960764c\out\plot3d_isosurface_tetramesh-0d8bab321960764c.exe)
+
+running 2 tests
+test tetramesh_culls_shared_interior_faces_and_picks_tetrahedra ... ok
+test isosurface_and_isocaps_align_at_volume_boundaries_and_color_from_secondary_field ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running tests\plot3d_meshes_contours.rs (target\debug\build\egui-customplot/212dfed6beb44d36\out\plot3d_meshes_contours-212dfed6beb44d36.exe)
+
+running 2 tests
+test contour3_extracts_exact_height_isolines_from_field_and_surface ... ok
+test mesh_meshc_meshz_waterfall_and_ezmesh_match_topology_expectations ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\plot3d_scatter_discrete.rs (target\debug\build\egui-customplot/6fdd7010e6cb245c\out\plot3d_scatter_discrete-6fdd7010e6cb245c.exe)
+
+running 4 tests
+test scatter3_picks_foreground_point_along_same_viewing_ray ... ok
+test pie3_renders_extruded_cylinder_wedges_and_picks_hovered_slice ... ok
+test bubblechart3_and_swarmchart3_render_and_preserve_raw_indices ... ok
+test bar3_bar3h_and_stem3_render_all_modes_and_support_hover ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\plot3d_surfaces.rs (target\debug\build\egui-customplot/c6c4af773204ca18\out\plot3d_surfaces-c6c4af773204ca18.exe)
+
+running 3 tests
+test ribbon_and_surfnorm_emit_strips_normals_and_outward_quivers ... ok
+test surf_validates_renders_shadings_nan_holes_colorbar_and_primitive ... ok
+test surfc_ezsurfc_and_surfl_react_to_contours_and_lighting ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\plot3d_vectors_planes_depth.rs (target\debug\build\egui-customplot/9b1b12294814b82f\out\plot3d_vectors_planes_depth-9b1b12294814b82f.exe)
+
+running 3 tests
+test fill3_validates_triangulates_and_picks_3d_polygons ... ok
+test quiver3_renders_shafts_and_pyramid_heads_and_picks_endpoints ... ok
+test constantplane_clips_axial_and_diagonal_planes_against_axis_box ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\plot3d_volumes_slices.rs (target\debug\build\egui-customplot/8fb8f550f586fa74\out\plot3d_volumes_slices-8fb8f550f586fa74.exe)
+
+running 3 tests
+test scalar_volume_trilinear_sampling_gradients_bounds_and_nan_safety ... ok
+test contourslice_extracts_isolines_on_orthogonal_and_tilted_volume_planes ... ok
+test slice_orthogonal_and_arbitrary_planes_render_and_pick_regions ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\polar_hist_regions.rs (target\debug\build\egui-customplot/b9ead3c49f40f172\out\polar_hist_regions-b9ead3c49f40f172.exe)
+
+running 2 tests
+test polarhistogram_normalizations_and_rose_petals_are_consistent ... ok
+test polar_regions_wrap_around_and_hover_picking_hits_points_and_bins ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\polar_plots.rs (target\debug\build\egui-customplot/df8f1a1827427c96\out\polar_plots-df8f1a1827427c96.exe)
+
+running 3 tests
+test negative_radius_modes_and_orientations_behave_distinctly ... ok
+test polar_line_scatter_bubble_compass_and_functions_render_cleanly ... ok
+test polar_state_navigation_and_legend_toggle_are_idempotent_across_multipass ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\polygons_patches.rs (target\debug\build\egui-customplot/d0a7252824c1c0ba\out\polygons_patches-d0a7252824c1c0ba.exe)
+
+running 5 tests
+test patch_supports_face_and_gouraud_coloring_and_validates_lengths ... ok
+test polyshape_hole_does_not_capture_hover_while_outer_ring_does ... ok
+test concave_fill_and_confidence_band_skip_notch_and_split_nan_gaps ... ok
+test rectangles_and_ellipses_hit_test_rounded_geometry ... ok
+test line_primitive_composes_additively_and_reflects_host_data_replacement ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\primitive_lifecycle.rs (target\debug\build\egui-customplot/2c5bbcea47c2ec91\out\primitive_lifecycle-2c5bbcea47c2ec91.exe)
+
+running 3 tests
+test hidden_and_parent_clipped_primitives_do_no_geometry_work ... ok
+test transparent_bar_composition_preserves_fill_outline_then_next_record_order ... ok
+test primitive_payloads_are_shared_deduplicated_and_not_retained_by_plot_state_or_cache ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\quiver.rs (target\debug\build\egui-customplot/c11cf504594ee952\out\quiver-c11cf504594ee952.exe)
+
+running 6 tests
+test head_validation_and_dashes_are_explicit_and_heads_stay_solid ... ok
+test joint_domains_nonfinite_and_endpoint_overflow_reject_whole_records_without_reindexing ... ok
+test clipping_never_fabricates_heads_at_intersections_and_uses_full_length_for_head_size ... ok
+test ill_conditioned_extreme_crossings_diagnose_instead_of_inventing_edge_geometry ... ok
+test subpixel_zero_empty_and_short_vectors_never_create_arbitrary_full_size_heads ... ok
+test true_endpoints_bounds_and_screen_heads_follow_linear_log_reversed_axes ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\quiver_dpi.rs (target\debug\build\egui-customplot/8607d655a748e2fc\out\quiver_dpi-8607d655a748e2fc.exe)
+
+running 2 tests
+test theme_parent_plot_and_vector_overrides_style_both_parts_without_adding_point_markers ... ok
+test head_dimensions_are_logical_points_at_multiple_host_dpi_and_resized_views ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\quiver_lifecycle.rs (target\debug\build\egui-customplot/45074656ea3db407\out\quiver_lifecycle-45074656ea3db407.exe)
+
+running 3 tests
+test log_reversed_zoom_and_vector_geometry_match_with_layout_retries ... ok
+test parent_clip_visibility_and_legend_once_per_frame_cover_all_vector_parts ... ok
+test payloads_are_shared_deduplicated_and_released_while_state_context_and_line_cache_survive ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\quiver_picking.rs (target\debug\build\egui-customplot/5afd609243846740\out\quiver_picking-5afd609243846740.exe)
+
+running 4 tests
+test right_log_reversed_raw_anchors_keep_joint_domain_and_existing_formatter_contract ... ok
+test origin_and_true_endpoint_pick_original_vector_record_not_shaft_wing_or_clip_intersection ... ok
+test nearest_distance_and_first_submission_ties_respect_filled_layer_occlusion ... ok
+test visibility_and_numeric_rejections_match_rendering_even_when_heads_are_disabled ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\series.rs (target\debug\build\egui-customplot/cbf3a15a2473e089\out\series-cbf3a15a2473e089.exe)
+
+running 6 tests
+test hidden_series_do_not_affect_auto_bounds_or_scan_geometry ... ok
+test mixed_series_share_samples_and_batch_markers_in_one_mesh_per_series ... ok
+test hover_disabled_avoids_linear_pick_scan ... ok
+test hover_reports_original_sample_and_skips_transparent_zero_and_hidden_points ... ok
+test all_marker_shapes_support_singletons_and_hidpi ... ok
+test invalid_scalar_marker_radius_is_neither_rendered_nor_picked ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\stairs.rs (target\debug\build\egui-customplot/a4a9979c592edbaf\out\stairs-a4a9979c592edbaf.exe)
+
+running 6 tests
+test no_plateaus_are_fabricated_next_to_nonfinite_or_log_invalid_samples ... ok
+test clipped_steps_do_not_connect_along_view_edges_or_create_diagonals ... ok
+test empty_singleton_duplicates_and_unsorted_steps_keep_the_raw_series_contract ... ok
+test nonuniform_steps_use_raw_corners_endpoints_order_log_and_reversal ... ok
+test visible_matches_exact_with_nonuniform_duplicate_x_and_boundary_neighbors ... ok
+test minmax_reduces_raw_selection_before_step_expansion_without_diagonal_shortcuts ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+
+     Running tests\stairs_lifecycle.rs (target\debug\build\egui-customplot/704d457340a81e49\out\stairs_lifecycle-704d457340a81e49.exe)
+
+running 4 tests
+test zooming_steps_keeps_single_and_repeated_layout_navigation_identical ... ok
+test cache_keys_include_interpolation_while_styles_visibility_and_layout_remain_independent ... ok
+test minmax_omitted_raw_sample_is_still_pickable_and_snapshots_invalidate_step_geometry ... ok
+test raw_markers_and_right_axis_hover_never_treat_synthetic_corners_as_samples ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\stems.rs (target\debug\build\egui-customplot/752e21b1feae7903\out\stems-752e21b1feae7903.exe)
+
+running 5 tests
+test signed_dashes_restart_at_each_baseline_and_never_join_rod_endpoints ... ok
+test huge_crossing_rods_clip_in_data_space_without_false_baseline_or_endpoint_markers ... ok
+test invalid_baselines_reject_the_whole_layer_and_log_invalid_endpoints_stay_raw ... ok
+test empty_singleton_duplicate_positions_and_hidden_baseline_have_defined_geometry ... ok
+test rods_keep_raw_order_and_baseline_without_connecting_neighbors_in_each_domain ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+     Running tests\stems_lifecycle.rs (target\debug\build\egui-customplot/5afa51047b240f07\out\stems_lifecycle-5afa51047b240f07.exe)
+
+running 5 tests
+test hidden_and_parent_clipped_stems_skip_geometry_and_leave_no_stale_visibility ... ok
+test visibility_styles_zero_rods_and_baseline_only_match_raw_endpoint_picking ... ok
+test indexed_right_log_hover_preserves_raw_indices_axes_and_submission_ties ... ok
+test optional_index_narrows_endpoint_picking_but_rendering_still_scans_all_rods ... ok
+test samples_and_indexes_are_deduplicated_and_not_retained_by_state_context_or_line_cache ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+     Running tests\stems_navigation.rs (target\debug\build\egui-customplot/27d49af1f2fa6161\out\stems_navigation-27d49af1f2fa6161.exe)
+
+running 2 tests
+test log_reversed_navigation_and_stem_geometry_are_identical_with_layout_retries ... ok
+test legend_click_toggles_all_stem_components_once_without_navigating ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests\stream.rs (target\debug\build\egui-customplot/d2bcb10b55642e17\out\stream-d2bcb10b55642e17.exe)
+
+running 4 tests
+test invalid_capacity_and_budget_fail_before_large_allocation ... ok
+test ring_wrap_oversize_reports_and_immutable_snapshots_match_chronology ... ok
+test multipass_applies_batch_once_and_each_published_snapshot_has_a_new_version ... ok
+test ring_matches_reference_over_many_wraps_and_keeps_domain_breaks ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+     Running tests\styles.rs (target\debug\build\egui-customplot/89d44de2b807f711\out\styles-89d44de2b807f711.exe)
+
+running 7 tests
+test invalid_plot_stroke_widths_do_not_reach_the_painter ... ok
+test theme_parent_plot_and_series_precedence_reaches_painter ... ok
+test optional_layers_preserve_explicit_plot_values_and_builder_order ... ok
+test width_only_preserves_palette_and_empty_palette_is_safe ... ok
+test scatter_point_overrides_take_priority_over_transparent_zero_defaults ... ok
+test themes_do_not_mutate_host_or_neighbor_plot_style ... ok
+test transparent_zero_and_false_override_inherited_values_for_render_and_pick ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests\tooltip.rs (target\debug\build\egui-customplot/2899d79e22a0c6ea\out\tooltip-2899d79e22a0c6ea.exe)
+
+running 3 tests
+test cursor_formatter_runs_without_a_hit_but_not_when_hover_is_disabled_or_clipped ... ok
+test custom_formatter_receives_raw_pick_and_can_read_context_outside_locks ... ok
+test default_text_includes_series_and_original_index ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests\trees_elimination.rs (target\debug\build\egui-customplot/58203cf5841eef49\out\trees_elimination-58203cf5841eef49.exe)
+
+running 2 tests
+test treeplot_forest_layout_centers_parents_and_rejects_cycles ... ok
+test etreeplot_liu_algorithm_matches_known_sparse_matrices_and_scales_to_10k_chain ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests\triangulation_voronoi.rs (target\debug\build\egui-customplot/255686258bf6506c\out\triangulation_voronoi-255686258bf6506c.exe)
+
+running 3 tests
+test triplot_and_trimesh_dedup_edges_render_scalars_and_pick_vertices ... ok
+test voronoi_clips_rays_handles_collinear_and_picks_sites ... ok
+test alphashape_hole_vs_critical_alpha_and_region_picking ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+   Doc-tests egui_customplot
+
+running 2 tests
+test crates\egui-customplot\src\lib.rs - (line 19) ... ok
+test crates\egui-customplot\src\lib.rs - (line 8) ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+all doctests ran in 0.93s; merged doctests compilation took 0.83s
+exit_code=0
+===== 5_clippy_default =====
+cmd=cargo clippy --workspace --all-targets --locked -- -D warnings
+    Checking egui-customplot v0.1.0-dev (D:\littepoint\Documents\WorkingSpace\things\egui-customplot\crates\egui-customplot)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.40s
+exit_code=0
+===== 6_clippy_all_features =====
+cmd=cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.16s
+exit_code=0
+===== 7_release_demo =====
+cmd=cargo build --release -p customplot-demo --locked
+    Finished `release` profile [optimized] target(s) in 0.16s
+exit_code=0
+release_demo_sha256=BAE03F45F73B5BB39FFD8E0F59E3EB82FFF8D76B337EBF0D3344ACCDB37BFEE9
+matches_gallery_smoke=True

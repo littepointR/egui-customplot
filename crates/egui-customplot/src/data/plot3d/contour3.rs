@@ -105,11 +105,19 @@ impl Contour3DData {
                 });
             }
         }
-        Ok(Self {
+        Ok(Self::from_lines(levels, lines, extents))
+    }
+
+    pub(super) fn from_lines(
+        levels: Vec<f64>,
+        lines: Vec<Contour3DLine>,
+        extents: CachedExtents3D,
+    ) -> Self {
+        Self {
             levels: Arc::from(levels),
             lines: Arc::from(lines),
             extents,
-        })
+        }
     }
 
     pub fn levels(&self) -> &[f64] {
@@ -137,7 +145,7 @@ impl Contour3DData {
     }
 }
 
-fn resolve_levels(
+pub(super) fn resolve_levels(
     z_range: Option<[f64; 2]>,
     levels: ContourLevels,
 ) -> Result<Vec<f64>, ContourError> {
@@ -168,32 +176,30 @@ fn resolve_levels(
 }
 
 fn intersect_tri_z(tri: [Point3D; 3], lvl: f64) -> Option<[Point3D; 2]> {
-    let z = [
-        if (tri[0][2] - lvl).abs() < 1e-12 {
+    intersect_tri_scalar(tri, [tri[0][2], tri[1][2], tri[2][2]], lvl)
+}
+
+pub(super) fn intersect_tri_scalar(
+    tri: [Point3D; 3],
+    scalars: [f64; 3],
+    lvl: f64,
+) -> Option<[Point3D; 2]> {
+    let s = [0, 1, 2].map(|i| {
+        if (scalars[i] - lvl).abs() < 1e-12 {
             lvl + 1e-12
         } else {
-            tri[0][2]
-        },
-        if (tri[1][2] - lvl).abs() < 1e-12 {
-            lvl + 1e-12
-        } else {
-            tri[1][2]
-        },
-        if (tri[2][2] - lvl).abs() < 1e-12 {
-            lvl + 1e-12
-        } else {
-            tri[2][2]
-        },
-    ];
+            scalars[i]
+        }
+    });
     let mut hits = [None, None];
     let mut count = 0usize;
     for (i, j) in [(0, 1), (1, 2), (2, 0)] {
-        if (z[i] < lvl && z[j] > lvl) || (z[i] > lvl && z[j] < lvl) {
-            let t = (lvl - z[i]) / (z[j] - z[i]);
+        if (s[i] < lvl && s[j] > lvl) || (s[i] > lvl && s[j] < lvl) {
+            let t = (lvl - s[i]) / (s[j] - s[i]);
             let p = [
                 tri[i][0] + t * (tri[j][0] - tri[i][0]),
                 tri[i][1] + t * (tri[j][1] - tri[i][1]),
-                lvl,
+                tri[i][2] + t * (tri[j][2] - tri[i][2]),
             ];
             if count < 2 {
                 hits[count] = Some(p);
@@ -202,14 +208,23 @@ fn intersect_tri_z(tri: [Point3D; 3], lvl: f64) -> Option<[Point3D; 2]> {
         }
     }
     match (hits[0], hits[1]) {
-        (Some(a), Some(b)) if (a[0] - b[0]).hypot(a[1] - b[1]) > 1e-12 => Some([a, b]),
+        (Some(a), Some(b))
+            if ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)) > 1e-24 =>
+        {
+            Some([a, b])
+        }
         _ => None,
     }
 }
 
-fn stitch_chains(mut segs: Vec<[Point3D; 2]>) -> Vec<Vec<Point3D>> {
+pub(super) fn stitch_chains(mut segs: Vec<[Point3D; 2]>) -> Vec<Vec<Point3D>> {
     let mut chains = Vec::new();
-    let near = |a: Point3D, b: Point3D| (a[0] - b[0]).hypot(a[1] - b[1]) <= 1e-8;
+    let near = |a: Point3D, b: Point3D| {
+        let dx = a[0] - b[0];
+        let dy = a[1] - b[1];
+        let dz = a[2] - b[2];
+        dx * dx + dy * dy + dz * dz <= 1e-16
+    };
     while let Some([s0, s1]) = segs.pop() {
         let mut chain = vec![s0, s1];
         loop {

@@ -1,108 +1,29 @@
 mod bars_vecs_polys;
 mod lines_scatter;
 mod mesh_tri;
+mod scene_opts;
 mod summary;
 mod surfaces;
+mod volume_flow;
 
-use egui::{Color32, IdSalt, Stroke};
+use egui::IdSalt;
 
 pub use bars_vecs_polys::{Bar3D, Fill3D, Pie3D, Quiver3D, Stem3D};
 pub use lines_scatter::{Bubble3D, Comet3D, Line3D, Scatter3D, Swarm3D};
 pub use mesh_tri::{Contour3D, MeshSurface3D, MeshSurfaceStyle, TriSurf3D};
+pub use scene_opts::{BoxStyle3D, ConstantPlane3D, DepthMode, Text3D};
 pub(crate) use summary::summarize_plot3d;
 pub use surfaces::{LightSource3D, Ribbon3D, Surface3D, SurfaceShading};
+pub use volume_flow::{
+    ConePlot3D, Isocaps3D, Isosurface3D, StreamParticles3D, StreamRibbon3D, StreamTube3D,
+    Streamline3D, TetraMesh3D, VolumeSlice3D,
+};
 
 use crate::{
     AxisScale, Point3D,
     data::union_bounds3,
     model::{ResolvedPlotStyle, ResolvedSeriesStyle},
 };
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum DepthMode {
-    #[default]
-    SortedPainter,
-    ZBuffer,
-}
-
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum BoxStyle3D {
-    #[default]
-    BackPlanes,
-    FullBox,
-    AxesOnly,
-}
-
-/// 3D infinite plane `normal · [x, y, z] = offset` clipped to the axis box (`constantplane`, `EX-032`).
-#[derive(Clone, Debug, PartialEq)]
-pub struct ConstantPlane3D {
-    pub normal: [f64; 3],
-    pub offset: f64,
-    pub fill: Color32,
-    pub border: Option<Stroke>,
-    pub grid_divisions: usize,
-    pub label: String,
-}
-
-impl ConstantPlane3D {
-    pub fn new(normal: [f64; 3], offset: f64) -> Self {
-        Self {
-            normal,
-            offset,
-            fill: Color32::from_rgba_unmultiplied(70, 145, 220, 72),
-            border: Some(Stroke::new(1.2, Color32::from_rgb(45, 110, 180))),
-            grid_divisions: 0,
-            label: String::new(),
-        }
-    }
-    pub fn x_plane(x: f64) -> Self {
-        Self::new([1.0, 0.0, 0.0], x)
-    }
-    pub fn y_plane(y: f64) -> Self {
-        Self::new([0.0, 1.0, 0.0], y)
-    }
-    pub fn z_plane(z: f64) -> Self {
-        Self::new([0.0, 0.0, 1.0], z)
-    }
-    pub fn fill(mut self, color: Color32) -> Self {
-        self.fill = color;
-        self
-    }
-    pub fn border(mut self, stroke: impl Into<Option<Stroke>>) -> Self {
-        self.border = stroke.into();
-        self
-    }
-    pub fn grid_divisions(mut self, n: usize) -> Self {
-        self.grid_divisions = n.min(32);
-        self
-    }
-    pub fn label(mut self, label: impl Into<String>) -> Self {
-        self.label = label.into();
-        self
-    }
-}
-
-/// 3D data-space text label (`EX-026` in 3D axes).
-#[derive(Clone, Debug, PartialEq)]
-pub struct Text3D {
-    pub position: Point3D,
-    pub text: String,
-    pub color: Option<Color32>,
-}
-
-impl Text3D {
-    pub fn new(position: Point3D, text: impl Into<String>) -> Self {
-        Self {
-            position,
-            text: text.into(),
-            color: None,
-        }
-    }
-    pub fn color(mut self, color: Color32) -> Self {
-        self.color = Some(color);
-        self
-    }
-}
 
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
@@ -122,6 +43,15 @@ pub enum Layer3D<'a> {
     Contour(Contour3D<'a>),
     Ribbon(Ribbon3D<'a>),
     TriSurf(TriSurf3D<'a>),
+    VolumeSlice(VolumeSlice3D<'a>),
+    Isosurface(Isosurface3D<'a>),
+    Isocaps(Isocaps3D<'a>),
+    TetraMesh(TetraMesh3D<'a>),
+    Streamline(Streamline3D<'a>),
+    StreamParticles(StreamParticles3D<'a>),
+    StreamRibbon(StreamRibbon3D<'a>),
+    StreamTube(StreamTube3D<'a>),
+    ConePlot(ConePlot3D<'a>),
 }
 
 impl<'a> From<Line3D<'a>> for Layer3D<'a> {
@@ -199,6 +129,51 @@ impl<'a> From<TriSurf3D<'a>> for Layer3D<'a> {
         Self::TriSurf(v)
     }
 }
+impl<'a> From<VolumeSlice3D<'a>> for Layer3D<'a> {
+    fn from(v: VolumeSlice3D<'a>) -> Self {
+        Self::VolumeSlice(v)
+    }
+}
+impl<'a> From<Isosurface3D<'a>> for Layer3D<'a> {
+    fn from(v: Isosurface3D<'a>) -> Self {
+        Self::Isosurface(v)
+    }
+}
+impl<'a> From<Isocaps3D<'a>> for Layer3D<'a> {
+    fn from(v: Isocaps3D<'a>) -> Self {
+        Self::Isocaps(v)
+    }
+}
+impl<'a> From<TetraMesh3D<'a>> for Layer3D<'a> {
+    fn from(v: TetraMesh3D<'a>) -> Self {
+        Self::TetraMesh(v)
+    }
+}
+impl<'a> From<Streamline3D<'a>> for Layer3D<'a> {
+    fn from(v: Streamline3D<'a>) -> Self {
+        Self::Streamline(v)
+    }
+}
+impl<'a> From<StreamParticles3D<'a>> for Layer3D<'a> {
+    fn from(v: StreamParticles3D<'a>) -> Self {
+        Self::StreamParticles(v)
+    }
+}
+impl<'a> From<StreamRibbon3D<'a>> for Layer3D<'a> {
+    fn from(v: StreamRibbon3D<'a>) -> Self {
+        Self::StreamRibbon(v)
+    }
+}
+impl<'a> From<StreamTube3D<'a>> for Layer3D<'a> {
+    fn from(v: StreamTube3D<'a>) -> Self {
+        Self::StreamTube(v)
+    }
+}
+impl<'a> From<ConePlot3D<'a>> for Layer3D<'a> {
+    fn from(v: ConePlot3D<'a>) -> Self {
+        Self::ConePlot(v)
+    }
+}
 
 impl<'a> Layer3D<'a> {
     pub fn name(self) -> &'a str {
@@ -230,6 +205,15 @@ impl<'a> Layer3D<'a> {
             Self::Contour(s) => s.name,
             Self::Ribbon(s) => s.name,
             Self::TriSurf(s) => s.name,
+            Self::VolumeSlice(s) => s.name,
+            Self::Isosurface(s) => s.name,
+            Self::Isocaps(s) => s.name,
+            Self::TetraMesh(s) => s.name,
+            Self::Streamline(s) => s.name,
+            Self::StreamParticles(s) => s.name,
+            Self::StreamRibbon(s) => s.name,
+            Self::StreamTube(s) => s.name,
+            Self::ConePlot(s) => s.name,
         }
     }
 
@@ -250,6 +234,15 @@ impl<'a> Layer3D<'a> {
             Self::Contour(s) => s.id_salt,
             Self::Ribbon(s) => s.id_salt,
             Self::TriSurf(s) => s.id_salt,
+            Self::VolumeSlice(s) => s.id_salt,
+            Self::Isosurface(s) => s.id_salt,
+            Self::Isocaps(s) => s.id_salt,
+            Self::TetraMesh(s) => s.id_salt,
+            Self::Streamline(s) => s.id_salt,
+            Self::StreamParticles(s) => s.id_salt,
+            Self::StreamRibbon(s) => s.id_salt,
+            Self::StreamTube(s) => s.id_salt,
+            Self::ConePlot(s) => s.id_salt,
         };
         custom.unwrap_or_else(|| IdSalt::new(("layer3d", self.name(), index)))
     }
@@ -283,6 +276,15 @@ impl<'a> Layer3D<'a> {
             Self::Contour(s) => s.style,
             Self::Ribbon(s) => s.style,
             Self::TriSurf(s) => s.style,
+            Self::VolumeSlice(s) => s.style,
+            Self::Isosurface(s) => s.style,
+            Self::Isocaps(s) => s.style,
+            Self::TetraMesh(s) => s.style,
+            Self::Streamline(s) => s.style,
+            Self::StreamParticles(s) => s.style,
+            Self::StreamRibbon(s) => s.style,
+            Self::StreamTube(s) => s.style,
+            Self::ConePlot(s) => s.style,
         };
         if let Some(c) = st.color {
             st.color = Some(c);
@@ -343,6 +345,15 @@ impl<'a> Layer3D<'a> {
                 .data
                 .and_then(|m| m.extent(scales))
                 .or_else(|| s.implicit.and_then(|imp| imp.extent(scales))),
+            Self::VolumeSlice(s) => s.data.extent(scales),
+            Self::Isosurface(s) => s.data.extent(scales),
+            Self::Isocaps(s) => s.data.extent(scales),
+            Self::TetraMesh(s) => s.data.extent(scales),
+            Self::Streamline(s) => s.data.extent(scales),
+            Self::StreamParticles(s) => s.data.extent(scales),
+            Self::StreamRibbon(s) => s.data.extent(scales),
+            Self::StreamTube(s) => s.data.extent(scales),
+            Self::ConePlot(s) => s.data.extent(scales),
         }
     }
 }

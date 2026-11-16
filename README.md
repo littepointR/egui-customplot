@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）与阶段 9A/9B 三维核心、双深度引擎、三维基本图元及曲面/网格/解析/隐式/三维等高线已实现并持续验证，尚非完整绘图库。**
+**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）与阶段 9 全三维能力（Stage 9A～9C：核心坐标、双深度引擎、三维基本图元、曲面网格解析隐式与体切片/等值面/四面体/三维流可视化）已实现并持续验证，尚非完整绘图库。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -29,6 +29,7 @@ cargo run -p customplot-demo --release --locked -- --polar
 cargo run -p customplot-demo --release --locked -- --networks
 cargo run -p customplot-demo --release --locked -- --plot3d
 cargo run -p customplot-demo --release --locked -- --surfaces3d
+cargo run -p customplot-demo --release --locked -- --volumes3d
 ```
 
 - 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
@@ -47,6 +48,7 @@ cargo run -p customplot-demo --release --locked -- --surfaces3d
 - `--networks` 展示无向 `GraphLayout::Force` 多边/自环/高亮、有向 `GraphLayout::Layered` DAG 与双向曲线箭头、`GraphData::from_spy` `gplot` 空间网格及 `TreeData` / `EliminationTree`（Liu 1990 `O(nnz)`）。
 - `--plot3d` 展示 `Plot3D` 三维核心（正交 / 透视、左键轨道旋转 / 右键平移 / Home 复位与 `SortedPainter` / 有界 360px 软件 `ZBuffer` 切换）与 `plot3`、`fplot3`、`ezplot3`、`comet3`、`scatter3`、`bubblechart3`、`swarmchart3`、`bar3`/`bar3h`、`stem3`、`quiver3`、`fill3`、`constantplane`、`pie3`；三维着色 / Z-buffer 网格在混合 SVG 中内嵌 PNG 栅格（无 `<text`）。
 - `--surfaces3d` 展示 Stage 9B 三维曲面与网格套件：`surf` / `surfc` / `surfl` / `surfnorm`（`Faceted` / `Flat` / `Interp` Gouraud 插值与共享 `ColorBar`）、`mesh` / `meshc` / `meshz` / `waterfall`（可选隐藏线遮挡）、`contour3`、`ribbon`、`fsurf` / `fmesh` / `ez*`、`fimplicit3`（6 四面体 Marching Tetrahedra + 极点守卫）及 `sphere` / `cylinder` / `ellipsoid` / `trisurf`（`ZBuffer` 切换）。
+- `--volumes3d` 展示 Stage 9C 三维体数据与流可视化套件：`slice`（正交 + 倾斜凸六边切片与共享 `ColorBar`）、`contourslice`、`isosurface` + `isocaps`（次级体积场着色与外边界端盖 `ZBuffer`）、`tetramesh`（共享内面剔除开关）、3D `streamline` / `streamslice` / 动画 `streamparticles` 与 `streamribbon` / `streamtube` / `coneplot`。
 - Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
 - 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
 - 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
@@ -101,6 +103,7 @@ cargo bench -p egui-customplot --bench stage8c_performance --locked
 cargo bench -p egui-customplot --bench stage8d_performance --locked
 cargo bench -p egui-customplot --bench stage9a_performance --locked
 cargo bench -p egui-customplot --bench stage9b_performance --locked
+cargo bench -p egui-customplot --bench stage9c_performance --locked
 cargo run -p egui-customplot --example export_snapshot --features export --release --locked -- target/exports/example
 ```
 
@@ -112,7 +115,7 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 
 - [源码职责、目录和扩展规则](docs/ARCHITECTURE.md)：按 data / model / axis / layout / interaction / render / widget 分域，带架构回归检查。
 - [全量实施进度](docs/PROGRESS.md)
-- [阶段 9 三维与体数据：三维核心、双深度引擎及点线柱杆矢量饼平面与曲面网格隐式（Stage 9A + 9B）](docs/STAGE_9.md)
+- [阶段 9 三维与体数据：三维全能力与 Stage 9A～9C 证据](docs/STAGE_9.md)
 - [阶段 8 阶梯线 / 茎状图 / 二维矢量场及二维类型补全](docs/STAGE_8.md)
 - [阶段 7 显示快照、PNG / 混合 SVG 与字体 / 分辨率边界](docs/STAGE_7.md)
 - [阶段 6 多面板、双轴、数值网格、柱 / 误差棒与直方图](docs/STAGE_6.md)
@@ -127,6 +130,6 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 - [egui 集成、性能与资源占用约束](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)：原生嵌入、多遍布局、按需重绘、CPU / GPU 预算与长期验收要求。
 - 推荐推进顺序：最小闭环 → 绘图能力 → 定制能力 → 数据性能 → 按需 GPU 加速 → 导出与发布。
 
-尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、三维体切片与流可视化（Stage 9C）、地理绘图（Stage 10）与完整类别/堆积全量核销（Stage 11）；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网、全区 10 万非零 `spy` 与高密三维 Z-buffer/网格/`fimplicit3` 等值提取的 CPU / 几何成本很高（`ZBuffer` 限制为最大 360px 边长且不代表硬件 GPU 光栅化），没有静默 LOD 或帧率承诺。MATLAB 清单已有 120 项“开发中”（13 项“未实现”），没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
+尚无独立印刷布局 / 全矢量文字导出、专用 GPU 后端、全局资源硬预算、地理绘图（Stage 10）与完整类别/堆积全量核销（Stage 11）；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网、全区 10 万非零 `spy` 与高密三维 Z-buffer/网格/`fimplicit3`/`isosurface` 等值提取的 CPU / 几何成本很高（`ZBuffer` 限制为最大 360px 边长且不代表硬件 GPU 光栅化），没有静默 LOD 或帧率承诺。MATLAB 清单已有 129 项“开发中”（4 项“未实现”），没有图类型通过完整交付门槛；不能声称已交付 133 项能力。历史 Windows / Ubuntu 自动检查不替代本轮 CI 或跨平台显示实机验证。
 
 许可证尚未决定，workspace 包均设为 `publish = false`；本项目没有默认授予开源许可。

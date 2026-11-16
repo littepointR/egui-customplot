@@ -38,7 +38,7 @@ crates/egui-customplot/
       composite.rs            # StackedPlot / ScatterHistogram / PlotMatrix 复合切片与作用域聚合
       polar/                  # PolarCurve / PolarHistogram / Rose / PolarBubble / Compass / 自适应 fpolarplot 数据
       graph/                  # GraphData / Circle / Force / Sugiyama Layered / TreeData / Liu EliminationTree 数据
-      plot3d/                 # Stage 9A/9B: 线/散点/柱/茎/矢量/多边形 + Surface3DData / Contour3DData / Ribbon3DData / analytic_surf / TriMesh3DData / ImplicitSurface3DData (八域缓存)
+      plot3d/                 # Stage 9A～9C: 线/散点/柱/茎/矢量/多边形、曲面网格、ScalarVolume3D / VolumeSliceData / Isosurface3D / Isocaps3D / TetraMesh3D / VectorField3D / Stream*3D / ConePlot3D
     model/
       line.rs                 # 折线的借用描述与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -64,7 +64,7 @@ crates/egui-customplot/
       bubble_swarm.rs / distribution.rs # Bubble / Swarm / Bivariate 与 Box / Violin / Raincloud 图层模型
       pie_clouds.rs / multivariate.rs   # Pie / Donut、WordCloud / BubbleCloud 与 ParallelCoords 图层模型
       polar.rs / polar_region.rs / graph.rs # Polar* 图层、PolarRegionAnnotation 与 GraphPlot / GraphHighlight
-      plot3d/                 # Layer3D / Line3D..Fill3D / Surface3D / MeshSurface3D / Contour3D / Ribbon3D / TriSurf3D / DepthMode / ConstantPlane3D / Text3D / summarize_plot3d
+      plot3d/                 # Stage 9A～9C: scene_opts / Layer3D / surfaces / mesh_tri / volume_flow (VolumeSlice/Iso*/TetraMesh/Stream*/ConePlot) / summarize_plot3d
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -92,7 +92,7 @@ crates/egui-customplot/
       quiver.rs               # 原始向量（Quiver / Feather）两锚点拾取、记录提示，复用点层距离仲裁
       region/                 # 面积 / 多边形 / 面片 / 矩形 / 等高线 / 伪彩 / 图像 / Alpha / Stage 8C / GraphEdge 区域命中
       hover.rs                # 填充层遮挡（含 Area / GraphEdge 共层优先级）及原始点最近距离仲裁
-      plot3d/                 # Plot3DState 多遍轨道旋转/平移/缩放、Legend 与深度优先三维点/柱/填充面/扇区及曲面拾取
+      plot3d/                 # Stage 9A～9C: Plot3DState 导航、Legend、三维点/柱/填充面/扇区/曲面及体切片/四面体/流粒子实时拾取 (volume_hover)
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
@@ -114,7 +114,7 @@ crates/egui-customplot/
       bubble_bivariate.rs / distribution.rs / pie_clouds.rs # 气泡群、双变量分箱、统计分布与饼图/词云绘制
       multivariate.rs / stage8c.rs / polar/ / graph.rs # ParallelCoords、Stage 8C、极坐标系与图网络箭头标签绘制
       right_axis.rs           # 右 Y 刻度与标签
-      plot3d/                 # Stage 9A/9B: 三背墙坐标框、SortedPainter 与 360px Gouraud ZBuffer、曲面/光照/隐藏线网格/等高线/ribbon/trisurf 场景收集
+      plot3d/                 # Stage 9A～9C: 三背墙坐标框、SortedPainter 与 360px Gouraud ZBuffer、曲面/网格/体切片/等值面/端盖/四面体/流带流管圆锥场景收集
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
         raster.rs / png.rs    # 有界 CPU 预乘合成与 RGBA8 编码
@@ -170,6 +170,10 @@ crates/egui-customplot/
     plot3d_meshes_contours.rs     # Stage 9B contour3 / mesh / meshc / meshz / waterfall / fmesh / ezmesh* / histogram2 3D 回归
     plot3d_analytic_implicit.rs   # Stage 9B fsurf / sphere / cylinder / ellipsoid / fimplicit3（Kuhn + 极点守卫）/ trisurf / 3D trimesh 回归
     export_stage9b.rs             # Stage 9B 混合 Figure 宿主释放导出与 ZBuffer Gouraud Interp 逐像素渐进验证
+    plot3d_volumes_slices.rs      # Stage 9C ScalarVolume3D 三线性/梯度、正交+倾斜 slice 与 contourslice 回归
+    plot3d_isosurface_tetramesh.rs # Stage 9C isosurface + 次级着色、isocaps 外边界端盖与 tetramesh 共享面剔除回归
+    plot3d_flow_volumes.rs        # Stage 9C 3D streamline / streamslice / 幂等 streamparticles / 涡度 streamribbon / 散度 streamtube / coneplot 回归
+    export_stage9c.rs             # Stage 9C SortedPainter slice+contourslice 与 ZBuffer iso+caps+streamtube+coneplot 混合导出
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -183,6 +187,7 @@ crates/egui-customplot/
     stage8d_performance.rs    # 极坐标 50k/100k 分箱/rosette/罗盘、Force/Layered 图网络与万节点消去树 CPU
     stage9a_performance.rs    # 三维 50k Helix / 10k 散点气泡 / 5k 蜂群 / 32x32 柱 / 2k 茎矢 / Z-buffer 面片与 fplot3+pie3 CPU
     stage9b_performance.rs    # Stage 9B Interp 128x128 / surfc+surfl / meshz / waterfall+ribbon / contour3 / fimplicit3 48^3 E2E / ZBuffer trisurf CPU
+    stage9c_performance.rs    # Stage 9C 64^3 切片与轮廓切片 / 48^3 ZBuffer 等值面端盖 / 2k 四面体 / 流粒子/流带流管/千锥 CPU
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -202,6 +207,7 @@ examples/demo/src/
   networks.rs                 # 无向 Force 图、有向 Layered DAG、gplot 网格、treeplot 与 etreeplot gallery
   plot3d.rs                   # Stage 9A 三维线/参数曲线/comet3/散点气泡/蜂群茎/分组水平柱/矢量交叉面/参考面/3D饼图 gallery
   surfaces3d.rs               # Stage 9B surf/surfc/surfl/surfnorm/mesh*/waterfall/contour3/ribbon/fsurf/fimplicit3/sphere/cylinder/ellipsoid/trisurf gallery
+  volumes3d.rs                # Stage 9C slice/contourslice/isosurface/isocaps/tetramesh/streamline/streamslice/streamparticles/streamribbon/streamtube/coneplot gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

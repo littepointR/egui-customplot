@@ -1,0 +1,13 @@
+date=2026-11-16T13:33:58.4579730+08:00
+cpu=Intel(R) Core(TM) i9-14900KF
+os=Microsoft Windows NT 10.0.26300.0
+rust=rustc 1.100.0 (0ef1bc386 2026-11-09)
+git_head=b1b23acdeb4e0783688206c5d117a21b0e80e103
+source=uncommitted stage9c 3D volumetric slices, isosurfaces, isocaps, tetramesh & 3D flow plots on top of git_head
+completed=2026-11-16T13:37:29.8574619+08:00
+exit_code=0
+executable=target/release/build/egui-customplot/9ef6a914445dd956/out/stage9c_performance-9ef6a914445dd956.exe
+sha256=67761706D0ED428A51E0AA32D0DEA288EA9E5EE9FC526ED08781FB8BA45D1E30
+cargo=cargo 1.100.0 (3acc79c0c 2026-11-05)
+seconds_per_scene=30; 7 scenes + 7 preprocess p50; Plot3D height=1080; dpi=1; show_legend=false; show_hover=false; normal_priority
+Shared machine during development. Headless CPU UI build + egui tessellation only; excludes wgpu/glow upload, GPU rasterization, swapchain presentation, and real FPS.
