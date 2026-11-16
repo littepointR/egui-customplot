@@ -3,17 +3,20 @@ use std::sync::Arc;
 use egui::{AsIdSalt, IdSalt, Response, Sense, Ui};
 
 use crate::{
-    Axis3D, AxisScale, Bounds3D, BoxStyle3D, BubbleLegend, Camera3D, ConstantPlane3D, DataAspect3D,
-    DepthMode, Hovered3DBar, Hovered3DPoint, Hovered3DRegion, Layer3D, LegendEntry, Plot3DState,
-    PlotBounds, PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme, PlotTransform, Point3D,
-    Projection3D, Text3D, Transform3D,
+    Axis, Axis3D, AxisScale, Bounds3D, BoxStyle3D, BubbleLegend, Camera3D, ColorScale,
+    ConstantPlane3D, DataAspect3D, DepthMode, Hovered3DBar, Hovered3DPoint, Hovered3DRegion,
+    Layer3D, LegendEntry, Plot3DState, PlotBounds, PlotDiagnostics, PlotResponse, PlotStyle,
+    PlotTheme, PlotTransform, Projection3D, Text3D, Transform3D,
     interaction::{navigate_plot3d, pick_plot3d_hover, show_plot3d_legend},
-    layout::{allocate_plot, bubble_legend_size, compute_plot3d_layout, paint_bubble_legend},
+    layout::{
+        allocate_plot, bubble_legend_size, compute_auto_bounds_3d, compute_plot3d_layout,
+        paint_bubble_legend,
+    },
     model::{resolve_plot_style, summarize_plot3d},
-    render::paint_plot3d,
+    render::{paint_color_bar, paint_plot3d},
 };
 
-/// 3D Cartesian axes widget (`plot3`, `scatter3`, `bubblechart3`, `swarmchart3`, `bar3`/`bar3h`, `stem3`, `quiver3`, `fill3`, `pie3`, `constantplane`, `comet3`).
+/// 3D Cartesian axes widget (`plot3`, `surf`, `mesh`, `contour3`, `fimplicit3`, `trisurf`, etc.).
 pub struct Plot3D {
     id_salt: IdSalt,
     height: f32,
@@ -26,6 +29,7 @@ pub struct Plot3D {
     planes: Arc<[ConstantPlane3D]>,
     texts: Arc<[Text3D]>,
     bubble_legend: Option<BubbleLegend>,
+    color_bar: Option<(ColorScale, String)>,
     allow_scroll_zoom: bool,
     show_legend: bool,
     show_hover: bool,
@@ -89,6 +93,7 @@ impl Plot3D {
             planes: Arc::from([]),
             texts: Arc::from([]),
             bubble_legend: None,
+            color_bar: None,
             allow_scroll_zoom: false,
             show_legend: true,
             show_hover: true,
@@ -170,6 +175,10 @@ impl Plot3D {
         self.bubble_legend = Some(legend);
         self
     }
+    pub fn color_bar(mut self, scale: ColorScale, label: impl Into<String>) -> Self {
+        self.color_bar = Some((scale, label.into()));
+        self
+    }
     pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
         self.allow_scroll_zoom = allow;
         self
@@ -210,7 +219,7 @@ impl Plot3D {
         let (mut diagnostics, present, raw_extent) =
             summarize_plot3d(layers, scales, |id| state.layer_visible(id));
         state.retain_layers(&present);
-        let auto_bounds = compute_auto_bounds(
+        let auto_bounds = compute_auto_bounds_3d(
             raw_extent,
             [&self.axes[0], &self.axes[1], &self.axes[2]],
             scales,
@@ -236,8 +245,13 @@ impl Plot3D {
             .as_ref()
             .zip(bubble_samples.as_ref())
             .map(|(b, s)| bubble_legend_size(b, s));
-        let layout =
-            compute_plot3d_layout(outer, !self.title.is_empty(), legend_count, bubble_size);
+        let layout = compute_plot3d_layout(
+            outer,
+            !self.title.is_empty(),
+            legend_count,
+            bubble_size,
+            self.color_bar.is_some(),
+        );
 
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id, self.camera);
@@ -299,6 +313,18 @@ impl Plot3D {
             ) {
                 paint_bubble_legend(ui, area, legend, samples, style.text_color);
             }
+            if let (Some(bar_rect), Some((scale, label))) = (layout.color_bar_rect, &self.color_bar)
+            {
+                let ticks = Axis::new()
+                    .scale(scale.scale())
+                    .ticks(scale.range(), bar_rect.height());
+                let outer_cb = egui::Rect::from_min_max(
+                    egui::pos2(bar_rect.left(), bar_rect.top() - 20.0),
+                    egui::pos2(bar_rect.left() + 72.0, bar_rect.bottom() + 8.0),
+                )
+                .intersect(layout.outer);
+                paint_color_bar(ui, outer_cb, bar_rect, *scale, &ticks, label);
+            }
         }
 
         let legend_entries = layout.legend_rect.map_or_else(Vec::new, |rect| {
@@ -342,36 +368,4 @@ impl Plot3D {
             legend_entries,
         }
     }
-}
-
-fn compute_auto_bounds(
-    extent: Option<[Point3D; 2]>,
-    axes: [&Axis3D; 3],
-    scales: [AxisScale; 3],
-) -> Bounds3D {
-    let mut lo = extent.map_or([-1.0; 3], |[a, _]| a);
-    let mut hi = extent.map_or([1.0; 3], |[_, b]| b);
-    for i in 0..3 {
-        if let Some([alo, ahi]) = axes[i].manual_bounds() {
-            lo[i] = alo;
-            hi[i] = ahi;
-        } else if extent.is_none() {
-            if scales[i] == AxisScale::Log10 {
-                lo[i] = 1.0;
-                hi[i] = 10.0;
-            }
-        } else if scales[i] == AxisScale::Log10 {
-            lo[i] = (lo[i] * 0.8).max(f64::MIN_POSITIVE);
-            hi[i] *= 1.25;
-            if hi[i] <= lo[i] {
-                hi[i] = lo[i] * 10.0;
-            }
-        } else {
-            let span = (hi[i] - lo[i]).abs();
-            let pad = if span <= 1e-12 { 0.5 } else { span * 0.06 };
-            lo[i] -= pad;
-            hi[i] += pad;
-        }
-    }
-    Bounds3D::new(lo, hi).unwrap_or_default()
 }

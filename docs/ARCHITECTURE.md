@@ -38,7 +38,7 @@ crates/egui-customplot/
       composite.rs            # StackedPlot / ScatterHistogram / PlotMatrix 复合切片与作用域聚合
       polar/                  # PolarCurve / PolarHistogram / Rose / PolarBubble / Compass / 自适应 fpolarplot 数据
       graph/                  # GraphData / Circle / Force / Sugiyama Layered / TreeData / Liu EliminationTree 数据
-      plot3d/                 # Stage 9A: Point3DData / ParametricCurve3DData / AnimatedLine3D / Bubble3D / Swarm3D / Bar3D / Stem3D / Pie3D / Quiver3D / Polygon3DData (八域缓存)
+      plot3d/                 # Stage 9A/9B: 线/散点/柱/茎/矢量/多边形 + Surface3DData / Contour3DData / Ribbon3DData / analytic_surf / TriMesh3DData / ImplicitSurface3DData (八域缓存)
     model/
       line.rs                 # 折线的借用描述与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -64,7 +64,7 @@ crates/egui-customplot/
       bubble_swarm.rs / distribution.rs # Bubble / Swarm / Bivariate 与 Box / Violin / Raincloud 图层模型
       pie_clouds.rs / multivariate.rs   # Pie / Donut、WordCloud / BubbleCloud 与 ParallelCoords 图层模型
       polar.rs / polar_region.rs / graph.rs # Polar* 图层、PolarRegionAnnotation 与 GraphPlot / GraphHighlight
-      plot3d/                 # Layer3D / Line3D / Scatter3D / Bubble3D / Swarm3D / Comet3D / Bar3D / Stem3D / Pie3D / Quiver3D / Fill3D / DepthMode / ConstantPlane3D / Text3D / summarize_plot3d
+      plot3d/                 # Layer3D / Line3D..Fill3D / Surface3D / MeshSurface3D / Contour3D / Ribbon3D / TriSurf3D / DepthMode / ConstantPlane3D / Text3D / summarize_plot3d
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
@@ -75,7 +75,7 @@ crates/egui-customplot/
       grid.rs / rect.rs       # 单元可见查询、定位、f64 矩形 / 轴向线段裁剪
       segment.rs              # 共用归一化线段裁剪、向量投影及图网络曲线/自环几何
       polygon.rs              # [0,1]^2 Sutherland-Hodgman 三角裁剪与点环判定
-      plot3d/                 # Bounds3D / Axis3D / Camera3D / Projection3D / Transform3D / [0,1]^3 裁剪与平面立方体求交
+      plot3d/                 # Stage 9A/9B: 三维坐标裁剪/投影、ClipVertex3D Gouraud 裁剪与平面立方体求交
       y_axis.rs / linked.rs   # 左右归属、共享范围与变换组装
     layout/
       plot.rs / polar.rs / plot3d.rs # 宿主空间分配、极坐标正圆 / 三维 Plot3D 排布、标题 / 轴标签留白
@@ -92,7 +92,7 @@ crates/egui-customplot/
       quiver.rs               # 原始向量（Quiver / Feather）两锚点拾取、记录提示，复用点层距离仲裁
       region/                 # 面积 / 多边形 / 面片 / 矩形 / 等高线 / 伪彩 / 图像 / Alpha / Stage 8C / GraphEdge 区域命中
       hover.rs                # 填充层遮挡（含 Area / GraphEdge 共层优先级）及原始点最近距离仲裁
-      plot3d/                 # Plot3DState 多遍轨道旋转/平移/滚轮缩放、Legend 开关与深度优先三维点/柱/填充面/扇区拾取
+      plot3d/                 # Plot3DState 多遍轨道旋转/平移/缩放、Legend 与深度优先三维点/柱/填充面/扇区及曲面拾取
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
@@ -114,7 +114,7 @@ crates/egui-customplot/
       bubble_bivariate.rs / distribution.rs / pie_clouds.rs # 气泡群、双变量分箱、统计分布与饼图/词云绘制
       multivariate.rs / stage8c.rs / polar/ / graph.rs # ParallelCoords、Stage 8C、极坐标系与图网络箭头标签绘制
       right_axis.rs           # 右 Y 刻度与标签
-      plot3d/                 # 三维三背墙坐标框、Lambertian 面片场景、SortedPainter 排序器与 360px 有界 WHITE_UV 软件 Z-buffer
+      plot3d/                 # Stage 9A/9B: 三背墙坐标框、SortedPainter 与 360px Gouraud ZBuffer、曲面/光照/隐藏线网格/等高线/ribbon/trisurf 场景收集
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
         raster.rs / png.rs    # 有界 CPU 预乘合成与 RGBA8 编码
@@ -123,7 +123,7 @@ crates/egui-customplot/
     widget/
       mod.rs                  # Plot 公开配置 builder（含 imshow_axes / spy_axes / graph_axes）
       polar.rs                # 独立极坐标 PolarPlot 控件与 PolarPlotResponse::into_plot_response
-      plot3d.rs               # 独立三维 Plot3D 控件、Plot3DResponse::into_plot_response 与八域自动边界
+      plot3d.rs               # 独立三维 Plot3D 控件、Plot3D::color_bar 与 Plot3DResponse::into_plot_response
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
       response.rs             # 宿主可读取的本遍返回值
       figure/                 # Figure（含图窗级 annotations / polar_plot / plot3d）与 cell 原生 Ui 接入，样本仍归宿主
@@ -166,6 +166,10 @@ crates/egui-customplot/
     plot3d_scatter_discrete.rs    # Stage 9A scatter3 / bubblechart3 / swarmchart3 / bar3 / bar3h / stem3 / pie3 回归
     plot3d_vectors_planes_depth.rs # Stage 9A quiver3 / fill3 / constantplane 与立方体平面裁剪回归
     export_stage9a.rs             # Stage 9A SortedPainter/ZBuffer 混合 Figure SVG/PNG 与互相交叉三维面片逐像素遮挡测试
+    plot3d_surfaces.rs            # Stage 9B surf / surfc / surfl / surfnorm / ribbon / ezsurf* / ColorBar / surface primitive 回归
+    plot3d_meshes_contours.rs     # Stage 9B contour3 / mesh / meshc / meshz / waterfall / fmesh / ezmesh* / histogram2 3D 回归
+    plot3d_analytic_implicit.rs   # Stage 9B fsurf / sphere / cylinder / ellipsoid / fimplicit3（Kuhn + 极点守卫）/ trisurf / 3D trimesh 回归
+    export_stage9b.rs             # Stage 9B 混合 Figure 宿主释放导出与 ZBuffer Gouraud Interp 逐像素渐进验证
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -178,6 +182,7 @@ crates/egui-customplot/
     stage8c_performance.rs    # 双变量 200k / 分布 50k / 气泡群 5k / 平行坐标 / 云图 / 4x4 散点矩阵 CPU
     stage8d_performance.rs    # 极坐标 50k/100k 分箱/rosette/罗盘、Force/Layered 图网络与万节点消去树 CPU
     stage9a_performance.rs    # 三维 50k Helix / 10k 散点气泡 / 5k 蜂群 / 32x32 柱 / 2k 茎矢 / Z-buffer 面片与 fplot3+pie3 CPU
+    stage9b_performance.rs    # Stage 9B Interp 128x128 / surfc+surfl / meshz / waterfall+ribbon / contour3 / fimplicit3 48^3 E2E / ZBuffer trisurf CPU
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -196,6 +201,7 @@ examples/demo/src/
   polar.rs                    # 极坐标曲线/fpolar/ezpolar、散点/气泡、polarhistogram/rose、罗盘与极坐标区域 gallery
   networks.rs                 # 无向 Force 图、有向 Layered DAG、gplot 网格、treeplot 与 etreeplot gallery
   plot3d.rs                   # Stage 9A 三维线/参数曲线/comet3/散点气泡/蜂群茎/分组水平柱/矢量交叉面/参考面/3D饼图 gallery
+  surfaces3d.rs               # Stage 9B surf/surfc/surfl/surfnorm/mesh*/waterfall/contour3/ribbon/fsurf/fimplicit3/sphere/cylinder/ellipsoid/trisurf gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

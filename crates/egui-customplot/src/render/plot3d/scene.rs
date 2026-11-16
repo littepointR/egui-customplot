@@ -2,7 +2,9 @@ use egui::{Color32, Mesh, Painter, Pos2, Rect, Shape, Stroke, epaint};
 
 use crate::{
     MarkerShape, Plot3DDiagnostics, Point3D, Transform3D,
-    axis::{clip_segment_unit_cube, clip_triangle_unit_cube},
+    axis::{
+        ClipVertex3D, clip_gouraud_tri_unit_cube, clip_segment_unit_cube, clip_triangle_unit_cube,
+    },
 };
 
 #[derive(Clone, Copy)]
@@ -125,6 +127,68 @@ impl Scene3D {
                 pos: [proj[0].0, proj[i].0, proj[i + 1].0],
                 depth: [proj[0].1, proj[i].1, proj[i + 1].1],
                 colors: [color; 3],
+                opaque,
+            });
+        }
+    }
+
+    pub fn push_gouraud_tri_data(
+        &mut self,
+        verts: [Point3D; 3],
+        colors: [Color32; 3],
+        depth_bias: f32,
+        transform: Transform3D,
+    ) {
+        let Some(u0) = transform.data_to_unit(verts[0]) else {
+            return;
+        };
+        let Some(u1) = transform.data_to_unit(verts[1]) else {
+            return;
+        };
+        let Some(u2) = transform.data_to_unit(verts[2]) else {
+            return;
+        };
+        let to_f = |c: Color32| {
+            let [r, g, b, a] = c.to_srgba_unmultiplied();
+            [f32::from(r), f32::from(g), f32::from(b), f32::from(a)]
+        };
+        let clipped = clip_gouraud_tri_unit_cube([
+            ClipVertex3D {
+                u: u0,
+                rgba: to_f(colors[0]),
+            },
+            ClipVertex3D {
+                u: u1,
+                rgba: to_f(colors[1]),
+            },
+            ClipVertex3D {
+                u: u2,
+                rgba: to_f(colors[2]),
+            },
+        ]);
+        if clipped.len() < 3 {
+            self.clipped += 1;
+            return;
+        }
+        let mut proj = Vec::with_capacity(clipped.len());
+        for cv in clipped {
+            let Some((p, d)) = transform.project_unit(cv.u) else {
+                return;
+            };
+            let c = Color32::from_rgba_unmultiplied(
+                cv.rgba[0].round().clamp(0.0, 255.0) as u8,
+                cv.rgba[1].round().clamp(0.0, 255.0) as u8,
+                cv.rgba[2].round().clamp(0.0, 255.0) as u8,
+                cv.rgba[3].round().clamp(0.0, 255.0) as u8,
+            );
+            proj.push((p, d + depth_bias, c));
+        }
+        let opaque = colors.iter().all(|c| c.a() >= 250);
+        for i in 1..(proj.len() - 1) {
+            self.tris.push(Tri3D {
+                pos: [proj[0].0, proj[i].0, proj[i + 1].0],
+                depth: [proj[0].1, proj[i].1, proj[i + 1].1],
+                colors: [proj[0].2, proj[i].2, proj[i + 1].2],
                 opaque,
             });
         }

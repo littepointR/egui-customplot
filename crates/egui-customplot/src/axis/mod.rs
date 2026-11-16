@@ -19,7 +19,8 @@ pub(crate) use grid::{edge_cell_at, grid_cell_at, grid_cell_rect, visible_edges,
 pub(crate) use linked::apply_axis_ranges;
 pub use plot3d::{Axis3D, Bounds3D, Camera3D, DataAspect3D, Point3D, Projection3D, Transform3D};
 pub(crate) use plot3d::{
-    clip_segment_unit_cube, clip_triangle_unit_cube, intersect_plane_unit_cube,
+    ClipVertex3D, clip_gouraud_tri_unit_cube, clip_segment_unit_cube, clip_triangle_unit_cube,
+    intersect_plane_unit_cube,
 };
 pub use polar::{NegativeRadiusMode, PolarTransform, ThetaDirection, ThetaZeroLocation};
 pub(crate) use polygon::{

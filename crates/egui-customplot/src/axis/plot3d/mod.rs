@@ -2,7 +2,10 @@ mod camera;
 mod clip;
 
 pub use camera::{Camera3D, Projection3D, Transform3D};
-pub(crate) use clip::{clip_segment_unit_cube, clip_triangle_unit_cube, intersect_plane_unit_cube};
+pub(crate) use clip::{
+    ClipVertex3D, clip_gouraud_tri_unit_cube, clip_segment_unit_cube, clip_triangle_unit_cube,
+    intersect_plane_unit_cube,
+};
 
 use super::{Axis, AxisScale, AxisTick, BoundsError};
 

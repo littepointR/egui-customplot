@@ -1,15 +1,25 @@
+mod analytic_surf;
+mod contour3;
 mod curve;
 mod discrete;
+mod implicit3;
 mod scatter;
+mod surface;
+mod trisurf;
 mod vector_poly;
 
 use std::sync::Arc;
 
+pub use analytic_surf::Ribbon3DData;
+pub use contour3::{Contour3DData, Contour3DLine};
 pub use curve::{AnimatedLine3D, Comet3DPlayback, ParametricCurve3DData};
 pub use discrete::{
     Bar3DBox, Bar3DData, Bar3DMode, Bar3DOrientation, Pie3DData, Pie3DSlice, Stem3DData,
 };
+pub use implicit3::ImplicitSurface3DData;
 pub use scatter::{Bubble3DData, Bubble3DPoint, Swarm3DData, Swarm3DPoint};
+pub use surface::Surface3DData;
+pub use trisurf::TriMesh3DData;
 pub use vector_poly::{Polygon3D, Polygon3DData, Quiver3DArrow, Quiver3DData};
 
 use crate::{AxisScale, Point3D};

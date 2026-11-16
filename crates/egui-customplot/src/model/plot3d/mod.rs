@@ -1,15 +1,19 @@
 mod bars_vecs_polys;
 mod lines_scatter;
-
-use std::collections::HashSet;
+mod mesh_tri;
+mod summary;
+mod surfaces;
 
 use egui::{Color32, IdSalt, Stroke};
 
 pub use bars_vecs_polys::{Bar3D, Fill3D, Pie3D, Quiver3D, Stem3D};
 pub use lines_scatter::{Bubble3D, Comet3D, Line3D, Scatter3D, Swarm3D};
+pub use mesh_tri::{Contour3D, MeshSurface3D, MeshSurfaceStyle, TriSurf3D};
+pub(crate) use summary::summarize_plot3d;
+pub use surfaces::{LightSource3D, Ribbon3D, Surface3D, SurfaceShading};
 
 use crate::{
-    AxisScale, PlotDiagnostics, Point3D,
+    AxisScale, Point3D,
     data::union_bounds3,
     model::{ResolvedPlotStyle, ResolvedSeriesStyle},
 };
@@ -113,6 +117,11 @@ pub enum Layer3D<'a> {
     Pie(Pie3D<'a>),
     Quiver(Quiver3D<'a>),
     Fill(Fill3D<'a>),
+    Surface(Surface3D<'a>),
+    MeshSurface(MeshSurface3D<'a>),
+    Contour(Contour3D<'a>),
+    Ribbon(Ribbon3D<'a>),
+    TriSurf(TriSurf3D<'a>),
 }
 
 impl<'a> From<Line3D<'a>> for Layer3D<'a> {
@@ -165,11 +174,42 @@ impl<'a> From<Fill3D<'a>> for Layer3D<'a> {
         Self::Fill(v)
     }
 }
+impl<'a> From<Surface3D<'a>> for Layer3D<'a> {
+    fn from(v: Surface3D<'a>) -> Self {
+        Self::Surface(v)
+    }
+}
+impl<'a> From<MeshSurface3D<'a>> for Layer3D<'a> {
+    fn from(v: MeshSurface3D<'a>) -> Self {
+        Self::MeshSurface(v)
+    }
+}
+impl<'a> From<Contour3D<'a>> for Layer3D<'a> {
+    fn from(v: Contour3D<'a>) -> Self {
+        Self::Contour(v)
+    }
+}
+impl<'a> From<Ribbon3D<'a>> for Layer3D<'a> {
+    fn from(v: Ribbon3D<'a>) -> Self {
+        Self::Ribbon(v)
+    }
+}
+impl<'a> From<TriSurf3D<'a>> for Layer3D<'a> {
+    fn from(v: TriSurf3D<'a>) -> Self {
+        Self::TriSurf(v)
+    }
+}
 
 impl<'a> Layer3D<'a> {
     pub fn name(self) -> &'a str {
         match self {
-            Self::Line(s) => s.name,
+            Self::Line(s) => {
+                if s.primitive {
+                    ""
+                } else {
+                    s.name
+                }
+            }
             Self::Scatter(s) => s.name,
             Self::Bubble(s) => s.name,
             Self::Swarm(s) => s.name,
@@ -179,6 +219,17 @@ impl<'a> Layer3D<'a> {
             Self::Pie(s) => s.name,
             Self::Quiver(s) => s.name,
             Self::Fill(s) => s.name,
+            Self::Surface(s) => {
+                if s.primitive {
+                    ""
+                } else {
+                    s.name
+                }
+            }
+            Self::MeshSurface(s) => s.name,
+            Self::Contour(s) => s.name,
+            Self::Ribbon(s) => s.name,
+            Self::TriSurf(s) => s.name,
         }
     }
 
@@ -194,6 +245,11 @@ impl<'a> Layer3D<'a> {
             Self::Pie(s) => s.id_salt,
             Self::Quiver(s) => s.id_salt,
             Self::Fill(s) => s.id_salt,
+            Self::Surface(s) => s.id_salt,
+            Self::MeshSurface(s) => s.id_salt,
+            Self::Contour(s) => s.id_salt,
+            Self::Ribbon(s) => s.id_salt,
+            Self::TriSurf(s) => s.id_salt,
         };
         custom.unwrap_or_else(|| IdSalt::new(("layer3d", self.name(), index)))
     }
@@ -222,6 +278,11 @@ impl<'a> Layer3D<'a> {
             Self::Pie(s) => s.style,
             Self::Quiver(s) => s.style,
             Self::Fill(s) => s.style,
+            Self::Surface(s) => s.style,
+            Self::MeshSurface(s) => s.style,
+            Self::Contour(s) => s.style,
+            Self::Ribbon(s) => s.style,
+            Self::TriSurf(s) => s.style,
         };
         if let Some(c) = st.color {
             st.color = Some(c);
@@ -250,98 +311,38 @@ impl<'a> Layer3D<'a> {
             }
             Self::Quiver(s) => s.data.extent(scales),
             Self::Fill(s) => s.data.extent(scales),
+            Self::Surface(s) => {
+                let mut b = s.data.extent(scales);
+                if s.floor_contours
+                    && let Some(fz) = s.floor_z
+                    && scales[2].forward(fz).is_some()
+                    && let Some([lo, _]) = b
+                {
+                    b = union_bounds3(b, Some([[lo[0], lo[1], fz], [lo[0], lo[1], fz]]));
+                }
+                b
+            }
+            Self::MeshSurface(s) => {
+                let mut b = s.data.extent(scales);
+                for opt in [s.floor_contours.then_some(s.floor_z).flatten(), s.base_z] {
+                    if let Some(z_extra) = opt
+                        && scales[2].forward(z_extra).is_some()
+                        && let Some([lo, _]) = b
+                    {
+                        b = union_bounds3(
+                            b,
+                            Some([[lo[0], lo[1], z_extra], [lo[0], lo[1], z_extra]]),
+                        );
+                    }
+                }
+                b
+            }
+            Self::Contour(s) => s.data.extent(scales),
+            Self::Ribbon(s) => s.data.extent(scales),
+            Self::TriSurf(s) => s
+                .data
+                .and_then(|m| m.extent(scales))
+                .or_else(|| s.implicit.and_then(|imp| imp.extent(scales))),
         }
     }
-}
-
-pub(crate) fn summarize_plot3d(
-    layers: &[Layer3D<'_>],
-    scales: [AxisScale; 3],
-    visible_fn: impl Fn(IdSalt) -> bool,
-) -> (PlotDiagnostics, HashSet<IdSalt>, Option<[Point3D; 2]>) {
-    let mut diag = PlotDiagnostics::default();
-    let mut present = HashSet::new();
-    let mut seen: HashSet<(usize, usize)> = HashSet::new();
-    let mut range: Option<[Point3D; 2]> = None;
-
-    for (idx, &layer) in layers.iter().enumerate() {
-        let id = layer.id(idx);
-        present.insert(id);
-        let (alloc, pts, prims, non_fin, dom_inv) = match layer {
-            Layer3D::Line(Line3D { data: s, .. })
-            | Layer3D::Scatter(Scatter3D { data: s, .. })
-            | Layer3D::Comet(Comet3D { data: s, .. }) => (
-                s.allocation(),
-                s.len(),
-                0,
-                s.non_finite_points(),
-                s.domain_invalid(scales),
-            ),
-            Layer3D::Bubble(s) => (
-                s.data.allocation(),
-                s.data.points().len(),
-                s.data.points().len(),
-                s.data.non_finite_points(),
-                s.data.domain_invalid(scales),
-            ),
-            Layer3D::Swarm(s) => (
-                s.data.allocation(),
-                s.data.len(),
-                s.data.len(),
-                s.data.non_finite_points(),
-                s.data.domain_invalid(scales),
-            ),
-            Layer3D::Bar(s) => (
-                s.data.allocation(),
-                0,
-                s.data.boxes().len(),
-                s.data.non_finite_items(),
-                s.data.domain_invalid(scales),
-            ),
-            Layer3D::Stem(s) => (
-                s.data.allocation(),
-                s.data.points().len(),
-                s.data.points().len(),
-                s.data.non_finite_points(),
-                s.data.domain_invalid(scales),
-            ),
-            Layer3D::Pie(s) => (
-                s.data.allocation(),
-                0,
-                s.data.slices().len(),
-                0,
-                if scales.contains(&AxisScale::Log10) {
-                    s.data.slices().len()
-                } else {
-                    0
-                },
-            ),
-            Layer3D::Quiver(s) => (
-                s.data.allocation(),
-                0,
-                s.data.arrows().len(),
-                s.data.non_finite_arrows(),
-                s.data.domain_invalid(scales),
-            ),
-            Layer3D::Fill(s) => (
-                s.data.allocation(),
-                0,
-                s.data.polygons().len(),
-                0,
-                s.data.domain_invalid(scales),
-            ),
-        };
-        diag.plot3d.input_points += pts;
-        diag.plot3d.input_primitives += prims;
-        diag.plot3d.non_finite_items += non_fin;
-        diag.plot3d.domain_invalid_items += dom_inv;
-        if seen.insert(alloc) {
-            diag.plot3d.unique_bytes += alloc.1;
-        }
-        if visible_fn(id) {
-            diag.visible_series += 1;
-            range = union_bounds3(range, layer.extent(scales));
-        }
-    }
-    (diag, present, range)
 }

@@ -99,6 +99,59 @@ pub(crate) fn clip_polygon_unit_cube(poly: &[[f64; 3]]) -> Vec<[f64; 3]> {
     cur
 }
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ClipVertex3D {
+    pub u: [f64; 3],
+    pub rgba: [f32; 4],
+}
+
+pub(crate) fn clip_gouraud_tri_unit_cube(tri: [ClipVertex3D; 3]) -> Vec<ClipVertex3D> {
+    let mut cur = tri.to_vec();
+    for axis in 0..3 {
+        for (is_min, bound) in [(true, 0.0_f64), (false, 1.0_f64)] {
+            if cur.len() < 3 {
+                return Vec::new();
+            }
+            let mut next = Vec::with_capacity(cur.len() + 2);
+            let eps = 1e-9;
+            let inside = |p: [f64; 3]| {
+                if is_min {
+                    p[axis] >= bound - eps
+                } else {
+                    p[axis] <= bound + eps
+                }
+            };
+            let mut prev = cur[cur.len() - 1];
+            let mut prev_in = inside(prev.u);
+            for &v in &cur {
+                let v_in = inside(v.u);
+                if v_in != prev_in {
+                    let denom = v.u[axis] - prev.u[axis];
+                    let t = if denom.abs() <= 1e-15 {
+                        0.5
+                    } else {
+                        ((bound - prev.u[axis]) / denom).clamp(0.0, 1.0)
+                    };
+                    let tf = t as f32;
+                    next.push(ClipVertex3D {
+                        u: std::array::from_fn(|k| prev.u[k] + t * (v.u[k] - prev.u[k])),
+                        rgba: std::array::from_fn(|k| {
+                            prev.rgba[k] + tf * (v.rgba[k] - prev.rgba[k])
+                        }),
+                    });
+                }
+                if v_in {
+                    next.push(v);
+                }
+                prev = v;
+                prev_in = v_in;
+            }
+            cur = next;
+        }
+    }
+    cur
+}
+
 pub(crate) fn clip_triangle_unit_cube(tri: [[f64; 3]; 3]) -> Vec<[f64; 3]> {
     clip_polygon_unit_cube(&tri)
 }

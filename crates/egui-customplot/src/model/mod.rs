@@ -66,8 +66,9 @@ pub use pcolor::{Pcolor, PcolorShading};
 pub use pie_clouds::{BubbleCloud, PieChart, WordCloud};
 pub(crate) use plot3d::summarize_plot3d;
 pub use plot3d::{
-    Bar3D, BoxStyle3D, Bubble3D, Comet3D, ConstantPlane3D, DepthMode, Fill3D, Layer3D, Line3D,
-    Pie3D, Quiver3D, Scatter3D, Stem3D, Swarm3D, Text3D,
+    Bar3D, BoxStyle3D, Bubble3D, Comet3D, ConstantPlane3D, Contour3D, DepthMode, Fill3D, Layer3D,
+    LightSource3D, Line3D, MeshSurface3D, MeshSurfaceStyle, Pie3D, Quiver3D, Ribbon3D, Scatter3D,
+    Stem3D, Surface3D, SurfaceShading, Swarm3D, Text3D, TriSurf3D,
 };
 pub use polar::{CompassPlot, PolarBubble, PolarHistogram, PolarLayer, PolarLine, PolarScatter};
 pub use polar_region::{PolarRegionAnnotation, PolarRegionKind};

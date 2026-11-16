@@ -1,7 +1,9 @@
 mod axes;
 mod layers;
+mod meshes_contours;
 mod scene;
 mod solid_layers;
+mod surfaces;
 mod zbuffer;
 
 use egui::Painter;

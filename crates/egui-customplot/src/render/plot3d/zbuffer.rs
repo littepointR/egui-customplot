@@ -152,7 +152,10 @@ fn raster_tri(
     let x1 = (a[0].max(b[0]).max(c[0]).ceil() as i32).min(w as i32 - 1) as usize;
     let y0 = (a[1].min(b[1]).min(c[1]).floor() as i32).max(0) as usize;
     let y1 = (a[1].max(b[1]).max(c[1]).ceil() as i32).min(h as i32 - 1) as usize;
-    let [r, g, bl, al] = t.colors[0].to_srgba_unmultiplied();
+    let c0 = t.colors[0].to_srgba_unmultiplied();
+    let c1 = t.colors[1].to_srgba_unmultiplied();
+    let c2 = t.colors[2].to_srgba_unmultiplied();
+    let uniform = c0 == c1 && c1 == c2;
 
     for py in y0..=y1 {
         let fy = py as f32 + 0.5;
@@ -165,15 +168,26 @@ fn raster_tri(
                 let l0 = (e0 * sign * inv).clamp(0.0, 1.0);
                 let l1 = (e1 * sign * inv).clamp(0.0, 1.0);
                 let l2 = (e2 * sign * inv).clamp(0.0, 1.0);
-                let z = l0 * t.depth[0] + l1 * t.depth[1] + l2 * t.depth[2];
+                let sum = (l0 + l1 + l2).max(1e-6);
+                let (w0, w1, w2) = (l0 / sum, l1 / sum, l2 / sum);
+                let z = w0 * t.depth[0] + w1 * t.depth[1] + w2 * t.depth[2];
+                let col = if uniform {
+                    c0
+                } else {
+                    std::array::from_fn(|k| {
+                        (w0 * f32::from(c0[k]) + w1 * f32::from(c1[k]) + w2 * f32::from(c2[k]))
+                            .round()
+                            .clamp(0.0, 255.0) as u8
+                    })
+                };
                 let idx = py * w + px;
                 if opaque {
                     if z <= depth[idx] {
                         depth[idx] = z;
-                        rgba[idx] = [r, g, bl, al];
+                        rgba[idx] = col;
                     }
                 } else if z <= depth[idx] + 1e-4 {
-                    rgba[idx] = blend_over(rgba[idx], [r, g, bl, al]);
+                    rgba[idx] = blend_over(rgba[idx], col);
                 }
             }
         }

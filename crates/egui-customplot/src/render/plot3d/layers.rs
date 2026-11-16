@@ -1,7 +1,9 @@
 use egui::{Color32, Stroke};
 
+use super::meshes_contours::{collect_contour3d, collect_mesh_surface3d};
 use super::scene::{Label3D, Marker3D, Scene3D};
 use super::solid_layers::{collect_constant_plane, collect_fill3, collect_pie3, collect_quiver3};
+use super::surfaces::{collect_ribbon3d, collect_surface3d, collect_trisurf3d};
 use crate::{
     ConstantPlane3D, Layer3D, MarkerShape, Plot3DDiagnostics, Plot3DState, Point3D, Text3D,
     Transform3D, model::ResolvedPlotStyle,
@@ -189,6 +191,35 @@ pub(super) fn collect_layers_3d(
             }
             Layer3D::Fill(fill) => {
                 collect_fill3(scene, fill, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::Surface(surf) => {
+                collect_surface3d(scene, surf, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::MeshSurface(mesh) => {
+                collect_mesh_surface3d(
+                    scene,
+                    mesh,
+                    style.background,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::Contour(c3) => {
+                collect_contour3d(scene, c3, resolved.stroke.color, transform, diagnostics);
+            }
+            Layer3D::Ribbon(rib) => {
+                collect_ribbon3d(scene, rib, style, transform, diagnostics);
+            }
+            Layer3D::TriSurf(ts) => {
+                collect_trisurf3d(
+                    scene,
+                    ts,
+                    style.background,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
             }
         }
     }

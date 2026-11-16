@@ -1,5 +1,6 @@
 mod hover;
 mod legend;
+mod surface_hover;
 
 use std::collections::HashSet;
 

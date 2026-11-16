@@ -202,7 +202,7 @@ pub(super) fn collect_constant_plane(
     }
 }
 
-fn push_quiver3_head(
+pub(super) fn push_quiver3_head(
     scene: &mut Scene3D,
     origin: Point3D,
     end: Point3D,

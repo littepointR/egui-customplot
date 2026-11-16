@@ -1,0 +1,13 @@
+date=2026-11-16T13:01:00.5171217+08:00
+cpu=Intel(R) Core(TM) i9-14900KF
+os=Microsoft Windows NT 10.0.26300.0
+rust=rustc 1.100.0 (0ef1bc386 2026-11-09)
+git_head=ec2375f2935aa9ad84adf2f8e3c0274cad94ad8f
+source=uncommitted stage9b 3D surfaces, meshes, contours & implicit surfaces on top of git_head
+completed=2026-11-16T13:04:31.7585244+08:00
+exit_code=0
+executable=target/release/build/egui-customplot/8569ea5521cb4507/out/stage9b_performance-8569ea5521cb4507.exe
+sha256=0BDE7DE1E62033B871217A0E356A9C8DABED276D21D0F577EEED89E21DC5BC9F
+cargo=cargo 1.100.0 (3acc79c0c 2026-11-05)
+seconds_per_scene=30; 7 scenes + 7 preprocess p50 (including fimplicit3_48x48x48 end-to-end inside timed loop); Plot3D height=1080; dpi=1; show_legend=false; show_hover=false; normal_priority
+Shared machine during development. Headless CPU UI build + egui tessellation only; excludes wgpu/glow upload, GPU rasterization, swapchain presentation, and real FPS.

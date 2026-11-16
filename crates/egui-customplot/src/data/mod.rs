@@ -80,8 +80,10 @@ pub use pie::{PieData, PieError, PieSlice};
 pub(crate) use plot3d::union_bounds3;
 pub use plot3d::{
     AnimatedLine3D, Bar3DBox, Bar3DData, Bar3DMode, Bar3DOrientation, Bubble3DData, Bubble3DPoint,
-    Comet3DPlayback, ParametricCurve3DData, Pie3DData, Pie3DSlice, Plot3DError, Point3DData,
-    Polygon3D, Polygon3DData, Quiver3DArrow, Quiver3DData, Stem3DData, Swarm3DData, Swarm3DPoint,
+    Comet3DPlayback, Contour3DData, Contour3DLine, ImplicitSurface3DData, ParametricCurve3DData,
+    Pie3DData, Pie3DSlice, Plot3DError, Point3DData, Polygon3D, Polygon3DData, Quiver3DArrow,
+    Quiver3DData, Ribbon3DData, Stem3DData, Surface3DData, Swarm3DData, Swarm3DPoint,
+    TriMesh3DData,
 };
 pub use points::{PlotData, PlotPoint};
 pub use polar::{

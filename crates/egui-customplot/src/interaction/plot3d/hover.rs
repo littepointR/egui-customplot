@@ -141,6 +141,21 @@ pub(crate) fn pick_plot3d_hover(
                 }
             }
             Layer3D::Bar(_) | Layer3D::Pie(_) | Layer3D::Fill(_) => {}
+            Layer3D::Surface(_)
+            | Layer3D::MeshSurface(_)
+            | Layer3D::Contour(_)
+            | Layer3D::Ribbon(_)
+            | Layer3D::TriSurf(_) => {
+                super::surface_hover::pick_surface_points(
+                    layer,
+                    id,
+                    li,
+                    transform,
+                    pointer,
+                    pick_radius,
+                    &mut best_pt,
+                );
+            }
         }
     }
 
@@ -193,46 +208,15 @@ pub(crate) fn pick_plot3d_hover(
                     }
                 }
             }
-            Layer3D::Pie(pie) => {
-                let h = pie.data.thickness();
-                let expl = pie.data.offset();
-                for slice in pie.data.slices() {
-                    let mid = 0.5 * (slice.start_angle_rad + slice.end_angle_rad);
-                    let shift = if slice.exploded {
-                        [expl * mid.cos(), expl * mid.sin()]
-                    } else {
-                        [0.0, 0.0]
-                    };
-                    let c_top = [shift[0], shift[1], h];
-                    let steps = (((slice.end_angle_rad - slice.start_angle_rad)
-                        / (std::f64::consts::PI / 18.0))
-                        .ceil() as usize)
-                        .clamp(4, 36);
-                    let rim = |i: usize| -> (Point3D, Point3D) {
-                        let a = slice.start_angle_rad
-                            + (slice.end_angle_rad - slice.start_angle_rad)
-                                * (i as f64 / steps as f64);
-                        let x = shift[0] + a.cos();
-                        let y = shift[1] + a.sin();
-                        ([x, y, 0.0], [x, y, h])
-                    };
-                    for i in 0..steps {
-                        let (bi0, ti0) = rim(i);
-                        let (bi1, ti1) = rim(i + 1);
-                        for tri in [[c_top, ti0, ti1], [bi0, bi1, ti1], [bi0, ti1, ti0]] {
-                            consider_tri_region(
-                                &mut best_region,
-                                id,
-                                li,
-                                slice.index,
-                                || slice.label.clone(),
-                                tri,
-                                transform,
-                                pointer,
-                            );
-                        }
-                    }
-                }
+            Layer3D::Pie(_) | Layer3D::Surface(_) | Layer3D::Ribbon(_) | Layer3D::TriSurf(_) => {
+                super::surface_hover::pick_extra_regions(
+                    layer,
+                    id,
+                    li,
+                    transform,
+                    pointer,
+                    &mut best_region,
+                );
             }
             _ => {}
         }
@@ -282,7 +266,7 @@ pub(crate) fn pick_plot3d_hover(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn consider_pt(
+pub(super) fn consider_pt(
     best: &mut Option<Hovered3DPoint>,
     layer_id: IdSalt,
     layer_index: usize,
@@ -337,7 +321,7 @@ fn projected_box_aabb(lo: Point3D, hi: Point3D, transform: Transform3D) -> Optio
 }
 
 #[allow(clippy::too_many_arguments)]
-fn consider_tri_region(
+pub(super) fn consider_tri_region(
     best: &mut Option<Hovered3DRegion>,
     layer_id: IdSalt,
     layer_index: usize,

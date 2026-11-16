@@ -133,6 +133,51 @@ impl Bar3DData {
         })
     }
 
+    /// Builds 3D histogram bars from binned bivariate XY counts (`histogram2` 3D mode, `ML-022`).
+    pub fn from_histogram2(
+        hist: &crate::Histogram2Data,
+        norm: crate::BivariateNormalization,
+    ) -> Result<Self, Plot3DError> {
+        let grid = hist
+            .to_grid(norm)
+            .map_err(|_| Plot3DError::InvalidDimensions)?;
+        let nx = hist.nx();
+        let ny = hist.ny();
+        let xe = grid.x_edges();
+        let ye = grid.y_edges();
+        let vals = grid.values();
+        let mut boxes = Vec::with_capacity(nx * ny);
+        let mut extents = CachedExtents3D::default();
+        let mut non_finite = 0usize;
+        for iy in 0..ny {
+            for ix in 0..nx {
+                let val = vals[iy * nx + ix];
+                if !val.is_finite() {
+                    non_finite += 1;
+                    continue;
+                }
+                let min = [xe[ix], ye[iy], val.min(0.0)];
+                let max = [xe[ix + 1], ye[iy + 1], val.max(0.0)];
+                extents.push_box(min, max);
+                boxes.push(Bar3DBox {
+                    row: iy,
+                    col: ix,
+                    value: val,
+                    min,
+                    max,
+                });
+            }
+        }
+        Ok(Self {
+            boxes: Arc::from(boxes),
+            cols: nx,
+            mode: Bar3DMode::Detached,
+            orientation: Bar3DOrientation::Vertical,
+            extents,
+            non_finite_items: non_finite,
+        })
+    }
+
     pub fn boxes(&self) -> &[Bar3DBox] {
         &self.boxes
     }

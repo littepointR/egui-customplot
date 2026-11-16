@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：60 项 ML、26 项 EX 与 12 项 LG 共 98 项“开发中”，其余 35 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9A 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）与点线柱杆矢量饼平面见 [阶段 9](STAGE_9.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：72 项 ML、32 项 EX 与 16 项 LG 共 120 项“开发中”，其余 13 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9A/9B 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）、曲面 / 网格 / 隐式与解析几何见 [阶段 9](STAGE_9.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -66,7 +66,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | ML-021 | 开发中 | [`histogram`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram.html) | 一维直方图，2D | 已有显式不等宽箱、边界、计数 / 概率 / 密度 / 累积、缺失与越界统计；自动估计器、类别数据、导出 / 完整验收仍缺，见阶段 6 |
-| ML-022 | 开发中 | [`histogram2`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram2.html) | 二维分箱直方图，2D / 3D | [阶段 8](STAGE_8.md)：`Histogram2Data`（5 种 `BivariateNormalization`）、`Histogram2` 平铺渲染与 `HoveredRegion::Histogram2Bin`；3D 柱体渲染与完整验收仍缺 |
+| ML-022 | 开发中 | [`histogram2`](https://ww2.mathworks.cn/help/matlab/ref/matlab.graphics.chart.primitive.histogram2.html) | 二维分箱直方图，2D / 3D | [阶段 8](STAGE_8.md) / [阶段 9](STAGE_9.md)：`Histogram2Data` 支持 5 种归一化、2D `Histogram2` 平铺与 `Bar3DData::from_histogram2` 3D 棱柱直方渲染及 `Hovered3DBar` 拾取；完整交互 / 验收仍缺 |
 | ML-023 | 开发中 | [`scatterhistogram`](https://ww2.mathworks.cn/help/matlab/ref/scatterhistogram.html) | 带边缘分布的散点图，复合 2D | [阶段 8](STAGE_8.md)：`ScatterHistogramData`（分组散点 + 边缘直方/KDE）与 `ScatterHistogram` 双轴同步布局；完整交互过滤与验收仍缺 |
 | ML-024 | 开发中 | [`boxchart`](https://ww2.mathworks.cn/help/matlab/ref/boxchart.html) | 箱线图，2D | [阶段 8](STAGE_8.md)：`BoxChartData`（四分位 / 须 / 异常值）、`BoxChart`（凹槽、均值点）与箱体区域/离群点拾取；横向箱线与完整验收仍缺 |
 | ML-025 | 开发中 | [`violinplot`](https://ww2.mathworks.cn/help/matlab/ref/violinplot.html) | 小提琴图，2D | [阶段 8](STAGE_8.md)：`ViolinData`（Silverman 核密度与超千样本分箱 KDE）、`ViolinScale` / `ViolinHalf` 与 `ViolinPlot`；完整验收仍缺 |
@@ -121,7 +121,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | --- | --- | --- | --- | --- |
 | ML-051 | 开发中 | [`contour`](https://ww2.mathworks.cn/help/matlab/ref/contour.html) | 等高线，2D | [阶段 8](STAGE_8.md)：`ScalarField2D`、`ContourData::from_field`（四三角中心分裂 Marching Squares）、`Contours` / `ColorScale` / 居中标签与原始顶点拾取；缺自动平滑避让标签、非规则参数网格与完整验收 |
 | ML-052 | 开发中 | [`contourf`](https://ww2.mathworks.cn/help/matlab/ref/contourf.html) | 填充等高线，2D | [阶段 8](STAGE_8.md)：`FilledContourData::from_field`（半平面三角裁剪）、`FilledContours` / 边界线 / 色条与等值带拾取；高密度等值带 CPU 三角数量大，完整优化与验收仍缺 |
-| ML-053 | 未实现 | [`contour3`](https://ww2.mathworks.cn/help/matlab/ref/contour3.html) | 等高线，3D | 等值线处于各自 Z 高度及三维遮挡 |
+| ML-053 | 开发中 | [`contour3`](https://ww2.mathworks.cn/help/matlab/ref/contour3.html) | 等高线，3D | [阶段 9](STAGE_9.md)：`Contour3DData::{from_contour2d, from_field, from_surface}`（在真实 `z = level` 提取并拼接等高线）与 `Contour3D` + 顶点拾取（`tests/plot3d_meshes_contours.rs`）；完整平滑与验收仍缺 |
 | ML-054 | 未实现 | [`contourslice`](https://ww2.mathworks.cn/help/matlab/ref/contourslice.html) | 体数据切片等高线，3D | 切片插值、等值提取、平面位置 |
 | ML-055 | 开发中 | [`fcontour`](https://ww2.mathworks.cn/help/matlab/ref/fcontour.html) | 函数等高线，2D | [阶段 8](STAGE_8.md)：`ContourData::from_function` / `FilledContourData::from_function` 与显式 `max_evaluations` 预算保护；当前采用均匀采样，自适应细化与完整误差估计仍缺 |
 
@@ -139,18 +139,18 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-059 | 未实现 | [`surf`](https://ww2.mathworks.cn/help/matlab/ref/surf.html) | 实体曲面，3D | 规则 / 参数网格、顶点颜色、法线、光照与透明 |
-| ML-060 | 未实现 | [`surfc`](https://ww2.mathworks.cn/help/matlab/ref/surfc.html) | 曲面 + 底部等高线，复合 3D | 共享数据 / 色域与等高线投影 |
-| ML-061 | 未实现 | [`surfl`](https://ww2.mathworks.cn/help/matlab/ref/surfl.html) | 基于颜色图光照的曲面，3D | 光照计算与颜色映射；区别于普通 surf 加灯光 |
-| ML-062 | 未实现 | [`ribbon`](https://ww2.mathworks.cn/help/matlab/ref/ribbon.html) | 带状图，3D | 多序列带宽、位置与颜色 |
+| ML-059 | 开发中 | [`surf`](https://ww2.mathworks.cn/help/matlab/ref/surf.html) | 实体曲面，3D | [阶段 9](STAGE_9.md)：`Surface3DData::{from_grid, from_field, from_parametric_grid}` + `Surface3D` 支持 `Faceted`/`Flat`/`Interp`（Gouraud 裁剪 + ZBuffer 双线性插值）、NaN 空洞、色条、区域/点拾取；完整验收仍缺 |
+| ML-060 | 开发中 | [`surfc`](https://ww2.mathworks.cn/help/matlab/ref/surfc.html) | 曲面 + 底部等高线，复合 3D | [阶段 9](STAGE_9.md)：`Surface3DData::with_contours` + `Surface3D::floor_contours(true)` 与底部 Z 平面投影等高线及 `Plot3D::color_bar` 共享色域（`tests/plot3d_surfaces.rs`）；完整验收仍缺 |
+| ML-061 | 开发中 | [`surfl`](https://ww2.mathworks.cn/help/matlab/ref/surfl.html) | 基于颜色图光照的曲面，3D | [阶段 9](STAGE_9.md)：`Surface3D::colormap_lighting(true)` 结合 `LightSource3D` Blinn-Phong 反射率映射 `ColorMap::Gray`（或指定色图）并随光源角变化（`tests/plot3d_surfaces.rs`）；完整验收仍缺 |
+| ML-062 | 开发中 | [`ribbon`](https://ww2.mathworks.cn/help/matlab/ref/ribbon.html) | 带状图，3D | [阶段 9](STAGE_9.md)：`Ribbon3DData` 多列带宽切片与 `Ribbon3D` 着色及 `"ribbon"` 区域拾取（`tests/plot3d_surfaces.rs`）；完整验收仍缺 |
 | ML-063 | 开发中 | [`pcolor`](https://ww2.mathworks.cn/help/matlab/ref/pcolor.html) | 伪彩色网格图，2D | [阶段 8](STAGE_8.md)：`Pcolor` 复用 `ScalarField2D`，支持 `PcolorShading::{Flat, Interp}`（Gouraud 顶点插值）、矩形节点二分可见裁剪与 cell 悬停插值；曲线参数网格（非矩形 X/Y 矩阵）及 GPU 渲染仍缺 |
-| ML-064 | 未实现 | [`fsurf`](https://ww2.mathworks.cn/help/matlab/ref/fsurf.html) | 显式 / 参数函数曲面，3D | 定义域、自适应细分、参数曲面 |
-| ML-065 | 未实现 | [`fimplicit3`](https://ww2.mathworks.cn/help/matlab/ref/fimplicit3.html) | 隐式曲面，3D | F(x,y,z)=0、拓扑、法线与提取误差 |
-| ML-066 | 未实现 | [`mesh`](https://ww2.mathworks.cn/help/matlab/ref/mesh.html) | 线框曲面，3D | 网格边、面可见性与隐藏线 |
-| ML-067 | 未实现 | [`meshc`](https://ww2.mathworks.cn/help/matlab/ref/meshc.html) | 网格 + 底部等高线，复合 3D | 网格与等高线共享范围 / 颜色 |
-| ML-068 | 未实现 | [`meshz`](https://ww2.mathworks.cn/help/matlab/ref/meshz.html) | 带垂帘的网格，3D | 边界垂帘、基面与遮挡 |
-| ML-069 | 未实现 | [`waterfall`](https://ww2.mathworks.cn/help/matlab/ref/waterfall.html) | 瀑布图，3D | 分行线 / 面、基面与深度遮挡 |
-| ML-070 | 未实现 | [`fmesh`](https://ww2.mathworks.cn/help/matlab/ref/fmesh.html) | 函数线框曲面，3D | 函数 / 参数曲面采样与网格密度 |
+| ML-064 | 开发中 | [`fsurf`](https://ww2.mathworks.cn/help/matlab/ref/fsurf.html) | 显式 / 参数函数曲面，3D | [阶段 9](STAGE_9.md)：`Surface3DData::{from_explicit_fn, from_parametric_fn}` 支持极点悬崖保护与 `max_evaluations` 预算拦截（`tests/plot3d_analytic_implicit.rs`）；自适应细分仍缺 |
+| ML-065 | 开发中 | [`fimplicit3`](https://ww2.mathworks.cn/help/matlab/ref/fimplicit3.html) | 隐式曲面，3D | [阶段 9](STAGE_9.md)：`ImplicitSurface3DData::from_function`（六面体 6 四面体 Kuhn Marching Tetrahedra + 中心差分梯度法线 + 有理极点断链保护）与 `TriSurf3D::from_implicit`（`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
+| ML-066 | 开发中 | [`mesh`](https://ww2.mathworks.cn/help/matlab/ref/mesh.html) | 线框曲面，3D | [阶段 9](STAGE_9.md)：`MeshSurface3D::new` 支持标量着色网格边与 `hidden_line(true)` 背景色深度遮挡面片（`tests/plot3d_meshes_contours.rs`）；完整验收仍缺 |
+| ML-067 | 开发中 | [`meshc`](https://ww2.mathworks.cn/help/matlab/ref/meshc.html) | 网格 + 底部等高线，复合 3D | [阶段 9](STAGE_9.md)：`MeshSurface3D::floor_contours(true)` 与共享 `Surface3DData::contours` 底部投影等高线（`tests/plot3d_meshes_contours.rs`）；完整验收仍缺 |
+| ML-068 | 开发中 | [`meshz`](https://ww2.mathworks.cn/help/matlab/ref/meshz.html) | 带垂帘的网格，3D | [阶段 9](STAGE_9.md)：`MeshSurface3D::curtain`（边界垂落至 `base_z` 与遮挡垂帘面片，`tests/plot3d_meshes_contours.rs`）；完整验收仍缺 |
+| ML-069 | 开发中 | [`waterfall`](https://ww2.mathworks.cn/help/matlab/ref/waterfall.html) | 瀑布图，3D | [阶段 9](STAGE_9.md)：`MeshSurface3D::waterfall` 分行切片与首尾落地边及隐藏线遮挡面（`tests/plot3d_meshes_contours.rs`）；完整验收仍缺 |
+| ML-070 | 开发中 | [`fmesh`](https://ww2.mathworks.cn/help/matlab/ref/fmesh.html) | 函数线框曲面，3D | [阶段 9](STAGE_9.md)：`Surface3DData::{from_explicit_fn, from_parametric_fn}` + `MeshSurface3D`（`tests/plot3d_meshes_contours.rs`）；自适应采样与完整验收仍缺 |
 
 ### A10. 体数据与流可视化：7 项
 
@@ -194,14 +194,14 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | EX-003 | 开发中 | [`fill3`](https://ww2.mathworks.cn/help/matlab/ref/fill3.html) | 三维填充多边形 | [阶段 9](STAGE_9.md)：`Polygon3DData::from_polygons`（Newell 法线投影 + 平面耳切三角剖分）与 `Fill3D` 结合 `DepthMode::{SortedPainter, ZBuffer}` 解决互相交叉三维面片逐像素遮挡与 `Hovered3DRegion` 拾取（`tests/export_stage9a.rs`）；完整验收仍缺 |
 | EX-004 | 开发中 | [`patch`](https://ww2.mathworks.cn/help/matlab/ref/patch.html) | 通用 2D / 3D 面片 | [阶段 8](STAGE_8.md)：`PatchData::{new, from_indexed, from_polygons}` 与 `Patch`，支持 Uniform / Face / Gouraud 逐顶点色与标量映射，SVG 混合栅格回退；三维面片与光源缺 |
 | EX-005 | 开发中 | [`rectangle`](https://ww2.mathworks.cn/help/matlab/ref/rectangle.html) | 矩形 / 圆角矩形 / 椭圆 | [阶段 8](STAGE_8.md)：`DataRect::{new, curvature, ellipse}`、`RectData` 与 `Rectangles`，支持圆角 / 椭圆细分、边框及精确圆角命中测试；完整验收仍缺 |
-| EX-006 | 未实现 | [`surface`](https://ww2.mathworks.cn/help/matlab/ref/surface.html) | 底层三维曲面图元 | 网格、面 / 边样式、纹理及更新 |
-| EX-007 | 未实现 | [`surfnorm`](https://ww2.mathworks.cn/help/matlab/ref/surfnorm.html) | 曲面及法线可视化 | 法线计算、方向和长度 |
-| EX-008 | 未实现 | [`sphere`](https://ww2.mathworks.cn/help/matlab/ref/sphere.html) | 球面 | 无输出绘制用法、网格分辨率与极点 |
-| EX-009 | 未实现 | [`cylinder`](https://ww2.mathworks.cn/help/matlab/ref/cylinder.html) | 圆柱 / 旋转曲面 | 无输出绘制用法、半径轮廓及接缝 |
-| EX-010 | 未实现 | [`ellipsoid`](https://ww2.mathworks.cn/help/matlab/ref/ellipsoid.html) | 椭球面 | 中心、三轴半径、网格分辨率 |
+| EX-006 | 开发中 | [`surface`](https://ww2.mathworks.cn/help/matlab/ref/surface.html) | 底层三维曲面图元 | [阶段 9](STAGE_9.md)：`Surface3D::primitive` 跳过图例与悬停拾取，直接绘制网格曲面面片（`tests/plot3d_surfaces.rs`）；完整对象句柄语义仍缺 |
+| EX-007 | 开发中 | [`surfnorm`](https://ww2.mathworks.cn/help/matlab/ref/surfnorm.html) | 曲面及法线可视化 | [阶段 9](STAGE_9.md)：`Surface3DData::normals_quiver` 与 `Surface3D::show_normals` 在步进网格顶点绘制外法线箭头（`tests/plot3d_surfaces.rs`）；完整验收仍缺 |
+| EX-008 | 开发中 | [`sphere`](https://ww2.mathworks.cn/help/matlab/ref/sphere.html) | 球面 | [阶段 9](STAGE_9.md)：`Surface3DData::sphere(subdivisions)` 复用 `ellipsoid` 生成精确单位球网格及解析外法线（`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
+| EX-009 | 开发中 | [`cylinder`](https://ww2.mathworks.cn/help/matlab/ref/cylinder.html) | 圆柱 / 旋转曲面 | [阶段 9](STAGE_9.md)：`Surface3DData::cylinder(profile_radii, subdivisions)` 从径向轮廓旋转生成闭环柱/变径曲面（`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
+| EX-010 | 开发中 | [`ellipsoid`](https://ww2.mathworks.cn/help/matlab/ref/ellipsoid.html) | 椭球面 | [阶段 9](STAGE_9.md)：`Surface3DData::ellipsoid(center, radii, subdivisions)` 生成三轴椭球点网格与精确解析梯度法线（`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
 | EX-011 | 开发中 | [`triplot`](https://ww2.mathworks.cn/help/matlab/ref/triplot.html) | 二维三角剖分线图 | 顶点 / 索引输入、边去重与裁剪 |
-| EX-012 | 开发中 | [`trimesh`](https://ww2.mathworks.cn/help/matlab/ref/trimesh.html) | 三角网格线框，2D / 3D | 非规则网格、着色与隐藏线 |
-| EX-013 | 未实现 | [`trisurf`](https://ww2.mathworks.cn/help/matlab/ref/trisurf.html) | 三角曲面，3D | 连接关系、法线、面色与拾取 |
+| EX-012 | 开发中 | [`trimesh`](https://ww2.mathworks.cn/help/matlab/ref/trimesh.html) | 三角网格线框，2D / 3D | [阶段 8](STAGE_8.md) / [阶段 9](STAGE_9.md)：2D `TriMesh2D` 与 3D `TriMesh3DData` + `TriSurf3D::wireframe`（边去重 + 可选 `hidden_line` 遮挡，`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
+| EX-013 | 开发中 | [`trisurf`](https://ww2.mathworks.cn/help/matlab/ref/trisurf.html) | 三角曲面，3D | [阶段 9](STAGE_9.md)：`TriMesh3DData::{new, from_delaunay_xy}` + `TriSurf3D`（面/顶点标量着色与 `"trisurf[i]"` 区域拾取，`tests/plot3d_analytic_implicit.rs`）；完整验收仍缺 |
 | EX-014 | 未实现 | [`tetramesh`](https://ww2.mathworks.cn/help/matlab/ref/tetramesh.html) | 四面体网格，3D | 单元面、内部面 / 透明策略与索引 |
 | EX-015 | 开发中 | [`voronoi`](https://ww2.mathworks.cn/help/matlab/ref/voronoi.html) | 二维 Voronoi 图 | 有界边、视区裁剪、重复 / 退化点策略 |
 | EX-016 | 开发中 | [`plot(polyshape)`](https://ww2.mathworks.cn/help/matlab/ref/polyshape.plot.html) | 多区域 / 带孔多边形 | [阶段 8](STAGE_8.md)：`PolyRegion::{new, hole}`、`PolyShapeData`（Eberly 孔洞桥接 + 四域耳切）与 `PolyShape`，孔洞不阻断穿透且矢量 SVG / PNG 一致；布尔并交差运算仍缺 |
@@ -258,10 +258,10 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | LG-010 | 开发中 | [`ezpolar`](https://ww2.mathworks.cn/help/matlab/ref/ezpolar.html) | 旧极坐标函数图，官方不推荐 | [阶段 8](STAGE_8.md)：`PolarCurveData::ezpolar(max_evals, f)` 默认 `[0, 2π]` 自适应采样 + `max_evaluations` 预算限制（非字符串解析器），对照 `fpolarplot` 经 `tests/polar_plots.rs` 与 `--polar` 验证；完整验收仍缺 |
 | LG-011 | 开发中 | [`ezcontour`](https://ww2.mathworks.cn/help/matlab/ref/ezcontour.html) | 旧函数等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`ContourData::ezcontour` 默认 `[-2π, 2π]^2` 定义域与 `max_evaluations` 预算限制（非字符串表达式解释器） |
 | LG-012 | 开发中 | [`ezcontourf`](https://ww2.mathworks.cn/help/matlab/ref/ezcontourf.html) | 旧函数填充等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`FilledContourData::ezcontourf` 默认 `[-2π, 2π]^2` 采样 + `FilledContours` 半平面带填充 |
-| LG-013 | 未实现 | [`ezmesh`](https://ww2.mathworks.cn/help/matlab/ref/ezmesh.html) | 旧函数网格，官方不推荐 | 对照 fmesh |
-| LG-014 | 未实现 | [`ezmeshc`](https://ww2.mathworks.cn/help/matlab/ref/ezmeshc.html) | 旧函数网格 + 等高线，官方不推荐 | 函数采样 + meshc |
-| LG-015 | 未实现 | [`ezsurf`](https://ww2.mathworks.cn/help/matlab/ref/ezsurf.html) | 旧函数曲面，官方不推荐 | 对照 fsurf |
-| LG-016 | 未实现 | [`ezsurfc`](https://ww2.mathworks.cn/help/matlab/ref/ezsurfc.html) | 旧函数曲面 + 等高线，官方不推荐 | 函数采样 + surfc |
+| LG-013 | 开发中 | [`ezmesh`](https://ww2.mathworks.cn/help/matlab/ref/ezmesh.html) | 旧函数网格，官方不推荐 | [阶段 9](STAGE_9.md)：`Surface3DData::{ez_explicit, ez_parametric}` + `MeshSurface3D` 对照 `fmesh`（`tests/plot3d_meshes_contours.rs`）；表达式解析与完整验收仍缺 |
+| LG-014 | 开发中 | [`ezmeshc`](https://ww2.mathworks.cn/help/matlab/ref/ezmeshc.html) | 旧函数网格 + 等高线，官方不推荐 | [阶段 9](STAGE_9.md)：`Surface3DData::ez_explicit(...).with_contours(...)` + `MeshSurface3D::floor_contours(true)`（`tests/plot3d_meshes_contours.rs`）；完整验收仍缺 |
+| LG-015 | 开发中 | [`ezsurf`](https://ww2.mathworks.cn/help/matlab/ref/ezsurf.html) | 旧函数曲面，官方不推荐 | [阶段 9](STAGE_9.md)：`Surface3DData::{ez_explicit, ez_parametric}` + `Surface3D` 对照 `fsurf`（`tests/plot3d_surfaces.rs`）；表达式解析与完整验收仍缺 |
+| LG-016 | 开发中 | [`ezsurfc`](https://ww2.mathworks.cn/help/matlab/ref/ezsurfc.html) | 旧函数曲面 + 等高线，官方不推荐 | [阶段 9](STAGE_9.md)：`Surface3DData::ez_explicit(...).with_contours(...)` + `Surface3D::floor_contours(true)`（`tests/plot3d_surfaces.rs`）；完整验收仍缺 |
 
 ## D. 工具箱扩展索引：与本体分账
 

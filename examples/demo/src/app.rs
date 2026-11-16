@@ -28,6 +28,7 @@ pub(super) struct Demo {
     polar: crate::polar::PolarDemo,
     networks: crate::networks::NetworksDemo,
     plot3d: crate::plot3d::Plot3DDemo,
+    surfaces3d: crate::surfaces3d::Surfaces3DDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -53,6 +54,7 @@ impl Default for Demo {
             polar: crate::polar::PolarDemo::default(),
             networks: crate::networks::NetworksDemo::default(),
             plot3d: crate::plot3d::Plot3DDemo::default(),
+            surfaces3d: crate::surfaces3d::Surfaces3DDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -74,6 +76,7 @@ impl Demo {
         demo.polar.enabled = gallery == Some("--polar");
         demo.networks.enabled = gallery == Some("--networks");
         demo.plot3d.enabled = gallery == Some("--plot3d");
+        demo.surfaces3d.enabled = gallery == Some("--surfaces3d");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -104,6 +107,7 @@ impl Demo {
                     self.polar.controls(ui);
                     self.networks.controls(ui);
                     self.plot3d.controls(ui);
+                    self.surfaces3d.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -139,7 +143,7 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 9A: 2D & 3D types");
+            ui.heading("egui-customplot / Stage 9B: 2D & 3D Surfaces");
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();
@@ -196,6 +200,9 @@ impl Demo {
         }
         if self.plot3d.enabled {
             return self.plot3d.show(ui);
+        }
+        if self.surfaces3d.enabled {
+            return self.surfaces3d.show(ui);
         }
         self.views.show(
             ui,
