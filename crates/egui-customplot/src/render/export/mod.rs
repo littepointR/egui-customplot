@@ -8,5 +8,6 @@ mod svg;
 mod vector;
 mod writer;
 
+pub(crate) use capture::is_capturing_snapshot;
 pub use capture::{CaptureLimits, PlotSnapshot};
 pub use options::{ExportError, ExportOptions};

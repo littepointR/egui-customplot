@@ -159,7 +159,7 @@ fn indexed_right_log_hover_preserves_raw_indices_axes_and_submission_ties() {
 #[test]
 fn optional_index_narrows_endpoint_picking_but_rendering_still_scans_all_rods() {
     let ctx = Context::default();
-    let mut data = PlotData::new(
+    let mut data = PlotData::new_unindexed(
         (1..=100_000)
             .map(|i| [i as f64, (i % 9 + 1) as f64])
             .collect::<Vec<_>>(),

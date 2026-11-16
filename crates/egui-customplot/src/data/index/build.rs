@@ -9,6 +9,9 @@ impl LineIndex {
         points: &[PlotPoint],
         budget_bytes: usize,
     ) -> Result<Self, LineIndexError> {
+        if points.len() >= u32::MAX as usize {
+            return Err(LineIndexError::SizeOverflow);
+        }
         let mut counts = [0usize; 4];
         let mut open = [false; 4];
         let mut previous_x = None;
@@ -72,7 +75,7 @@ impl LineIndex {
         for (i, point) in points.iter().enumerate() {
             if valid(*point, 0) {
                 let leaf = leaf_count + i / BLOCK_SIZE;
-                tree[leaf] = tree[leaf].merge(Extrema::point(i), points);
+                tree[leaf] = tree[leaf].merge(Extrema::point(i as u32, point[1]));
             }
             for mask in 0..4 {
                 if valid(*point, mask) {
@@ -88,7 +91,7 @@ impl LineIndex {
             }
         }
         for i in (1..leaf_count).rev() {
-            tree[i] = tree[i * 2].merge(tree[i * 2 + 1], points);
+            tree[i] = tree[i * 2].merge(tree[i * 2 + 1]);
         }
         Ok(Self {
             runs: runs.map(Vec::into_boxed_slice),

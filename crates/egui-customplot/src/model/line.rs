@@ -1,6 +1,9 @@
 use egui::{AsIdSalt, Color32, IdSalt, Stroke};
 
-use super::{LineInterpolation, LinePattern, LineSampling, MarkerStyle, SeriesStyle};
+use super::{
+    LineInterpolation, LinePattern, LineSampling, MarkerSampling, MarkerStyle, RenderBackend,
+    SeriesStyle,
+};
 use crate::{PlotData, YAxis};
 
 /// A borrowed series description; samples remain in the application model.
@@ -11,6 +14,8 @@ pub struct Line<'a> {
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) style: SeriesStyle,
     pub(crate) sampling: LineSampling,
+    pub(crate) marker_sampling: MarkerSampling,
+    pub(crate) backend: RenderBackend,
     pub(crate) interpolation: LineInterpolation,
     pub(crate) y_axis: YAxis,
 }
@@ -22,7 +27,9 @@ impl<'a> Line<'a> {
             name: "",
             id_salt: None,
             style: SeriesStyle::default(),
-            sampling: LineSampling::Exact,
+            sampling: LineSampling::Auto,
+            marker_sampling: MarkerSampling::Auto,
+            backend: RenderBackend::Auto,
             interpolation: LineInterpolation::Linear,
             y_axis: YAxis::Left,
         }
@@ -81,6 +88,14 @@ impl<'a> Line<'a> {
     /// reference path is used and `lod_fallback_series` reports that fallback.
     pub fn sampling(mut self, sampling: LineSampling) -> Self {
         self.sampling = sampling;
+        self
+    }
+    pub fn marker_sampling(mut self, sampling: MarkerSampling) -> Self {
+        self.marker_sampling = sampling;
+        self
+    }
+    pub fn backend(mut self, backend: RenderBackend) -> Self {
+        self.backend = backend;
         self
     }
     /// Steps are built after sample selection and before clipping. Invalid or

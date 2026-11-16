@@ -70,6 +70,26 @@ impl Plot {
         self.show_impl(ui, state, layers, Some(cache))
     }
 
+    pub fn show_stream(
+        self,
+        ui: &mut Ui,
+        state: &mut PlotState,
+        lines: &[crate::StreamLine<'_>],
+    ) -> PlotResponse {
+        let layers: Vec<_> = lines.iter().copied().map(PlotLayer::from).collect();
+        self.show_impl(ui, state, &layers, None)
+    }
+
+    pub fn show_waveform(
+        self,
+        ui: &mut Ui,
+        state: &mut PlotState,
+        lines: &[crate::WaveformLine<'_>],
+    ) -> PlotResponse {
+        let layers: Vec<_> = lines.iter().copied().map(PlotLayer::from).collect();
+        self.show_impl(ui, state, &layers, None)
+    }
+
     fn show_impl(
         self,
         ui: &mut Ui,
@@ -193,14 +213,16 @@ impl Plot {
             if let Some((axis, t)) = self.right_y_axis.as_ref().zip(right_transform) {
                 paint_right_axis(ui, outer, t, axis, &right_axis_ticks, &style);
             }
+            let (hidden_series, auto_cache) = state.split_visibility_and_auto_cache();
             paint_series(
                 ui,
-                state,
+                hidden_series,
                 series,
                 transforms,
                 &mut diagnostics,
                 &style,
                 cache.as_deref_mut(),
+                Some(auto_cache),
             );
             paint_annotations(ui, &self.annotations, transform, &style, &mut diagnostics);
             if let Some(legend) = &self.bubble_legend {

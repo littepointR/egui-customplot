@@ -12,21 +12,23 @@ const MAX_ENTRIES: usize = 64;
 /// allocator headers, VecDeque spare slots, temporary clones submitted to egui,
 /// markers, tessellation or GPU resources. At most 64 entries are retained.
 /// A hit still copies coordinates for egui and runs dash/tessellation work.
-#[derive(Default)]
+#[derive(Clone, Debug, Default)]
 pub struct PlotCache {
     entries: VecDeque<Entry>,
     budget: usize,
     bytes: usize,
 }
 
+#[derive(Clone, Debug)]
 struct Entry {
     key: Key,
     geometry: PreparedLine,
     bytes: usize,
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub(super) struct Key {
+    source_tag: u8,
     version: u64,
     bounds: [u64; 4],
     rect: [u32; 4],
@@ -40,10 +42,31 @@ pub(super) struct Key {
 
 impl Key {
     pub fn new(line: Line<'_>, transform: PlotTransform, dpi: f32) -> Self {
+        Self::from_parts(
+            0,
+            line.data.version(),
+            transform,
+            dpi,
+            line.sampling,
+            line.interpolation,
+            line.data.line_index().is_some(),
+        )
+    }
+
+    pub fn from_parts(
+        source_tag: u8,
+        version: u64,
+        transform: PlotTransform,
+        dpi: f32,
+        sampling: LineSampling,
+        interpolation: LineInterpolation,
+        indexed: bool,
+    ) -> Self {
         let bounds = transform.bounds();
         let rect = transform.rect();
         Self {
-            version: line.data.version(),
+            source_tag,
+            version,
             bounds: [
                 bounds.min()[0],
                 bounds.min()[1],
@@ -55,9 +78,9 @@ impl Key {
             dpi: dpi.to_bits(),
             scales: transform.scales(),
             reversed: transform.reversed(),
-            sampling: line.sampling,
-            interpolation: line.interpolation,
-            indexed: line.data.line_index().is_some(),
+            sampling,
+            interpolation,
+            indexed,
         }
     }
 }

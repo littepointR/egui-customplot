@@ -91,11 +91,21 @@ fn just_outside_samples_that_round_to_screen_edges_remain_pickable() {
 
 #[test]
 fn indexed_hover_reduces_x_candidates_but_dense_equal_x_is_reported_honestly() {
+    #[derive(Clone, Copy)]
+    enum Mode {
+        Spread,
+        DenseExact,
+        DenseUnprunable,
+    }
     let ctx = Context::default();
-    for dense in [false, true] {
+    for mode in [Mode::Spread, Mode::DenseExact, Mode::DenseUnprunable] {
         let mut data = PlotData::new(
             (0..100_000)
-                .map(|i| [if dense { 50_000.0 } else { i as f64 }, (i % 100) as f64])
+                .map(|i| match mode {
+                    Mode::Spread => [i as f64, (i % 100) as f64],
+                    Mode::DenseExact => [50_000.0, (i % 100) as f64],
+                    Mode::DenseUnprunable => [50_000.0, (i % 99) as f64 + 0.37],
+                })
                 .collect::<Vec<_>>(),
         );
         data.build_line_index(1024 * 1024).unwrap();
@@ -116,12 +126,20 @@ fn indexed_hover_reduces_x_candidates_but_dense_equal_x_is_reported_honestly() {
                 &[Line::new(&data).sampling(LineSampling::MinMax)],
             )
         });
-        assert!(out.hovered_point.is_some());
+        let hit = out.hovered_point.expect("hover hits dense or spread stack");
         assert_eq!(out.diagnostics.pick_index_runs, 1);
-        if dense {
-            assert_eq!(out.diagnostics.visited_pick_points, data.len());
-        } else {
-            assert!(out.diagnostics.visited_pick_points < data.len() / 20);
+        match mode {
+            Mode::Spread => {
+                assert!(out.diagnostics.visited_pick_points < data.len() / 20);
+            }
+            Mode::DenseExact => {
+                assert_eq!(hit.point_index, 50);
+                assert_eq!(hit.screen_distance, 0.0);
+                assert!(out.diagnostics.visited_pick_points <= 128);
+            }
+            Mode::DenseUnprunable => {
+                assert_eq!(out.diagnostics.visited_pick_points, data.len());
+            }
         }
         assert!(out.diagnostics.pick_index_comparisons < 40);
     }

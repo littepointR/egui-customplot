@@ -1,32 +1,68 @@
-use std::time::Instant;
+use std::{collections::HashSet, time::Instant};
 
-use egui::{Color32, Pos2, Ui};
+use egui::{Color32, IdSalt, Pos2, Ui};
 
-use super::{line_query::prepare_series_line, markers::prepare_markers, pattern::apply_pattern};
+use super::{
+    line_query::prepare_series_line, markers_lod::prepare_markers_with_sampling,
+    pattern::apply_pattern,
+};
 use crate::{
-    PlotCache, PlotDiagnostics, PlotLayer, PlotState, Series, axis::SeriesTransforms,
-    model::ResolvedPlotStyle,
+    MarkerSampling, PlotCache, PlotDiagnostics, PlotLayer, RenderBackend, Series,
+    axis::SeriesTransforms, model::ResolvedPlotStyle,
 };
 
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn paint_series(
     ui: &Ui,
-    state: &PlotState,
+    hidden_series: &HashSet<IdSalt>,
     series: &[PlotLayer<'_>],
     transforms: SeriesTransforms,
     diagnostics: &mut PlotDiagnostics,
     style: &ResolvedPlotStyle<'_>,
     mut cache: Option<&mut PlotCache>,
+    mut auto_cache: Option<&mut PlotCache>,
 ) {
     let painter = ui.painter().with_clip_rect(transforms.left.rect());
     let start = Instant::now();
     let query_start = diagnostics.query_duration;
     for (index, s) in series.iter().enumerate() {
-        if !state.series_visible(s.id(index)) {
+        if hidden_series.contains(&s.id(index)) {
             continue;
         }
         let transform = transforms.for_axis(s.y_axis());
         let resolved = s.resolved_style(index, style);
         let s = match *s {
+            PlotLayer::StreamLine(line) => {
+                super::fast_series::paint_stream_line(
+                    &painter,
+                    line,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                    cache.as_deref_mut(),
+                    auto_cache.as_deref_mut(),
+                );
+                continue;
+            }
+            PlotLayer::WaveformLine(line) => {
+                let draw_key = ui
+                    .make_persistent_id(("customplot-wgpu-wave", index))
+                    .value();
+                super::fast_series::paint_waveform_line(
+                    ui.ctx(),
+                    &painter,
+                    draw_key,
+                    line,
+                    transform,
+                    resolved,
+                    ui.ctx().pixels_per_point(),
+                    diagnostics,
+                    cache.as_deref_mut(),
+                    auto_cache.as_deref_mut(),
+                );
+                continue;
+            }
             PlotLayer::Heatmap(heatmap) => {
                 super::heatmap::paint_heatmap(&painter, heatmap, transform, diagnostics);
                 continue;
@@ -75,6 +111,7 @@ pub(crate) fn paint_series(
                     ui.ctx().pixels_per_point(),
                     diagnostics,
                     cache.as_deref_mut(),
+                    auto_cache.as_deref_mut(),
                 );
                 continue;
             }
@@ -236,6 +273,9 @@ pub(crate) fn paint_series(
         let color = resolved.stroke.color;
         let markers = match s {
             Series::Line(line) => {
+                if line.backend == RenderBackend::Wgpu {
+                    diagnostics.wgpu_fallback_series += 1;
+                }
                 let stroke = resolved.stroke;
                 if stroke.width.is_finite()
                     && stroke.width > 0.0
@@ -248,6 +288,7 @@ pub(crate) fn paint_series(
                             ui.ctx().pixels_per_point(),
                             diagnostics,
                             cache.as_deref_mut(),
+                            auto_cache.as_deref_mut(),
                         );
                         diagnostics.visited_segments += prepared.visited_segments;
                         diagnostics.numeric_rejections += prepared.numeric_rejections;
@@ -266,23 +307,63 @@ pub(crate) fn paint_series(
                 }
                 resolved
                     .line_markers
-                    .then_some((resolved.marker, None, None))
+                    .then_some((resolved.marker, None, None, line.marker_sampling))
             }
-            Series::Scatter(scatter) => Some((resolved.marker, scatter.colors, scatter.radii)),
+            Series::Scatter(scatter) => {
+                #[cfg(feature = "wgpu")]
+                let painted_wgpu = {
+                    let draw_key = ui
+                        .make_persistent_id(("customplot-wgpu-scatter", index))
+                        .value();
+                    super::wgpu::try_paint_scatter_wgpu(
+                        ui.ctx(),
+                        &painter,
+                        draw_key,
+                        scatter.data,
+                        transform,
+                        resolved.marker,
+                        color,
+                        scatter.colors,
+                        scatter.radii,
+                        scatter.sampling,
+                        scatter.backend,
+                        diagnostics,
+                    )
+                };
+                #[cfg(not(feature = "wgpu"))]
+                let painted_wgpu = false;
+                if painted_wgpu {
+                    None
+                } else {
+                    if scatter.backend == RenderBackend::Wgpu {
+                        diagnostics.wgpu_fallback_series += 1;
+                    }
+                    Some((
+                        resolved.marker,
+                        scatter.colors,
+                        scatter.radii,
+                        scatter.sampling,
+                    ))
+                }
+            }
         };
-        if let Some((style, colors, radii)) = markers {
-            let prepared = prepare_markers(
-                s.data().points(),
+        if let Some((style, colors, radii, marker_sampling)) = markers {
+            let prepared = prepare_markers_with_sampling(
+                s.data(),
                 transform,
                 style,
                 color,
                 colors,
                 radii,
                 ui.ctx().pixels_per_point(),
+                marker_sampling,
             );
             diagnostics.visited_marker_points += prepared.visited_points;
             diagnostics.output_markers += prepared.output_markers;
             diagnostics.numeric_rejections += prepared.numeric_rejections;
+            if marker_sampling == MarkerSampling::Auto && prepared.reduced {
+                diagnostics.marker_lod_series += 1;
+            }
             diagnostics.geometry_capacity_bytes += prepared.mesh.vertices.capacity()
                 * std::mem::size_of::<egui::epaint::Vertex>()
                 + prepared.mesh.indices.capacity() * std::mem::size_of::<u32>();

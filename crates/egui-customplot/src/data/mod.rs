@@ -35,7 +35,9 @@ mod quiver;
 mod shapes;
 mod spy;
 mod stream;
+mod stream_indexed;
 mod triangulate;
+mod waveform;
 
 pub use animation::{AnimatedLine2D, CometPlayback};
 pub use area::{AreaBandData, AreaError, AreaStackMode};
@@ -77,7 +79,7 @@ pub use hist_legacy::LegacyHistData;
 pub use histogram::{HistogramData, HistogramError, HistogramNormalization};
 pub use image::{ImageData, ImageError};
 pub use index::LineIndexError;
-pub(crate) use index::QueryStats;
+pub(crate) use index::{BLOCK_SIZE, LineIndex, QueryStats, project_axis_raw, screen_aabb};
 pub use multivariate::{
     CategoricalHeatmapData, MultivariateError, ParallelData, ParallelNormalization, SortOrder,
     TableAggregation,
@@ -95,7 +97,7 @@ pub use plot3d::{
     Streamline3DData, Streamline3DLine, Surface3DData, Swarm3DData, Swarm3DPoint, TetraMesh3DData,
     TriMesh3DData, VectorField3D, VolumeSliceData,
 };
-pub use points::{PlotData, PlotPoint};
+pub use points::{AUTO_INDEX_MIN_POINTS, PlotData, PlotPoint};
 pub use polar::{
     CompassData, PolarBubbleData, PolarBubblePoint, PolarCurveData, PolarError, PolarFunctionData,
     PolarHistNormalization, PolarHistogramData, RoseData,
@@ -106,4 +108,6 @@ pub use quiver::{QuiverArrow, QuiverData};
 pub use shapes::{DataRect, RectData};
 pub use spy::{SpyData, SpyError};
 pub use stream::{AppendReport, PlotStream, StreamError};
+pub use stream_indexed::IndexedStream;
 pub(crate) use triangulate::triangulate_indexed_polygon;
+pub use waveform::{UniformWaveform, WaveformError};

@@ -10,8 +10,15 @@ pub type PlotPoint = [f64; 2];
 
 static NEXT_VERSION: AtomicU64 = AtomicU64::new(1);
 
+/// Minimum sample count at which [`PlotData::new`] automatically constructs a
+/// monotonic-X tree index (within the default 64 MiB budget).
+pub const AUTO_INDEX_MIN_POINTS: usize = 8_192;
+const AUTO_INDEX_MAX_BYTES: usize = 64 * 1024 * 1024;
+
 /// Immutable shared XY data. Cloning shares samples; construction scans once.
-/// A point with either non-finite component breaks the polyline.
+/// When `len >= AUTO_INDEX_MIN_POINTS` and finite runs are X-nondecreasing,
+/// [`PlotData::new`] automatically builds an immutable index within 64 MiB so
+/// default lines and raw picking run in sub-millisecond time.
 #[derive(Clone, Debug)]
 pub struct PlotData {
     points: Arc<[PlotPoint]>,
@@ -24,15 +31,40 @@ pub struct PlotData {
 
 impl PlotData {
     pub fn new(points: impl Into<Arc<[PlotPoint]>>) -> Self {
-        let points = points.into();
+        Self::from_arc(points.into(), Some(AUTO_INDEX_MAX_BYTES))
+    }
+
+    /// Construct `PlotData` without building an automatic monotonic-X index.
+    pub fn new_unindexed(points: impl Into<Arc<[PlotPoint]>>) -> Self {
+        Self::from_arc(points.into(), None)
+    }
+
+    /// Construct `PlotData` and build a monotonic-X index bounded by `budget_bytes`.
+    pub fn with_index_budget(
+        points: impl Into<Arc<[PlotPoint]>>,
+        budget_bytes: usize,
+    ) -> Result<Self, LineIndexError> {
+        let mut data = Self::from_arc(points.into(), None);
+        data.build_line_index(budget_bytes)?;
+        Ok(data)
+    }
+
+    fn from_arc(points: Arc<[PlotPoint]>, auto_index_budget: Option<usize>) -> Self {
         let mut extents: [Option<(PlotPoint, PlotPoint)>; 4] = [None; 4];
         let mut valid_counts = [0; 4];
         let mut non_finite = 0;
+        let mut monotonic_x = true;
+        let mut previous_x: Option<f64> = None;
         for p in points.iter() {
             if !p[0].is_finite() || !p[1].is_finite() {
                 non_finite += 1;
+                previous_x = None;
                 continue;
             }
+            if monotonic_x && previous_x.is_some_and(|x| p[0] < x) {
+                monotonic_x = false;
+            }
+            previous_x = Some(p[0]);
             for mask in 0..4 {
                 if (mask & 1 != 0 && p[0] <= 0.0) || (mask & 2 != 0 && p[1] <= 0.0) {
                     continue;
@@ -45,12 +77,16 @@ impl PlotData {
                 }
             }
         }
+        let line_index = auto_index_budget
+            .filter(|_| monotonic_x && points.len() >= AUTO_INDEX_MIN_POINTS)
+            .and_then(|budget| LineIndex::build(&points, budget).ok())
+            .map(Arc::new);
         Self {
             points,
             extents,
             valid_counts,
             non_finite,
-            line_index: None,
+            line_index,
             version: next_version(),
         }
     }
@@ -143,7 +179,7 @@ impl PlotData {
     }
 }
 
-fn next_version() -> u64 {
+pub(crate) fn next_version() -> u64 {
     let mut current = NEXT_VERSION.load(Ordering::Relaxed);
     loop {
         let next = current

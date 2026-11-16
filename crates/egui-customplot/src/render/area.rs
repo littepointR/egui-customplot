@@ -10,6 +10,7 @@ use crate::{
     model::{AreaSource, ResolvedSeriesStyle},
 };
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn paint_area(
     painter: &Painter,
     area: Area<'_>,
@@ -18,6 +19,7 @@ pub(super) fn paint_area(
     pixels_per_point: f32,
     diagnostics: &mut PlotDiagnostics,
     cache: Option<&mut PlotCache>,
+    auto_cache: Option<&mut PlotCache>,
 ) {
     if !area.baseline_valid(transform.scales()) {
         return;
@@ -41,6 +43,7 @@ pub(super) fn paint_area(
                         pixels_per_point,
                         diagnostics,
                         cache,
+                        auto_cache,
                     );
                     diagnostics.visited_segments += prepared.visited_segments;
                     diagnostics.numeric_rejections += prepared.numeric_rejections;

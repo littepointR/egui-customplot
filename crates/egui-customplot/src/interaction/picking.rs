@@ -97,56 +97,19 @@ pub(super) fn pick_point(
             }
             continue;
         }
-        let Some(data) = s.point_data() else { continue };
-        let transform = transforms.for_axis(s.y_axis());
-        if let PlotLayer::Stems(stems) = *s
-            && !stems.baseline_valid(transform.scales())
-        {
-            continue;
-        }
-        if let PlotLayer::Area(area) = *s
-            && (!area.show_stroke || !area.baseline_valid(transform.scales()))
-        {
-            continue;
-        }
-        let ranges = if let Some(index) = data.line_index() {
-            // A one-point guard conservatively covers f32 projection rounding;
-            // the final raw-point distance filter still uses the exact radius.
-            let rect = transform.rect();
-            let a = transform
-                .point_from_position(egui::pos2(position.x - radius - 1.0, rect.center().y))[0];
-            let b = transform
-                .point_from_position(egui::pos2(position.x + radius + 1.0, rect.center().y))[0];
-            let mut stats = QueryStats::default();
-            // Do not clamp to the data bounds: just-outside points may round
-            // onto the f32 screen edge and are eligible in the reference path.
-            // An inverse overflow must broaden, not accidentally empty, a query.
-            let x = if a.is_finite() && b.is_finite() {
-                [a.min(b), a.max(b)]
-            } else {
-                [f64::NEG_INFINITY, f64::INFINITY]
-            };
-            let ranges = index.candidates(data.points(), transform.scales(), x, &mut stats);
-            diagnostics.pick_index_runs += stats.visited_runs;
-            diagnostics.pick_index_comparisons += stats.comparisons;
-            diagnostics.pick_query_capacity_bytes +=
-                ranges.capacity() * std::mem::size_of::<std::ops::Range<usize>>();
-            ranges
-        } else {
-            std::iter::once(0..data.len()).collect()
-        };
-        for point_index in ranges.into_iter().flatten() {
-            let point = data.points()[point_index];
-            diagnostics.visited_pick_points += 1;
-            if !transform.is_valid_point(point) || !point_visible(*s, point_index, resolved) {
-                continue;
-            }
-            let screen = transform.position_from_point(point);
-            if !transform.rect().contains(screen) {
-                continue;
-            }
-            let distance = screen.distance(position);
-            if distance <= radius
+        let initial_limit = closest
+            .as_ref()
+            .map_or(radius, |p| p.screen_distance.min(radius));
+        if let Some(hit) = super::point_fast::pick_fast_point(
+            *s,
+            transforms,
+            position,
+            radius,
+            initial_limit,
+            resolved,
+            diagnostics,
+        ) {
+            if let Some((point_index, point, distance)) = hit
                 && closest
                     .as_ref()
                     .is_none_or(|p| distance < p.screen_distance)
@@ -159,6 +122,123 @@ pub(super) fn pick_point(
                     point,
                     screen_distance: distance,
                 });
+            }
+            continue;
+        }
+        let Some(data) = s.point_data() else { continue };
+        let transform = transforms.for_axis(s.y_axis());
+        if let PlotLayer::Stems(stems) = *s
+            && !stems.baseline_valid(transform.scales())
+        {
+            continue;
+        }
+        if let PlotLayer::Area(area) = *s
+            && (!area.show_stroke || !area.baseline_valid(transform.scales()))
+        {
+            continue;
+        }
+        if let Some(index) = data.line_index() {
+            let mut stats = QueryStats::default();
+            let initial_best = closest
+                .as_ref()
+                .filter(|p| p.screen_distance <= radius)
+                .map(|p| (0usize, p.screen_distance));
+            let capacity_bytes = index.pick_runs(
+                data.points(),
+                transform,
+                position,
+                radius,
+                initial_best,
+                &mut stats,
+                |point_index| {
+                    let point = data.points()[point_index];
+                    diagnostics.visited_pick_points += 1;
+                    let mut eligible = false;
+                    if transform.is_valid_point(point) && point_visible(*s, point_index, resolved) {
+                        let screen = transform.position_from_point(point);
+                        if transform.rect().contains(screen) {
+                            eligible = true;
+                            let distance = screen.distance(position);
+                            if distance <= radius
+                                && closest.as_ref().is_none_or(|p| {
+                                    distance < p.screen_distance
+                                        || (distance == p.screen_distance
+                                            && p.series_index == series_index
+                                            && point_index < p.point_index)
+                                })
+                            {
+                                closest = Some(HoveredPoint {
+                                    y_axis: transforms.effective_axis(s.y_axis()),
+                                    series_id: s.id(series_index),
+                                    series_index,
+                                    point_index,
+                                    point,
+                                    screen_distance: distance,
+                                });
+                            }
+                        }
+                    }
+                    let best_pair = closest
+                        .as_ref()
+                        .filter(|p| p.screen_distance <= radius)
+                        .map(|p| {
+                            (
+                                if p.series_index == series_index {
+                                    p.point_index
+                                } else {
+                                    0
+                                },
+                                p.screen_distance,
+                            )
+                        });
+                    (eligible, best_pair)
+                },
+            );
+            diagnostics.pick_index_runs += stats.visited_runs;
+            diagnostics.pick_index_comparisons += stats.comparisons;
+            diagnostics.pick_query_capacity_bytes += capacity_bytes;
+        } else if let Some((ext_min, ext_max)) = data.extent(transform.scales())
+            && let Some(aabb) = crate::data::screen_aabb(
+                transform,
+                [ext_min[0], ext_max[0]],
+                Some([ext_min[1], ext_max[1]]),
+                position,
+            )
+            && aabb.can_improve(
+                radius,
+                closest
+                    .as_ref()
+                    .filter(|p| p.screen_distance <= radius)
+                    .map(|p| (0usize, p.screen_distance)),
+                0,
+            )
+        {
+            for point_index in 0..data.len() {
+                let point = data.points()[point_index];
+                diagnostics.visited_pick_points += 1;
+                if transform.is_valid_point(point) && point_visible(*s, point_index, resolved) {
+                    let screen = transform.position_from_point(point);
+                    if transform.rect().contains(screen) {
+                        let distance = screen.distance(position);
+                        if distance <= radius
+                            && closest
+                                .as_ref()
+                                .is_none_or(|p| distance < p.screen_distance)
+                        {
+                            closest = Some(HoveredPoint {
+                                y_axis: transforms.effective_axis(s.y_axis()),
+                                series_id: s.id(series_index),
+                                series_index,
+                                point_index,
+                                point,
+                                screen_distance: distance,
+                            });
+                        }
+                        if aabb.exact_single_pos {
+                            break;
+                        }
+                    }
+                }
             }
         }
     }

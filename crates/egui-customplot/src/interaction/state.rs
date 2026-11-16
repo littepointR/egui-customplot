@@ -6,13 +6,27 @@ use crate::{PlotBounds, PlotTransform};
 
 /// Application-owned view state, one instance per widget. None means auto-fit.
 /// Do not put this in the same Context's IdTypeMap: frame snapshots hold a Context handle.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct PlotState {
     pub(super) bounds: Option<PlotBounds>,
     pub(super) linked_ranges: [Option<[f64; 2]>; 2],
     pub(super) right_y_range: Option<[f64; 2]>,
     hidden: HashSet<IdSalt>,
     pub(super) frame: Option<FrameSnapshot>,
+    pub(crate) auto_cache: crate::PlotCache,
+}
+
+impl Default for PlotState {
+    fn default() -> Self {
+        Self {
+            bounds: None,
+            linked_ranges: [None; 2],
+            right_y_range: None,
+            hidden: HashSet::new(),
+            frame: None,
+            auto_cache: crate::PlotCache::new(2 * 1024 * 1024),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -63,6 +77,7 @@ impl PlotState {
         self.bounds = None;
         self.right_y_range = None;
         self.frame = None;
+        self.auto_cache.clear();
     }
     pub fn set_bounds(&mut self, bounds: PlotBounds) {
         self.bounds = Some(bounds);
@@ -109,6 +124,12 @@ impl PlotState {
         } else {
             self.hidden.insert(id);
         }
+    }
+
+    pub(crate) fn split_visibility_and_auto_cache(
+        &mut self,
+    ) -> (&HashSet<IdSalt>, &mut crate::PlotCache) {
+        (&self.hidden, &mut self.auto_cache)
     }
 
     pub(crate) fn retain_series(&mut self, present: &HashSet<IdSalt>) {

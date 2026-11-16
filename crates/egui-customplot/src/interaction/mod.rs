@@ -10,6 +10,7 @@ mod navigation;
 mod picking;
 mod plot3d;
 mod point_aux;
+mod point_fast;
 mod point_stage8b;
 mod point_stage8c;
 mod polar;

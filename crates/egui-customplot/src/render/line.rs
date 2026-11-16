@@ -2,11 +2,109 @@ use egui::Pos2;
 
 use crate::{LineInterpolation, PlotPoint, PlotTransform, axis::clip_normalized_segment};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Debug, Default)]
 pub(super) struct PreparedLine {
     pub paths: Vec<Vec<Pos2>>,
     pub visited_segments: usize,
     pub numeric_rejections: usize,
+}
+
+/// Pixel-cell coalescing fallback for large unindexed/unsorted polylines (`Auto`).
+pub(super) fn prepare_line_auto_unindexed(
+    points: &[PlotPoint],
+    transform: PlotTransform,
+    pixels_per_point: f32,
+) -> PreparedLine {
+    prepare_line_auto_unindexed_iter(points.iter().copied(), transform, pixels_per_point)
+}
+
+pub(super) fn prepare_line_auto_unindexed_iter(
+    points: impl IntoIterator<Item = PlotPoint>,
+    transform: PlotTransform,
+    pixels_per_point: f32,
+) -> PreparedLine {
+    let ppp = pixels_per_point.max(0.25);
+    let mut prepared = PreparedLine::default();
+    let mut path = Vec::new();
+    let mut prev_cell: Option<(i32, i32)> = None;
+    let mut pending_last: Option<Pos2> = None;
+    let mut points_iter = points.into_iter();
+    let Some(mut previous) = points_iter.next() else {
+        return prepared;
+    };
+    let quantize = |pos: Pos2| ((pos.x * ppp).round() as i32, (pos.y * ppp).round() as i32);
+    for point in points_iter {
+        let pair = [previous, point];
+        previous = point;
+        prepared.visited_segments += 1;
+        if !transform.is_valid_point(pair[0]) || !transform.is_valid_point(pair[1]) {
+            if let Some(last) = pending_last.take()
+                && path.last() != Some(&last)
+            {
+                path.push(last);
+            }
+            prev_cell = None;
+            flush(&mut path, &mut prepared.paths);
+            continue;
+        }
+        let a = transform.normalized(pair[0]);
+        let b = transform.normalized(pair[1]);
+        if a.iter().chain(&b).any(|x| !x.is_finite())
+            || !(b[0] - a[0]).is_finite()
+            || !(b[1] - a[1]).is_finite()
+        {
+            prepared.numeric_rejections += 1;
+            if let Some(last) = pending_last.take()
+                && path.last() != Some(&last)
+            {
+                path.push(last);
+            }
+            prev_cell = None;
+            flush(&mut path, &mut prepared.paths);
+            continue;
+        }
+        if let Some((ca, cb)) = clip_normalized_segment(a, b) {
+            let sa = transform.position_from_normalized(ca);
+            let sb = transform.position_from_normalized(cb);
+            if path.last() != Some(&sa) {
+                if let Some(last) = pending_last.take()
+                    && path.last() != Some(&last)
+                {
+                    path.push(last);
+                }
+                flush(&mut path, &mut prepared.paths);
+                path.push(sa);
+                prev_cell = Some(quantize(sa));
+            }
+            let qb = quantize(sb);
+            if prev_cell == Some(qb) {
+                pending_last = Some(sb);
+            } else {
+                if let Some(last) = pending_last.take()
+                    && path.last() != Some(&last)
+                {
+                    path.push(last);
+                }
+                path.push(sb);
+                prev_cell = Some(qb);
+            }
+        } else {
+            if let Some(last) = pending_last.take()
+                && path.last() != Some(&last)
+            {
+                path.push(last);
+            }
+            prev_cell = None;
+            flush(&mut path, &mut prepared.paths);
+        }
+    }
+    if let Some(last) = pending_last.take()
+        && path.last() != Some(&last)
+    {
+        path.push(last);
+    }
+    flush(&mut path, &mut prepared.paths);
+    prepared
 }
 
 /// Reference O(N) path. Clip in f64 normalized coordinates before casting to f32.

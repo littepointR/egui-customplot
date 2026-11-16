@@ -1,6 +1,7 @@
-//! Explicit, immutable monotonic-X acceleration. No UI state or render geometry.
+//! Explicit or automatic immutable monotonic-X acceleration. No UI state or render geometry.
 
 mod build;
+mod pick;
 mod query;
 #[cfg(test)]
 mod tests;
@@ -9,9 +10,11 @@ mod tree;
 use std::ops::Range;
 
 use crate::{AxisScale, PlotPoint};
-use tree::Extrema;
 
-const BLOCK_SIZE: usize = 64;
+pub(crate) const BLOCK_SIZE: usize = 64;
+pub(crate) use pick::{ScreenAabb, project_axis_raw, screen_aabb};
+pub(crate) use query::gallop_partition_point;
+pub(crate) use tree::Extrema;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LineIndexError {
@@ -62,6 +65,7 @@ pub(crate) struct QueryStats {
     pub scanned_points: usize,
     pub selected_points: usize,
     pub visited_runs: usize,
+    pub reduced: bool,
 }
 
 pub(crate) struct LineQuery {
@@ -73,6 +77,18 @@ pub(crate) struct LineQuery {
 impl LineIndex {
     pub(super) fn bytes(&self) -> usize {
         self.bytes
+    }
+
+    pub(crate) fn leaf_count(&self) -> usize {
+        self.leaf_count
+    }
+
+    pub(crate) fn node_extrema(&self, node_idx: usize) -> Extrema {
+        self.tree[node_idx]
+    }
+
+    pub(crate) fn runs_for_scales(&self, scales: [AxisScale; 2]) -> &[Range<usize>] {
+        self.runs(scales)
     }
 
     fn runs(&self, scales: [AxisScale; 2]) -> &[Range<usize>] {

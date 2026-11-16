@@ -170,7 +170,7 @@ impl PlotStream {
     /// A snapshot has a new PlotData version and no prebuilt line index.
     pub fn snapshot(&self) -> PlotData {
         let (a, b) = self.as_slices();
-        PlotData::new(a.iter().chain(b).copied().collect::<Vec<_>>())
+        PlotData::new_unindexed(a.iter().chain(b).copied().collect::<Vec<_>>())
     }
 
     /// Keeps the batch watermark, preventing old/retried batches after a clear.

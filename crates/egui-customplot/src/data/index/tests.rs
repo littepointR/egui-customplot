@@ -101,7 +101,7 @@ fn tree_extrema_match_raw_scan_for_partial_blocks_ties_and_gaps() {
             let expected = (start..end)
                 .filter(|i| valid(points[*i], 0))
                 .fold(Extrema::default(), |e, i| {
-                    e.merge(Extrema::point(i), &points)
+                    e.merge(Extrema::point(i as u32, points[i][1]))
                 });
             let result = index.extrema(&points, start..end, &mut QueryStats::default());
             assert_eq!((result.min, result.max), (expected.min, expected.max));
@@ -180,4 +180,38 @@ fn queries_keep_crossing_neighbors_duplicate_x_and_report_break_heavy_cost() {
     assert_eq!(query.paths.len(), 10_000);
     assert_eq!(query.stats.visited_runs, 10_000);
     assert_eq!(query.stats.selected_points, 20_000);
+}
+
+#[test]
+fn gallop_partition_point_matches_std_across_uniform_and_clustered_inputs() {
+    let uniform: Vec<PlotPoint> = (0..5000).map(|i| [i as f64 * 0.25, 0.0]).collect();
+    let clustered: Vec<PlotPoint> = (0..5000)
+        .map(|i| {
+            let x = if i < 100 {
+                0.0
+            } else if i < 4000 {
+                (i / 50) as f64
+            } else {
+                10_000.0 + (i - 4000) as f64
+            };
+            [x, 0.0]
+        })
+        .collect();
+    for data in [&uniform, &clustered] {
+        for start in [0, 1, 63, 64, 500, 4900] {
+            for end in [start, (start + 17).min(data.len()), data.len()] {
+                for hint in [1, 32, 128, 1024] {
+                    for boundary in [-1.0, 0.0, 10.5, 80.0, 500.0, 10_500.0, 20_000.0] {
+                        let expected =
+                            start + data[start..end].partition_point(|p| p[0] < boundary);
+                        let mut cmp = 0;
+                        let actual = query::gallop_partition_point(
+                            data, start, end, hint, boundary, &mut cmp,
+                        );
+                        assert_eq!(actual, expected, "{start}..{end} hint={hint} b={boundary}");
+                    }
+                }
+            }
+        }
+    }
 }

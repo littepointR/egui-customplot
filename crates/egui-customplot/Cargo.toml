@@ -11,10 +11,14 @@ description = "An embeddable scientific plotting prototype for egui"
 [features]
 default = []
 export = ["dep:png"]
+wgpu = ["dep:egui-wgpu", "dep:wgpu", "dep:bytemuck"]
 
 [dependencies]
 egui.workspace = true
 png = { version = "0.18.1", optional = true }
+egui-wgpu = { workspace = true, optional = true }
+wgpu = { workspace = true, optional = true }
+bytemuck = { workspace = true, optional = true }
 
 [dev-dependencies]
 egui = { workspace = true, features = ["default_fonts"] }
@@ -75,6 +79,10 @@ harness = false
 
 [[bench]]
 name = "stage10_performance"
+harness = false
+
+[[bench]]
+name = "dynamic_10m_performance"
 harness = false
 
 [[example]]

@@ -47,6 +47,32 @@ pub(super) fn accumulate_layer(
                 data.extent(scales)
             }
         }
+        PlotLayer::StreamLine(line) => {
+            let stream = line.data;
+            diagnostics.input_points += stream.len();
+            let non_finite = stream.non_finite_points();
+            diagnostics.non_finite_points += non_finite;
+            diagnostics.domain_invalid_points += stream.invalid_points(scales) - non_finite;
+            let (ptr, cap) = stream.identity();
+            if seen.points.insert((ptr as usize, cap)) {
+                diagnostics.unique_sample_bytes += stream.sample_bytes();
+                diagnostics.unique_index_bytes += stream.index_bytes();
+            }
+            stream.extent(scales)
+        }
+        PlotLayer::WaveformLine(line) => {
+            let wave = line.data;
+            diagnostics.input_points += wave.len();
+            let non_finite = wave.non_finite_points();
+            diagnostics.non_finite_points += non_finite;
+            diagnostics.domain_invalid_points += wave.invalid_points(scales) - non_finite;
+            let (ptr, len) = wave.identity();
+            if seen.points.insert((ptr as usize, len)) {
+                diagnostics.unique_sample_bytes += wave.sample_bytes();
+                diagnostics.unique_index_bytes += wave.index_bytes();
+            }
+            wave.extent(scales)
+        }
         PlotLayer::Heatmap(s) => {
             diagnostics.input_heatmap_cells += s.data.values().len();
             diagnostics.non_finite_heatmap_cells += s.data.non_finite_cells();

@@ -1,0 +1,9 @@
+# CPU+tessellation 10M benchmark; bench_mode=true; canvas=2024x1124; plot=1920x1080; dpi=1; seconds_per_scene=2
+# No GPU swapchain/presentation in this binary; see customplot-demo --bench-window-10m for real wgpu swapchain FPS.
+points,scene,batch_points,frames,build_p50_ms,build_p95_ms,tess_p50_ms,tess_p95_ms,total_p50_ms,total_p95_ms,total_p99_ms,query_p95_ms,pick_p95_ms,output_points,output_markers,mesh_vertices,auto_lod_series,marker_lod_series
+10000000,indexed_stream_10m_live_32k,32768,329,5.5910,6.0816,0.2984,0.4221,5.9157,6.4448,6.9484,5.0195,0.0000,6987,0,48872,1,0
+10000000,uniform_waveform_10m_live_32k,32768,898,1.7319,2.1674,0.3612,0.4419,2.0975,2.5512,3.0335,1.3884,0.0000,6982,0,48772,1,0
+10000000,plotdata_auto_10m_pan_hover,0,1828,0.9833,1.3221,0.0649,0.1546,1.0653,1.4209,1.6637,1.0736,0.0150,3846,0,15604,1,0
+1000000,scatter_auto_1m_pan,0,328,4.5152,4.7929,1.3519,1.6556,5.9102,6.2817,6.6250,0.0000,0.0000,0,11422,194346,0,1
+1000000,scatter_auto_1m_zoom_out_hover,0,6233,0.0328,1.2842,0.0040,0.5575,0.0373,1.8454,2.2548,0.0000,0.0100,0,1231,40935,0,1
+10000000,zoom_out_deep_10m_hover,32768,2182,0.8202,1.3828,0.0097,0.0422,0.8311,1.4256,1.6055,0.5076,0.0115,23,0,572,3,0

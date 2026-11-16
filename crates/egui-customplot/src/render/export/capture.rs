@@ -43,6 +43,33 @@ pub struct PlotSnapshot {
     source_pixels_per_point: f32,
 }
 
+#[derive(Clone, Copy, Debug, Default)]
+struct SnapshotCaptureDepth(usize);
+
+pub(crate) fn is_capturing_snapshot(ctx: &egui::Context) -> bool {
+    ctx.data(|d| {
+        d.get_temp::<SnapshotCaptureDepth>(egui::Id::NULL)
+            .is_some_and(|depth| depth.0 > 0)
+    })
+}
+
+struct SnapshotCaptureGuard(egui::Context);
+
+impl Drop for SnapshotCaptureGuard {
+    fn drop(&mut self) {
+        self.0.data_mut(|d| {
+            let depth = d
+                .get_temp::<SnapshotCaptureDepth>(egui::Id::NULL)
+                .unwrap_or_default();
+            if depth.0 <= 1 {
+                d.remove::<SnapshotCaptureDepth>(egui::Id::NULL);
+            } else {
+                d.insert_temp(egui::Id::NULL, SnapshotCaptureDepth(depth.0 - 1));
+            }
+        });
+    }
+}
+
 impl PlotSnapshot {
     /// Draw exactly once in the EXISTING host Ui, returning the logical export
     /// rectangle (typically `PlotResponse::outer_rect`). Captures only additions
@@ -65,7 +92,16 @@ impl PlotSnapshot {
         let start = ui
             .ctx()
             .graphics(|g| g.get(layer).map_or(0, |l| l.next_idx().0));
-        let rect = draw(ui);
+        ui.ctx().data_mut(|d| {
+            let depth = d
+                .get_temp::<SnapshotCaptureDepth>(egui::Id::NULL)
+                .unwrap_or_default();
+            d.insert_temp(egui::Id::NULL, SnapshotCaptureDepth(depth.0 + 1));
+        });
+        let rect = {
+            let _guard = SnapshotCaptureGuard(ui.ctx().clone());
+            draw(ui)
+        };
         if !rect.is_finite() || !rect.is_positive() {
             return Err(ExportError::InvalidDimensions);
         }

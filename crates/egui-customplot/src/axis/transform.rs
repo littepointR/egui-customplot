@@ -198,6 +198,16 @@ impl PlotTransform {
             self.rect.bottom() - p[1] as f32 * self.rect.height(),
         )
     }
+
+    #[inline]
+    pub(crate) fn axis_min(self, axis: usize) -> f64 {
+        self.axis_bounds.min[axis]
+    }
+
+    #[inline]
+    pub(crate) fn axis_span(self, axis: usize) -> f64 {
+        self.axis_bounds.span()[axis]
+    }
 }
 
 #[cfg(test)]

@@ -9,6 +9,8 @@ use crate::{
 pub(super) fn layer_id(layer: PlotLayer<'_>, index: usize) -> IdSalt {
     let id_salt = match layer {
         PlotLayer::Series(s) => return s.id(index),
+        PlotLayer::StreamLine(s) => s.id_salt,
+        PlotLayer::WaveformLine(s) => s.id_salt,
         PlotLayer::Heatmap(s) => s.id_salt,
         PlotLayer::Bars(s) => s.id_salt,
         PlotLayer::ErrorBars(s) => s.id_salt,
@@ -61,6 +63,8 @@ impl<'a> PlotLayer<'a> {
     ) -> ResolvedSeriesStyle {
         match self {
             Self::Series(s) => s.resolved_style(index, plot),
+            Self::StreamLine(s) => plot.resolve_series(index, s.style),
+            Self::WaveformLine(s) => plot.resolve_series(index, s.style),
             Self::Heatmap(s) => plot.resolve_series(
                 index,
                 SeriesStyle {

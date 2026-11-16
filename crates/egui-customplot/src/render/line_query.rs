@@ -1,9 +1,12 @@
 use std::time::Instant;
 
-use crate::{Line, LineSampling, PlotCache, PlotDiagnostics, PlotTransform};
+use crate::{
+    Line, LineInterpolation, LineSampling, PlotCache, PlotDiagnostics, PlotTransform,
+    data::AUTO_INDEX_MIN_POINTS,
+};
 
 use super::cache::Key;
-use super::line::{PreparedLine, prepare_line, prepare_line_iter};
+use super::line::{PreparedLine, prepare_line, prepare_line_auto_unindexed, prepare_line_iter};
 
 pub(super) fn prepare_series_line(
     line: Line<'_>,
@@ -11,6 +14,7 @@ pub(super) fn prepare_series_line(
     pixels_per_point: f32,
     diagnostics: &mut PlotDiagnostics,
     cache: Option<&mut PlotCache>,
+    auto_cache: Option<&mut PlotCache>,
 ) -> PreparedLine {
     // Pre-style geometry is independent of color/width/dash/marker properties.
     // All transform, immutable data and sampling inputs belong to its key.
@@ -19,7 +23,9 @@ pub(super) fn prepare_series_line(
         if let Some(mut prepared) = cache.get(&key) {
             diagnostics.line_cache_hits += 1;
             prepared.visited_segments = 0;
-            if line.sampling != LineSampling::Exact && line.data.line_index().is_none() {
+            if matches!(line.sampling, LineSampling::Visible | LineSampling::MinMax)
+                && line.data.line_index().is_none()
+            {
                 diagnostics.lod_fallback_series += 1;
             }
             return prepared;
@@ -29,6 +35,19 @@ pub(super) fn prepare_series_line(
         if !cache.insert(key, &prepared) {
             diagnostics.line_cache_rejections += 1;
         }
+        return prepared;
+    }
+    if line.sampling == LineSampling::Auto
+        && line.data.len() >= AUTO_INDEX_MIN_POINTS
+        && let Some(auto) = auto_cache
+    {
+        let key = Key::new(line, transform, pixels_per_point);
+        if let Some(mut prepared) = auto.get(&key) {
+            prepared.visited_segments = 0;
+            return prepared;
+        }
+        let prepared = prepare_uncached_line(line, transform, pixels_per_point, diagnostics);
+        auto.insert(key, &prepared);
         return prepared;
     }
     prepare_uncached_line(line, transform, pixels_per_point, diagnostics)
@@ -44,18 +63,28 @@ fn prepare_uncached_line(
         return prepare_line(line.data.points(), transform, line.interpolation);
     }
     let Some(index) = line.data.line_index() else {
+        if line.sampling == LineSampling::Auto {
+            if line.data.len() >= 32_768 && line.interpolation == LineInterpolation::Linear {
+                diagnostics.auto_lod_series += 1;
+                return prepare_line_auto_unindexed(
+                    line.data.points(),
+                    transform,
+                    pixels_per_point,
+                );
+            }
+            return prepare_line(line.data.points(), transform, line.interpolation);
+        }
         diagnostics.lod_fallback_series += 1;
         return prepare_line(line.data.points(), transform, line.interpolation);
     };
+    let reduce = matches!(line.sampling, LineSampling::MinMax | LineSampling::Auto);
     let start = Instant::now();
-    let query = index.query(
-        line.data.points(),
-        transform,
-        pixels_per_point,
-        line.sampling == LineSampling::MinMax,
-    );
+    let query = index.query(line.data.points(), transform, pixels_per_point, reduce);
     diagnostics.query_duration += start.elapsed();
     diagnostics.indexed_line_series += 1;
+    if line.sampling == LineSampling::Auto && query.stats.reduced {
+        diagnostics.auto_lod_series += 1;
+    }
     diagnostics.query_comparisons += query.stats.comparisons;
     diagnostics.query_index_nodes += query.stats.visited_nodes;
     diagnostics.query_scanned_points += query.stats.scanned_points;

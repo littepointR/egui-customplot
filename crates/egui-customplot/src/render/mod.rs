@@ -13,6 +13,7 @@ mod distribution;
 mod error_bars;
 #[cfg(feature = "export")]
 mod export;
+mod fast_series;
 mod flow;
 mod geo;
 mod graph;
@@ -21,6 +22,8 @@ mod image;
 mod line;
 mod line_query;
 mod markers;
+mod markers_grid_tree;
+mod markers_lod;
 mod mesh;
 mod multivariate;
 mod overlay;
@@ -39,6 +42,8 @@ mod spy;
 mod stage8c;
 mod stems;
 mod triangulation;
+#[cfg(feature = "wgpu")]
+mod wgpu;
 
 pub(crate) use annotation::{paint_annotations, paint_figure_annotations};
 pub(crate) use axes::{AxesStyle, paint_axes};
@@ -52,3 +57,17 @@ pub(crate) use plot3d::paint_plot3d;
 pub(crate) use polar::paint_polar;
 pub(crate) use right_axis::paint_right_axis;
 pub(crate) use series::paint_series;
+#[cfg(feature = "wgpu")]
+pub use wgpu::{WgpuPlotConfig, register_wgpu, register_wgpu_with_config, set_wgpu_budget};
+
+#[cfg(feature = "export")]
+#[cfg_attr(not(feature = "wgpu"), allow(dead_code))]
+pub(crate) fn is_capturing_snapshot(ctx: &egui::Context) -> bool {
+    export::is_capturing_snapshot(ctx)
+}
+
+#[cfg(not(feature = "export"))]
+#[cfg_attr(not(feature = "wgpu"), allow(dead_code))]
+pub(crate) fn is_capturing_snapshot(_ctx: &egui::Context) -> bool {
+    false
+}

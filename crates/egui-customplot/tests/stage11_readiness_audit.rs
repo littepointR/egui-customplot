@@ -89,7 +89,7 @@ fn checklist_capabilities_egui_perf_and_benchmarks_are_complete_and_traceable() 
             next_is_bench = false;
         }
     }
-    assert_eq!(benches.len(), 14, "expected 14 benchmark targets");
+    assert_eq!(benches.len(), 15, "expected 15 benchmark targets");
     for bench in &benches {
         assert!(
             root.join(format!("crates/egui-customplot/benches/{bench}.rs"))

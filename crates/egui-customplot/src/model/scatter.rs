@@ -1,6 +1,6 @@
 use egui::{AsIdSalt, Color32, IdSalt};
 
-use super::{MarkerShape, SeriesStyle};
+use super::{MarkerSampling, MarkerShape, RenderBackend, SeriesStyle};
 use crate::{PlotData, YAxis};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -26,6 +26,8 @@ pub struct Scatter<'a> {
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) style: SeriesStyle,
+    pub(crate) sampling: MarkerSampling,
+    pub(crate) backend: RenderBackend,
     pub(crate) colors: Option<&'a [Color32]>,
     pub(crate) radii: Option<&'a [f32]>,
     pub(crate) y_axis: YAxis,
@@ -38,10 +40,20 @@ impl<'a> Scatter<'a> {
             name: "",
             id_salt: None,
             style: SeriesStyle::default(),
+            sampling: MarkerSampling::Auto,
+            backend: RenderBackend::Auto,
             colors: None,
             radii: None,
             y_axis: YAxis::Left,
         }
+    }
+    pub fn sampling(mut self, sampling: MarkerSampling) -> Self {
+        self.sampling = sampling;
+        self
+    }
+    pub fn backend(mut self, backend: RenderBackend) -> Self {
+        self.backend = backend;
+        self
     }
     pub fn name(mut self, name: &'a str) -> Self {
         self.name = name;
