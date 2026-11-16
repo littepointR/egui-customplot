@@ -124,6 +124,20 @@ pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
             d.network.unique_bytes
         ));
     }
+    if d.plot3d.input_points != 0 || d.plot3d.input_primitives != 0 || d.plot3d.output_planes != 0 {
+        ui.monospace(format!(
+            "plot3d: {} pts, {} prims | tris/segs/markers/planes: {}/{}/{}/{} | zbuf px/spans: {}/{} | payload: {} B",
+            d.plot3d.input_points,
+            d.plot3d.input_primitives,
+            d.plot3d.output_triangles,
+            d.plot3d.output_segments,
+            d.plot3d.output_markers,
+            d.plot3d.output_planes,
+            d.plot3d.zbuffer_pixels,
+            d.plot3d.zbuffer_spans,
+            d.plot3d.unique_bytes
+        ));
+    }
     if d.input_quiver_arrows != 0 {
         ui.monospace(format!("vectors: {} | visited: {} | shafts / heads: {} / {} | invalid / domain-invalid: {} / {} | raw pick visits: {} | vector payload: {} B",
             d.input_quiver_arrows, d.visited_quiver_arrows, d.output_quiver_shafts, d.output_quiver_heads,

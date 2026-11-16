@@ -126,6 +126,25 @@ pub struct NetworkDiagnostics {
     pub pick_queries: usize,
 }
 
+/// 3D axes, projection, clipping, and depth/Z-buffer counters (Stage 9A).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Plot3DDiagnostics {
+    pub input_points: usize,
+    pub input_primitives: usize,
+    pub non_finite_items: usize,
+    pub domain_invalid_items: usize,
+    pub clipped_items: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub output_triangles: usize,
+    pub output_segments: usize,
+    pub output_markers: usize,
+    pub output_planes: usize,
+    pub zbuffer_pixels: usize,
+    pub zbuffer_spans: usize,
+    pub pick_queries: usize,
+}
+
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
@@ -137,6 +156,7 @@ pub struct PlotDiagnostics {
     pub stats: StatDiagnostics,
     pub polar: PolarDiagnostics,
     pub network: NetworkDiagnostics,
+    pub plot3d: Plot3DDiagnostics,
     pub input_quiver_arrows: usize,
     /// Nonfinite origins/vectors or overflowed true endpoints.
     pub invalid_quiver_arrows: usize,

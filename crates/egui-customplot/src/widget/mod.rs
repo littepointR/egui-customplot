@@ -4,6 +4,7 @@ mod color_bar;
 mod composite;
 mod figure;
 mod hover;
+mod plot3d;
 mod polar;
 mod response;
 mod show;
@@ -22,6 +23,7 @@ pub use composite::{
     StackedPlotResponse,
 };
 pub use figure::{Figure, FigureCell, FigureResponse};
+pub use plot3d::{Plot3D, Plot3DResponse};
 pub use polar::{PolarPlot, PolarPlotResponse};
 pub use response::PlotResponse;
 

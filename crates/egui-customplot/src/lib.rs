@@ -39,55 +39,62 @@ mod render;
 mod widget;
 
 pub use axis::{
-    Axis, AxisScale, AxisTick, BoundsError, NegativeRadiusMode, PlotBounds, PlotTransform,
-    PolarTransform, ThetaDirection, ThetaZeroLocation, YAxis,
+    Axis, Axis3D, AxisScale, AxisTick, Bounds3D, BoundsError, Camera3D, DataAspect3D,
+    NegativeRadiusMode, PlotBounds, PlotTransform, Point3D, PolarTransform, Projection3D,
+    ThetaDirection, ThetaZeroLocation, Transform3D, YAxis,
 };
 pub use data::{
-    AlphaShapeData, AnimatedLine2D, AppendReport, AreaBandData, AreaError, AreaStackMode, Bar,
-    BarData, BarOrientation, BarSeriesError, BinCell, BinScatterData, BinShape, BivariateError,
-    BivariateNormalization, BoxChartData, BoxSummary, BubbleCloudData, BubbleData, BubbleError,
-    BubblePoint, CategoricalHeatmapData, CloudError, CometPlayback, CompassData, CompositeError,
-    ContourBand, ContourData, ContourError, ContourLevels, ContourLine, DataRect, EliminationTree,
-    ErrorBar, ErrorBarData, FeatherData, FilledContourData, FlowError, FunctionContourError,
-    FunctionCurveData, FunctionPlotError, FunctionPlotOptions, GraphData, GraphEdge, GraphError,
-    GraphLayout, GraphLayoutKind, GridData, GridError, Histogram2Data, HistogramData,
-    HistogramError, HistogramNormalization, ImageData, ImageError, ImplicitCurveData,
-    ImplicitOptions, LegacyHistData, LineIndexError, MarginalKind, MultivariateError, PackedBubble,
-    ParallelData, ParallelNormalization, ParetoData, PatchData, PatchError, PieData, PieError,
-    PieSlice, PlacedWord, PlotData, PlotMatrixData, PlotPoint, PlotStream, PolarBubbleData,
-    PolarBubblePoint, PolarCurveData, PolarError, PolarFunctionData, PolarHistNormalization,
-    PolarHistogramData, PolyRegion, PolyShapeData, PolygonData, QuiverArrow, QuiverData,
+    AlphaShapeData, AnimatedLine2D, AnimatedLine3D, AppendReport, AreaBandData, AreaError,
+    AreaStackMode, Bar, Bar3DBox, Bar3DData, Bar3DMode, Bar3DOrientation, BarData, BarOrientation,
+    BarSeriesError, BinCell, BinScatterData, BinShape, BivariateError, BivariateNormalization,
+    BoxChartData, BoxSummary, Bubble3DData, Bubble3DPoint, BubbleCloudData, BubbleData,
+    BubbleError, BubblePoint, CategoricalHeatmapData, CloudError, Comet3DPlayback, CometPlayback,
+    CompassData, CompositeError, ContourBand, ContourData, ContourError, ContourLevels,
+    ContourLine, DataRect, EliminationTree, ErrorBar, ErrorBarData, FeatherData, FilledContourData,
+    FlowError, FunctionContourError, FunctionCurveData, FunctionPlotError, FunctionPlotOptions,
+    GraphData, GraphEdge, GraphError, GraphLayout, GraphLayoutKind, GridData, GridError,
+    Histogram2Data, HistogramData, HistogramError, HistogramNormalization, ImageData, ImageError,
+    ImplicitCurveData, ImplicitOptions, LegacyHistData, LineIndexError, MarginalKind,
+    MultivariateError, PackedBubble, ParallelData, ParallelNormalization, ParametricCurve3DData,
+    ParetoData, PatchData, PatchError, Pie3DData, Pie3DSlice, PieData, PieError, PieSlice,
+    PlacedWord, Plot3DError, PlotData, PlotMatrixData, PlotPoint, PlotStream, Point3DData,
+    PolarBubbleData, PolarBubblePoint, PolarCurveData, PolarError, PolarFunctionData,
+    PolarHistNormalization, PolarHistogramData, PolyRegion, PolyShapeData, Polygon3D,
+    Polygon3DData, PolygonData, Quiver3DArrow, Quiver3DData, QuiverArrow, QuiverData,
     RaincloudData, RaincloudEntry, RectData, RoseData, ScalarField2D, ScatterHistogramData,
-    SortOrder, SpyData, SpyError, StatError, StreamError, StreamOptions, StreamlineData, SwarmData,
-    SwarmPoint, TableAggregation, TreeData, TriMesh2D, TriMeshError, VectorField2D, ViolinData,
-    ViolinEntry, ViolinHalf, ViolinOptions, ViolinScale, VoronoiData, WordCloudData,
+    SortOrder, SpyData, SpyError, StatError, Stem3DData, StreamError, StreamOptions,
+    StreamlineData, Swarm3DData, Swarm3DPoint, SwarmData, SwarmPoint, TableAggregation, TreeData,
+    TriMesh2D, TriMeshError, VectorField2D, ViolinData, ViolinEntry, ViolinHalf, ViolinOptions,
+    ViolinScale, VoronoiData, WordCloudData,
 };
 pub use diagnostics::{
     ContourDiagnostics, FlowDiagnostics, GeometryDiagnostics, ImageDiagnostics, NetworkDiagnostics,
-    PatchDiagnostics, PlotDiagnostics, PolarDiagnostics, StatDiagnostics,
+    PatchDiagnostics, Plot3DDiagnostics, PlotDiagnostics, PolarDiagnostics, StatDiagnostics,
 };
 pub use interaction::{
-    AxisLink, HoverInfo, HoveredBar, HoveredCell, HoveredPoint, HoveredPolarBin, HoveredPolarPoint,
-    HoveredRegion, HoveredVector, LinkError, LinkReport, PlotState, PolarState, RegionKind,
-    VectorAnchor,
+    AxisLink, HoverInfo, Hovered3DBar, Hovered3DPoint, Hovered3DRegion, HoveredBar, HoveredCell,
+    HoveredPoint, HoveredPolarBin, HoveredPolarPoint, HoveredRegion, HoveredVector, LinkError,
+    LinkReport, Plot3DState, PlotState, PolarState, RegionKind, VectorAnchor,
 };
 pub use layout::{BubbleLegend, BubbleLegendResponse, FigureError, LegendEntry};
 pub use model::{
-    AlphaShape, AnimatedLine, Annotation, AnnotationCoord, Area, Bars, BinScatter, BoxChart,
-    BubbleChart, BubbleCloud, CategoricalHeatmap, ColorMap, ColorScale, ColorScaleError, Comet,
-    CompassPlot, Contours, ErrorBars, Feather, Fill, FilledContours, FunctionPlot, GraphHighlight,
-    GraphPlot, Heatmap, Histogram2, ImplicitCurve, Line, LineInterpolation, LinePattern,
-    LineSampling, MarkerShape, MarkerStyle, ParallelPlot, Patch, PatchColoring, Pcolor,
-    PcolorShading, PieChart, PlotImage, PlotLayer, PlotStyle, PlotTheme, PolarBubble,
-    PolarHistogram, PolarLayer, PolarLine, PolarRegionAnnotation, PolarRegionKind, PolarScatter,
-    PolyShape, Quiver, Raincloud, Rectangles, Scatter, Series, SeriesError, SeriesStyle, Spy,
-    StemOrientation, Stems, Streamlines, SwarmChart, TriPlot, ViolinPlot, Voronoi, WordCloud,
+    AlphaShape, AnimatedLine, Annotation, AnnotationCoord, Area, Bar3D, Bars, BinScatter, BoxChart,
+    BoxStyle3D, Bubble3D, BubbleChart, BubbleCloud, CategoricalHeatmap, ColorMap, ColorScale,
+    ColorScaleError, Comet, Comet3D, CompassPlot, ConstantPlane3D, Contours, DepthMode, ErrorBars,
+    Feather, Fill, Fill3D, FilledContours, FunctionPlot, GraphHighlight, GraphPlot, Heatmap,
+    Histogram2, ImplicitCurve, Layer3D, Line, Line3D, LineInterpolation, LinePattern, LineSampling,
+    MarkerShape, MarkerStyle, ParallelPlot, Patch, PatchColoring, Pcolor, PcolorShading, Pie3D,
+    PieChart, PlotImage, PlotLayer, PlotStyle, PlotTheme, PolarBubble, PolarHistogram, PolarLayer,
+    PolarLine, PolarRegionAnnotation, PolarRegionKind, PolarScatter, PolyShape, Quiver, Quiver3D,
+    Raincloud, Rectangles, Scatter, Scatter3D, Series, SeriesError, SeriesStyle, Spy, Stem3D,
+    StemOrientation, Stems, Streamlines, Swarm3D, SwarmChart, Text3D, TriPlot, ViolinPlot, Voronoi,
+    WordCloud,
 };
 pub use render::PlotCache;
 #[cfg(feature = "export")]
 pub use render::{CaptureLimits, ExportError, ExportOptions, PlotSnapshot};
 pub use widget::{
-    ColorBar, ColorBarResponse, Figure, FigureCell, FigureResponse, ParetoChart, Plot, PlotMatrix,
-    PlotResponse, PlotYy, PolarPlot, PolarPlotResponse, ScatterHistogram, ScatterHistogramState,
-    StackedPlot, StackedPlotResponse,
+    ColorBar, ColorBarResponse, Figure, FigureCell, FigureResponse, ParetoChart, Plot, Plot3D,
+    Plot3DResponse, PlotMatrix, PlotResponse, PlotYy, PolarPlot, PolarPlotResponse,
+    ScatterHistogram, ScatterHistogramState, StackedPlot, StackedPlotResponse,
 };

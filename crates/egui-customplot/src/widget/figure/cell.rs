@@ -3,8 +3,8 @@ use std::sync::Arc;
 use egui::{Rect, Ui};
 
 use crate::{
-    Line, Plot, PlotCache, PlotLayer, PlotResponse, PlotState, PlotStyle, PlotTheme, PolarLayer,
-    PolarPlot, PolarPlotResponse, PolarState, Series,
+    Layer3D, Line, Plot, Plot3D, Plot3DResponse, Plot3DState, PlotCache, PlotLayer, PlotResponse,
+    PlotState, PlotStyle, PlotTheme, PolarLayer, PolarPlot, PolarPlotResponse, PolarState, Series,
 };
 
 pub struct FigureCell<'a> {
@@ -126,5 +126,23 @@ impl<'a> FigureCell<'a> {
         layers: &[PolarLayer<'_>],
     ) -> PolarPlotResponse {
         self.polar_plot(plot).show(self.ui, state, layers)
+    }
+
+    /// Inherit figure defaults and size the [`Plot3D`] to this cell.
+    pub fn plot3d(&self, mut plot: Plot3D) -> Plot3D {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_plot3d(
+        &mut self,
+        plot: Plot3D,
+        state: &mut Plot3DState,
+        layers: &[Layer3D<'_>],
+    ) -> Plot3DResponse {
+        self.plot3d(plot).show(self.ui, state, layers)
     }
 }

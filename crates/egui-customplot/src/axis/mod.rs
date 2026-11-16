@@ -4,6 +4,7 @@ mod aspect;
 mod bounds;
 mod grid;
 mod linked;
+mod plot3d;
 mod polar;
 mod polygon;
 mod rect;
@@ -16,6 +17,10 @@ mod y_axis;
 pub use bounds::{BoundsError, PlotBounds};
 pub(crate) use grid::{edge_cell_at, grid_cell_at, grid_cell_rect, visible_edges, visible_grid};
 pub(crate) use linked::apply_axis_ranges;
+pub use plot3d::{Axis3D, Bounds3D, Camera3D, DataAspect3D, Point3D, Projection3D, Transform3D};
+pub(crate) use plot3d::{
+    clip_segment_unit_cube, clip_triangle_unit_cube, intersect_plane_unit_cube,
+};
 pub use polar::{NegativeRadiusMode, PolarTransform, ThetaDirection, ThetaZeroLocation};
 pub(crate) use polygon::{
     ClipVertex, clip_normalized_triangle, point_in_ring_transformed, project_boundary_segment,

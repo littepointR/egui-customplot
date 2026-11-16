@@ -27,6 +27,7 @@ mod patch;
 mod pattern;
 mod pcolor;
 mod pie_clouds;
+mod plot3d;
 mod polar;
 mod polygon;
 mod quiver;
@@ -45,6 +46,7 @@ pub(crate) use color_bar::paint_color_bar;
 #[cfg(feature = "export")]
 pub use export::{CaptureLimits, ExportError, ExportOptions, PlotSnapshot};
 pub(crate) use overlay::{paint_bar_hover, paint_cell_hover, paint_hover, paint_region_hover};
+pub(crate) use plot3d::paint_plot3d;
 pub(crate) use polar::paint_polar;
 pub(crate) use right_axis::paint_right_axis;
 pub(crate) use series::paint_series;

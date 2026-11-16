@@ -25,6 +25,7 @@ mod index;
 mod multivariate;
 mod patch;
 mod pie;
+mod plot3d;
 mod points;
 mod polar;
 mod polygon;
@@ -76,6 +77,12 @@ pub use multivariate::{
 };
 pub use patch::{PatchData, PatchError};
 pub use pie::{PieData, PieError, PieSlice};
+pub(crate) use plot3d::union_bounds3;
+pub use plot3d::{
+    AnimatedLine3D, Bar3DBox, Bar3DData, Bar3DMode, Bar3DOrientation, Bubble3DData, Bubble3DPoint,
+    Comet3DPlayback, ParametricCurve3DData, Pie3DData, Pie3DSlice, Plot3DError, Point3DData,
+    Polygon3D, Polygon3DData, Quiver3DArrow, Quiver3DData, Stem3DData, Swarm3DData, Swarm3DPoint,
+};
 pub use points::{PlotData, PlotPoint};
 pub use polar::{
     CompassData, PolarBubbleData, PolarBubblePoint, PolarCurveData, PolarError, PolarFunctionData,

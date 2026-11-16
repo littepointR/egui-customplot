@@ -27,6 +27,7 @@ pub(super) struct Demo {
     multivariate: crate::multivariate::MultivariateDemo,
     polar: crate::polar::PolarDemo,
     networks: crate::networks::NetworksDemo,
+    plot3d: crate::plot3d::Plot3DDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -51,6 +52,7 @@ impl Default for Demo {
             multivariate: crate::multivariate::MultivariateDemo::default(),
             polar: crate::polar::PolarDemo::default(),
             networks: crate::networks::NetworksDemo::default(),
+            plot3d: crate::plot3d::Plot3DDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -71,6 +73,7 @@ impl Demo {
         demo.multivariate.enabled = gallery == Some("--multivariate");
         demo.polar.enabled = gallery == Some("--polar");
         demo.networks.enabled = gallery == Some("--networks");
+        demo.plot3d.enabled = gallery == Some("--plot3d");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -100,6 +103,7 @@ impl Demo {
                     self.multivariate.controls(ui);
                     self.polar.controls(ui);
                     self.networks.controls(ui);
+                    self.plot3d.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -135,7 +139,7 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 8: 2D types");
+            ui.heading("egui-customplot / Stage 9A: 2D & 3D types");
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();
@@ -189,6 +193,9 @@ impl Demo {
         }
         if self.networks.enabled {
             return self.networks.show(ui);
+        }
+        if self.plot3d.enabled {
+            return self.plot3d.show(ui);
         }
         self.views.show(
             ui,

@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：50 项 ML、24 项 EX 与 10 项 LG 共 84 项“开发中”，其余 49 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D：面积多边形等高线图像、函数 / 几何 / 流线 / 稀疏 / 动画 / 图窗注解、分布 / 气泡群 / 词云 / 多变量复合子图、极坐标与二维图网络 / 树）见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：60 项 ML、26 项 EX 与 12 项 LG 共 98 项“开发中”，其余 35 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9A 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）与点线柱杆矢量饼平面见 [阶段 9](STAGE_9.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -36,7 +36,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | ML-001 | 开发中 | [`plot`](https://ww2.mathworks.cn/help/matlab/ref/plot.html) | 二维折线 / 标记图，2D | 已有折线 / 标记 / 混合叠加 / 断段 / 基础线型；复数适配、导出与完整验收仍缺，见阶段 2 |
-| ML-002 | 未实现 | [`plot3`](https://ww2.mathworks.cn/help/matlab/ref/plot3.html) | 三维折线，3D | XYZ 轨迹、深度遮挡、相机与拾取 |
+| ML-002 | 开发中 | [`plot3`](https://ww2.mathworks.cn/help/matlab/ref/plot3.html) | 三维折线，3D | [阶段 9](STAGE_9.md)：`Point3DData`、`Line3D`、`Transform3D`（正交/透视与 Liang-Barsky 立方体裁剪）、NaN 断段、Log10/反向轴与三维轨迹拾取（`tests/plot3d_core_lines.rs`）；GPU 加速与完整验收仍缺 |
 | ML-003 | 开发中 | [`stairs`](https://ww2.mathworks.cn/help/matlab/ref/stairs.html) | 阶梯图，2D | [阶段 8](STAGE_8.md)：前 / 后阶、非等距 X、原始拾取 / 缓存 / 导出；完整验收未完成 |
 | ML-004 | 开发中 | [`errorbar`](https://ww2.mathworks.cn/help/matlab/ref/errorbar.html) | 误差棒图，2D | 已有独立水平 / 垂直非对称偏移、逻辑点端帽、log / 右轴及原始中心拾取；连接中心线可显式叠加 Line，导出 / 性能 / 完整验收仍缺，见阶段 6 |
 | ML-005 | 开发中 | [`area`](https://ww2.mathworks.cn/help/matlab/ref/area.html) | 面积图 / 堆积面积图，2D | [阶段 8](STAGE_8.md)：`Area`、`AreaBandData::{from_band, stack}`（Cumulative / PosNegSplit）、NaN 断段 / 非线基线交叉、显式 `LineIndex` 区间裁剪与区域 / 上边界原始点拾取；缺动态基准平滑与完整跨平台验收 |
@@ -45,7 +45,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ML-008 | 开发中 | [`semilogx`](https://ww2.mathworks.cn/help/matlab/ref/semilogx.html) | X 对数折线，2D | 已有 X log / Y linear 及正反变换；导出和完整验收仍缺 |
 | ML-009 | 开发中 | [`semilogy`](https://ww2.mathworks.cn/help/matlab/ref/semilogy.html) | Y 对数折线，2D | 已有 X linear / Y log 及正反变换；导出和完整验收仍缺 |
 | ML-010 | 开发中 | [`fplot`](https://ww2.mathworks.cn/help/matlab/ref/fplot.html) | 显式 / 参数函数曲线，2D | 自适应采样、参数曲线、不连续点与预算限制 |
-| ML-011 | 未实现 | [`fplot3`](https://ww2.mathworks.cn/help/matlab/ref/fplot3.html) | 参数函数曲线，3D | 三分量回调、参数区间、采样误差 |
+| ML-011 | 开发中 | [`fplot3`](https://ww2.mathworks.cn/help/matlab/ref/fplot3.html) | 参数函数曲线，3D | [阶段 9](STAGE_9.md)：`ParametricCurve3DData::from_parametric` 自适应三分量弧弦细分、奇点识别与 `max_evaluations` 预算保护，配合 `Line3D` / `Plot3D` 绘制（`tests/plot3d_core_lines.rs`）；完整验收仍缺 |
 | ML-012 | 开发中 | [`fimplicit`](https://ww2.mathworks.cn/help/matlab/ref/fimplicit.html) | 隐式曲线，2D | F(x,y)=0、多连通分支与奇异区域 |
 
 ### A2. 散点图和气泡图：8 项
@@ -53,11 +53,11 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | ML-013 | 开发中 | [`scatter`](https://ww2.mathworks.cn/help/matlab/ref/scatter.html) | 散点图，2D | 已有逐点颜色 / 半径、7 种实心标记与拾取；空心样式、大小语义适配、导出及完整验收仍缺 |
-| ML-014 | 未实现 | [`scatter3`](https://ww2.mathworks.cn/help/matlab/ref/scatter3.html) | 散点图，3D | 深度排序 / 测试、三维拾取 |
+| ML-014 | 开发中 | [`scatter3`](https://ww2.mathworks.cn/help/matlab/ref/scatter3.html) | 散点图，3D | [阶段 9](STAGE_9.md)：`Scatter3D`（逐点颜色/半径/标量色图）、深度排序与深度优先前景点拾取（`tests/plot3d_scatter_discrete.rs`）；空心高光材质与完整验收仍缺 |
 | ML-015 | 开发中 | [`bubblechart`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart.html) | 气泡图，2D | [阶段 8](STAGE_8.md)：`BubbleData`（面积平方根半径映射）、`BubbleChart` 与 `BubbleLegend` 三档气泡尺寸图例及原始点拾取；完整验收仍缺 |
-| ML-016 | 未实现 | [`bubblechart3`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart3.html) | 气泡图，3D | 大小映射、深度与透明遮挡 |
+| ML-016 | 开发中 | [`bubblechart3`](https://ww2.mathworks.cn/help/matlab/ref/bubblechart3.html) | 气泡图，3D | [阶段 9](STAGE_9.md)：`Bubble3DData` / `Bubble3D` 结合 `BubbleLegend`、`ColorScale`、半透明顺序混叠与 Z-buffer 测试（`tests/plot3d_scatter_discrete.rs`）；三维球体光照体渲染与完整验收仍缺 |
 | ML-017 | 开发中 | [`swarmchart`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart.html) | 蜂群图，2D | [阶段 8](STAGE_8.md)：`SwarmData::{new, from_groups}` 确定性核密避让横向抖动与 `SwarmChart` 原始点拾取；分类表适配与完整验收仍缺 |
-| ML-018 | 未实现 | [`swarmchart3`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart3.html) | 蜂群图，3D | 三维分组 / 抖动策略与原数据对应关系 |
+| ML-018 | 开发中 | [`swarmchart3`](https://ww2.mathworks.cn/help/matlab/ref/swarmchart3.html) | 蜂群图，3D | [阶段 9](STAGE_9.md)：`Swarm3DData::from_groups`（沿 Z 核密度 XY 圆盘确定性黄金角避让抖动，保留 `raw_xy` / `group_index` / `raw_index`）与 `Swarm3D`（`tests/plot3d_scatter_discrete.rs`）；完整验收仍缺 |
 | ML-019 | 开发中 | [`binscatter`](https://ww2.mathworks.cn/help/matlab/ref/binscatter.html) | 分箱散点密度图，2D | [阶段 8](STAGE_8.md)：`BinScatterData`（矩形 / 六边形二维分箱）、`BinScatter` 与 `HoveredRegion::BinScatterCell`；动态缩放松重分箱与完整验收仍缺 |
 | ML-020 | 开发中 | [`spy`](https://ww2.mathworks.cn/help/matlab/ref/spy.html) | 稀疏矩阵非零模式图，2D | 行列方向、非零定位、大型稀疏输入 |
 
@@ -85,11 +85,11 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | --- | --- | --- | --- | --- |
 | ML-034 | 开发中 | [`bar`](https://ww2.mathworks.cn/help/matlab/ref/bar.html) | 竖向柱状图，2D | [阶段 6](STAGE_6.md)/[阶段 8](STAGE_8.md)：已有独立柱、`BarData::{grouped, stacked}` 分组/堆积（正负分离）、`Axis::categories`、边框与原始柱拾取；导出完整视觉/验收仍缺 |
 | ML-035 | 开发中 | [`barh`](https://ww2.mathworks.cn/help/matlab/ref/barh.html) | 横向条形图，2D | [阶段 6](STAGE_6.md)/[阶段 8](STAGE_8.md)：已有横向独立柱、`BarData::{grouped, stacked}` 分组/堆积、`Axis::categories`、双轴/log/反向与拾取；导出完整验收仍缺 |
-| ML-036 | 未实现 | [`bar3`](https://ww2.mathworks.cn/help/matlab/ref/bar3.html) | 柱状图，3D | 柱体布局、分组 / 堆积模式、遮挡与着色 |
-| ML-037 | 未实现 | [`bar3h`](https://ww2.mathworks.cn/help/matlab/ref/bar3h.html) | 横向条形图，3D | 横向柱体布局与深度关系 |
+| ML-036 | 开发中 | [`bar3`](https://ww2.mathworks.cn/help/matlab/ref/bar3.html) | 柱状图，3D | [阶段 9](STAGE_9.md)：`Bar3DData::from_matrix`（`Detached` / `Grouped` / `Stacked` 三种布局与六面 Lambertian 着色棱柱）+ `Bar3D` 与 `Hovered3DBar` 拾取（`tests/plot3d_scatter_discrete.rs`）；完整验收仍缺 |
+| ML-037 | 开发中 | [`bar3h`](https://ww2.mathworks.cn/help/matlab/ref/bar3h.html) | 横向条形图，3D | [阶段 9](STAGE_9.md)：`Bar3DOrientation::Horizontal` 支持三种模式的水平 3D 条柱布局、面片深度排序与拾取（`tests/plot3d_scatter_discrete.rs`）；完整验收仍缺 |
 | ML-038 | 开发中 | [`pareto`](https://ww2.mathworks.cn/help/matlab/ref/pareto.html) | 帕累托图，复合 2D | [阶段 8](STAGE_8.md)：`ParetoData`（降序排列、累积百分比与阈值/上限截断）与 `ParetoChart` 双 Y 轴展示；完整交互与验收仍缺 |
 | ML-039 | 开发中 | [`stem`](https://ww2.mathworks.cn/help/matlab/ref/stem.html) | 针状图，2D | [阶段 8](STAGE_8.md)：独立杆 / 原始端点、基线 / 方向 / log / 双轴 / 导出；完整验收未完成 |
-| ML-040 | 未实现 | [`stem3`](https://ww2.mathworks.cn/help/matlab/ref/stem3.html) | 针状图，3D | 三维位置、针杆与基面 |
+| ML-040 | 开发中 | [`stem3`](https://ww2.mathworks.cn/help/matlab/ref/stem3.html) | 针状图，3D | [阶段 9](STAGE_9.md)：`Stem3DData`（显式 `base_z` 基面锚定）与 `Stem3D` 杆段 + 顶/基点标记与拾取（`tests/plot3d_scatter_discrete.rs`）；完整验收仍缺 |
 
 `stairs` 已记录为 ML-003，不重复计数。
 
@@ -130,7 +130,7 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
 | ML-056 | 开发中 | [`quiver`](https://ww2.mathworks.cn/help/matlab/ref/quiver.html) | 箭头向量场，2D | [阶段 8](STAGE_8.md)：显式位移 / 真实端点、逻辑点箭头 / log / 拾取 / 导出；自动缩放与完整验收未完成 |
-| ML-057 | 未实现 | [`quiver3`](https://ww2.mathworks.cn/help/matlab/ref/quiver3.html) | 箭头向量场，3D | 三维方向、尺度、遮挡 |
+| ML-057 | 开发中 | [`quiver3`](https://ww2.mathworks.cn/help/matlab/ref/quiver3.html) | 箭头向量场，3D | [阶段 9](STAGE_9.md)：`Quiver3DData`（原点+三维位移与显式 `.autoscale()`）与 `Quiver3D` 杆段 + 四面体棱锥箭头及端点拾取（`tests/plot3d_vectors_planes_depth.rs`）；完整验收仍缺 |
 | ML-058 | 开发中 | [`feather`](https://ww2.mathworks.cn/help/matlab/ref/feather.html) | 羽状图，2D | 沿基线排列向量、分量与复数输入适配 |
 
 流线与流切片在 A10 记录，不重复计数。
@@ -170,9 +170,9 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-078 | 开发中 | [`animatedline`](https://ww2.mathworks.cn/help/matlab/ref/animatedline.html) | 增量动画曲线，2D / 3D | 批量追加、有界历史、暂停 / 清空与资源复用 |
+| ML-078 | 开发中 | [`animatedline`](https://ww2.mathworks.cn/help/matlab/ref/animatedline.html) | 增量动画曲线，2D / 3D | 2D `AnimatedLine2D` 与 3D [阶段 9](STAGE_9.md) `AnimatedLine3D`（有界环形缓冲、批次幂等 `add_points_once`、暂停 / 清空与按需重绘）；完整属性与验收仍缺 |
 | ML-079 | 开发中 | [`comet`](https://ww2.mathworks.cn/help/matlab/ref/comet.html) | 彗星轨迹，时变 2D | 头部、尾迹长度、播放速度与时间一致性 |
-| ML-080 | 未实现 | [`comet3`](https://ww2.mathworks.cn/help/matlab/ref/comet3.html) | 彗星轨迹，时变 3D | 三维轨迹、尾迹和相机交互 |
+| ML-080 | 开发中 | [`comet3`](https://ww2.mathworks.cn/help/matlab/ref/comet3.html) | 彗星轨迹，时变 3D | [阶段 9](STAGE_9.md)：`Comet3D` 复用 `Comet3DPlayback::advance_once` 帧幂等推进三维轨迹、尾迹段与圆头点及相机交互（`tests/plot3d_core_lines.rs`）；完整验收仍缺 |
 
 ### A12. 图像：2 项
 
@@ -189,9 +189,9 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 / 方法 | 绘制能力 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| EX-001 | 开发中 | [`line`](https://ww2.mathworks.cn/help/matlab/ref/line.html) | 2D / 3D 底层线图元 | [阶段 8](STAGE_8.md)：`Line::primitive` 支持无隐式清除的二维数据空间折线图元与增量替换；三维图元与完整对象句柄语义仍缺 |
+| EX-001 | 开发中 | [`line`](https://ww2.mathworks.cn/help/matlab/ref/line.html) | 2D / 3D 底层线图元 | [阶段 8](STAGE_8.md) / [阶段 9](STAGE_9.md)：2D `Line::primitive` 与 3D `Line3D::primitive`（跳过图例与拾取）提供无隐式重置的数据空间折线图元；完整对象句柄语义仍缺 |
 | EX-002 | 开发中 | [`fill`](https://ww2.mathworks.cn/help/matlab/ref/fill.html) | 二维填充多边形 / 置信带 | [阶段 8](STAGE_8.md)：`PolygonData::{new, from_rings, confidence_band}` 与 `Fill`，支持凹多边形耳切三角化、四坐标域变换、透明 / 边框与悬停；无顶点色插值及跨平台视觉验收 |
-| EX-003 | 未实现 | [`fill3`](https://ww2.mathworks.cn/help/matlab/ref/fill3.html) | 三维填充多边形 | 面朝向、三角化与深度 |
+| EX-003 | 开发中 | [`fill3`](https://ww2.mathworks.cn/help/matlab/ref/fill3.html) | 三维填充多边形 | [阶段 9](STAGE_9.md)：`Polygon3DData::from_polygons`（Newell 法线投影 + 平面耳切三角剖分）与 `Fill3D` 结合 `DepthMode::{SortedPainter, ZBuffer}` 解决互相交叉三维面片逐像素遮挡与 `Hovered3DRegion` 拾取（`tests/export_stage9a.rs`）；完整验收仍缺 |
 | EX-004 | 开发中 | [`patch`](https://ww2.mathworks.cn/help/matlab/ref/patch.html) | 通用 2D / 3D 面片 | [阶段 8](STAGE_8.md)：`PatchData::{new, from_indexed, from_polygons}` 与 `Patch`，支持 Uniform / Face / Gouraud 逐顶点色与标量映射，SVG 混合栅格回退；三维面片与光源缺 |
 | EX-005 | 开发中 | [`rectangle`](https://ww2.mathworks.cn/help/matlab/ref/rectangle.html) | 矩形 / 圆角矩形 / 椭圆 | [阶段 8](STAGE_8.md)：`DataRect::{new, curvature, ellipse}`、`RectData` 与 `Rectangles`，支持圆角 / 椭圆细分、边框及精确圆角命中测试；完整验收仍缺 |
 | EX-006 | 未实现 | [`surface`](https://ww2.mathworks.cn/help/matlab/ref/surface.html) | 底层三维曲面图元 | 网格、面 / 边样式、纹理及更新 |
@@ -229,13 +229,13 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 绘制能力 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| EX-026 | 开发中 | [`text`](https://ww2.mathworks.cn/help/matlab/ref/text.html) | 2D / 3D 数据文本 | 已有二维坐标锚定、对齐、继承文字色和父裁剪；旋转 / 字体独立配置、三维、导出及完整验收仍缺，见阶段 3 |
+| EX-026 | 开发中 | [`text`](https://ww2.mathworks.cn/help/matlab/ref/text.html) | 2D / 3D 数据文本 | 2D 锚定对齐标注与 3D [阶段 9](STAGE_9.md) `Text3D`（三维数据坐标投影标签，支持混合导出无 `<text` 外部字体）；旋转 / 字体独立配置及完整验收仍缺 |
 | EX-027 | 开发中 | [`annotation`](https://ww2.mathworks.cn/help/matlab/ref/annotation.html) | 图窗注解图元 | line、arrow、doublearrow、textarrow、textbox、rectangle、ellipse 七种；图窗 / 数据坐标分离 |
 | EX-028 | 开发中 | [`xline`](https://ww2.mathworks.cn/help/matlab/ref/xline.html) | 竖直常量参考线 | 已有多条线、标签、对数 / 反向坐标和裁剪；图例、导出及完整验收仍缺 |
 | EX-029 | 开发中 | [`yline`](https://ww2.mathworks.cn/help/matlab/ref/yline.html) | 水平常量参考线 | 已有多条线、标签、对数 / 反向坐标和裁剪；图例、导出及完整验收仍缺 |
 | EX-030 | 开发中 | [`xregion`](https://ww2.mathworks.cn/help/matlab/ref/xregion.html) | X 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
 | EX-031 | 开发中 | [`yregion`](https://ww2.mathworks.cn/help/matlab/ref/yregion.html) | Y 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
-| EX-032 | 未实现 | [`constantplane`](https://ww2.mathworks.cn/help/matlab/ref/constantplane.html) | 三维无限参考平面 | 平面方程、可见范围裁剪与透明深度 |
+| EX-032 | 开发中 | [`constantplane`](https://ww2.mathworks.cn/help/matlab/ref/constantplane.html) | 三维无限参考平面 | [阶段 9](STAGE_9.md)：`ConstantPlane3D`（轴向与任意法线平面方程、`intersect_plane_unit_cube` 3..=6 边形裁剪、边框/半透明与 Z-buffer 深度测试，`tests/plot3d_vectors_planes_depth.rs`）；完整验收仍缺 |
 | EX-033 | 开发中 | [`thetaregion`](https://ww2.mathworks.cn/help/matlab/ref/thetaregion.html) | 极坐标角度扇区 | [阶段 8](STAGE_8.md)：`PolarRegionAnnotation::theta_region` 支持跨零角 `330°..30°`、两套角度方向、全半径跨度扇形 Mesh 填充与可选边界/标签（`tests/polar_hist_regions.rs`）；完整图例协同与验收仍缺 |
 | EX-034 | 开发中 | [`radiusregion`](https://ww2.mathworks.cn/help/matlab/ref/radiusregion.html) | 极坐标圆盘 / 圆环 | [阶段 8](STAGE_8.md)：`PolarRegionAnnotation::radius_region` 支持闭合角域圆环/圆盘 Mesh 裁剪填充（`tests/polar_hist_regions.rs` / `--polar`）；负半径反射带细节与完整验收仍缺 |
 | EX-035 | 开发中 | [`polarregion`](https://ww2.mathworks.cn/help/matlab/ref/polarregion.html) | 极坐标环形扇区 | [阶段 8](STAGE_8.md)：`PolarRegionAnnotation::polar_region` 组合角度与径向边界精确细分绘制并计入 `PolarDiagnostics::output_regions`（`tests/export_stage8d.rs` 导出无 `<text`）；完整属性与验收仍缺 |
@@ -247,14 +247,14 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | ID | 状态 | MATLAB 接口 | 图类型 / 定位 | 对照与迁移要求 |
 | --- | --- | --- | --- | --- |
 | LG-001 | 开发中 | [`pie`](https://ww2.mathworks.cn/help/matlab/ref/pie.html) | 传统二维饼图 | [阶段 8](STAGE_8.md)：通过 `PieData::with_options`（explode/start_angle）+ `PieChart` 验证分离扇区与标签；小于整圆独立切片规则与完整验收仍缺 |
-| LG-002 | 未实现 | [`pie3`](https://ww2.mathworks.cn/help/matlab/ref/pie3.html) | 三维饼图 | 仍有独立视觉效果；扇区厚度、分离、遮挡与相机，不用二维饼图冒充 |
+| LG-002 | 开发中 | [`pie3`](https://ww2.mathworks.cn/help/matlab/ref/pie3.html) | 三维饼图 | [阶段 9](STAGE_9.md)：`Pie3DData::with_options`（真挤压圆柱扇区：底/顶扇面、外弧环壁、径向切面、`exploded` 分离与视角标签）+ `Pie3D` 与扇区 `Hovered3DRegion` 拾取（`tests/plot3d_scatter_discrete.rs`）；完整验收仍缺 |
 | LG-003 | 开发中 | [`hist`](https://ww2.mathworks.cn/help/matlab/ref/hist.html) | 旧直方图，官方不推荐 | [阶段 8](STAGE_8.md)：`LegacyHistData::{new, with_centers}` 验证等宽计数与中心点最近邻语义；完整统计属性与验收仍缺 |
 | LG-004 | 开发中 | [`polar`](https://ww2.mathworks.cn/help/matlab/ref/polar.html) | 旧极坐标折线，官方不推荐 | [阶段 8](STAGE_8.md)：映射 `PolarPlot` + `PolarLine` / `PolarCurveData::from_theta_r`（`tests/polar_plots.rs` / `--polar`）；区别在于本库使用真实 `PolarTransform`（可配零点/方向/负半径模式），而非旧笛卡尔模拟网格，完整迁移属性仍缺 |
 | LG-005 | 开发中 | [`compass`](https://ww2.mathworks.cn/help/matlab/ref/compass.html) | 旧罗盘图，官方不推荐 | [阶段 8](STAGE_8.md)：对照 `CompassPlot` 补充 `CompassData::from_cartesian` 与 `from_complex` 复数/直角分量适配（`tests/polar_plots.rs` / `--polar`）；完整迁移属性与验收仍缺 |
 | LG-006 | 开发中 | [`rose`](https://ww2.mathworks.cn/help/matlab/ref/rose.html) | 旧角直方图，官方不推荐 | [阶段 8](STAGE_8.md)：`RoseData::{new, with_centers}::to_polar_curve()` 生成原点起闭扇形花瓣轮廓（`4*nbins+` 顶点，非 `polarhistogram` 填充归一化扇区），经 `tests/polar_hist_regions.rs` 与 `--polar` 验证；完整验收仍缺 |
 | LG-007 | 开发中 | [`plotyy`](https://ww2.mathworks.cn/help/matlab/ref/plotyy.html) | 旧双 Y 轴组合，官方不推荐 | [阶段 8](STAGE_8.md)：`PlotYy::{new, lines}` 封装显式左/右轴、双图例与独立缩放联动；完整句柄属性仍缺 |
 | LG-008 | 开发中 | [`ezplot`](https://ww2.mathworks.cn/help/matlab/ref/ezplot.html) | 旧二维函数图，官方不推荐 | 对照 fplot / fimplicit；显式、参数与隐式曲线 |
-| LG-009 | 未实现 | [`ezplot3`](https://ww2.mathworks.cn/help/matlab/ref/ezplot3.html) | 旧三维参数曲线，官方不推荐 | 对照 fplot3 |
+| LG-009 | 开发中 | [`ezplot3`](https://ww2.mathworks.cn/help/matlab/ref/ezplot3.html) | 旧三维参数曲线，官方不推荐 | [阶段 9](STAGE_9.md)：`ParametricCurve3DData::ezplot3` 默认 `[0, 2π]` 自适应采样与 `max_evaluations` 预算保护，配合 `Line3D` 对照 `fplot3`（`tests/plot3d_core_lines.rs`，非字符串解释器）；完整验收仍缺 |
 | LG-010 | 开发中 | [`ezpolar`](https://ww2.mathworks.cn/help/matlab/ref/ezpolar.html) | 旧极坐标函数图，官方不推荐 | [阶段 8](STAGE_8.md)：`PolarCurveData::ezpolar(max_evals, f)` 默认 `[0, 2π]` 自适应采样 + `max_evaluations` 预算限制（非字符串解析器），对照 `fpolarplot` 经 `tests/polar_plots.rs` 与 `--polar` 验证；完整验收仍缺 |
 | LG-011 | 开发中 | [`ezcontour`](https://ww2.mathworks.cn/help/matlab/ref/ezcontour.html) | 旧函数等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`ContourData::ezcontour` 默认 `[-2π, 2π]^2` 定义域与 `max_evaluations` 预算限制（非字符串表达式解释器） |
 | LG-012 | 开发中 | [`ezcontourf`](https://ww2.mathworks.cn/help/matlab/ref/ezcontourf.html) | 旧函数填充等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`FilledContourData::ezcontourf` 默认 `[-2π, 2π]^2` 采样 + `FilledContours` 半平面带填充 |

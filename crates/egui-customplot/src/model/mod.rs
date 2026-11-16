@@ -23,6 +23,7 @@ mod multivariate;
 mod patch;
 mod pcolor;
 mod pie_clouds;
+mod plot3d;
 mod polar;
 mod polar_region;
 mod polygon;
@@ -63,6 +64,11 @@ pub use multivariate::{CategoricalHeatmap, ParallelPlot};
 pub use patch::{Patch, PatchColoring};
 pub use pcolor::{Pcolor, PcolorShading};
 pub use pie_clouds::{BubbleCloud, PieChart, WordCloud};
+pub(crate) use plot3d::summarize_plot3d;
+pub use plot3d::{
+    Bar3D, BoxStyle3D, Bubble3D, Comet3D, ConstantPlane3D, DepthMode, Fill3D, Layer3D, Line3D,
+    Pie3D, Quiver3D, Scatter3D, Stem3D, Swarm3D, Text3D,
+};
 pub use polar::{CompassPlot, PolarBubble, PolarHistogram, PolarLayer, PolarLine, PolarScatter};
 pub use polar_region::{PolarRegionAnnotation, PolarRegionKind};
 pub use polygon::Fill;
