@@ -42,6 +42,7 @@ pub(super) fn layer_id(layer: PlotLayer<'_>, index: usize) -> IdSalt {
         PlotLayer::BubbleCloud(s) => s.id_salt,
         PlotLayer::CategoricalHeatmap(s) => s.id_salt,
         PlotLayer::ParallelPlot(s) => s.id_salt,
+        PlotLayer::Graph(s) => s.id_salt,
     };
     id_salt.unwrap_or_else(|| {
         if layer.name().is_empty() {
@@ -141,6 +142,7 @@ impl<'a> PlotLayer<'a> {
             Self::WordCloud(s) => plot.resolve_series(index, s.style),
             Self::BubbleCloud(s) => plot.resolve_series(index, s.style),
             Self::ParallelPlot(s) => plot.resolve_series(index, s.style),
+            Self::Graph(s) => plot.resolve_series(index, s.style),
         }
     }
 }

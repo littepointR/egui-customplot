@@ -4,6 +4,7 @@ mod color_bar;
 mod composite;
 mod figure;
 mod hover;
+mod polar;
 mod response;
 mod show;
 
@@ -21,6 +22,7 @@ pub use composite::{
     StackedPlotResponse,
 };
 pub use figure::{Figure, FigureCell, FigureResponse};
+pub use polar::{PolarPlot, PolarPlotResponse};
 pub use response::PlotResponse;
 
 /// Native egui control. Drag to pan; double-click or focused Home resets.
@@ -218,6 +220,15 @@ impl Plot {
             .explicit_ticks(data.y_ticks())
             .reversed(true);
         self.show_grid = false;
+        self
+    }
+
+    /// Configures 1:1 aspect ratio and hides axis tick labels/grid for clean network & tree views.
+    pub fn graph_axes(mut self) -> Self {
+        self.axes[0] = self.axes[0].clone().tick_labels_visible(false);
+        self.axes[1] = self.axes[1].clone().tick_labels_visible(false);
+        self.show_grid = false;
+        self.data_aspect = Some(1.0);
         self
     }
 }

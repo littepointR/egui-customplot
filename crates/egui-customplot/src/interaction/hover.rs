@@ -48,7 +48,13 @@ pub(crate) fn pick_hover(
         }
     }
     let first_layer = match top_layer {
-        Some(top) if region.as_ref().is_some_and(|r| r.kind == RegionKind::Area) => top,
+        Some(top)
+            if region
+                .as_ref()
+                .is_some_and(|r| matches!(r.kind, RegionKind::Area | RegionKind::GraphEdge)) =>
+        {
+            top
+        }
         Some(top) => top + 1,
         None => 0,
     };

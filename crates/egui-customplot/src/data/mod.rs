@@ -16,6 +16,7 @@ mod extents;
 mod field2d;
 mod flow;
 mod function;
+mod graph;
 mod grid;
 mod hist_legacy;
 mod histogram;
@@ -25,6 +26,7 @@ mod multivariate;
 mod patch;
 mod pie;
 mod points;
+mod polar;
 mod polygon;
 mod polyshape;
 mod quiver;
@@ -59,6 +61,9 @@ pub use flow::{FeatherData, FlowError, StreamOptions, StreamlineData, VectorFiel
 pub use function::{
     FunctionCurveData, FunctionPlotError, FunctionPlotOptions, ImplicitCurveData, ImplicitOptions,
 };
+pub use graph::{
+    EliminationTree, GraphData, GraphEdge, GraphError, GraphLayout, GraphLayoutKind, TreeData,
+};
 pub use grid::{GridData, GridError};
 pub use hist_legacy::LegacyHistData;
 pub use histogram::{HistogramData, HistogramError, HistogramNormalization};
@@ -72,6 +77,10 @@ pub use multivariate::{
 pub use patch::{PatchData, PatchError};
 pub use pie::{PieData, PieError, PieSlice};
 pub use points::{PlotData, PlotPoint};
+pub use polar::{
+    CompassData, PolarBubbleData, PolarBubblePoint, PolarCurveData, PolarError, PolarFunctionData,
+    PolarHistNormalization, PolarHistogramData, RoseData,
+};
 pub use polygon::PolygonData;
 pub use polyshape::{PolyRegion, PolyShapeData};
 pub use quiver::{QuiverArrow, QuiverData};

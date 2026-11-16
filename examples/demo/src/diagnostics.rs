@@ -97,6 +97,33 @@ pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
             d.stats.input_parallel_rows,
         ));
     }
+    if d.polar.input_points != 0 || d.polar.output_regions != 0 {
+        ui.monospace(format!(
+            "polar: {} in | visited: {} | paths/markers/sectors/arrows/regions: {}/{}/{}/{}/{} | payload: {} B",
+            d.polar.input_points,
+            d.polar.visited_items,
+            d.polar.output_paths,
+            d.polar.output_markers,
+            d.polar.output_sectors,
+            d.polar.output_arrows,
+            d.polar.output_regions,
+            d.polar.unique_bytes
+        ));
+    }
+    if d.network.input_nodes != 0 || d.network.input_edges != 0 {
+        ui.monospace(format!(
+            "network: {} nodes, {} edges (loops={}, multi={}) | out nodes/edges/arrows/labels: {}/{}/{}/{} | payload: {} B",
+            d.network.input_nodes,
+            d.network.input_edges,
+            d.network.self_loops,
+            d.network.multi_edges,
+            d.network.output_nodes,
+            d.network.output_edges,
+            d.network.output_arrows,
+            d.network.output_labels,
+            d.network.unique_bytes
+        ));
+    }
     if d.input_quiver_arrows != 0 {
         ui.monospace(format!("vectors: {} | visited: {} | shafts / heads: {} / {} | invalid / domain-invalid: {} / {} | raw pick visits: {} | vector payload: {} B",
             d.input_quiver_arrows, d.visited_quiver_arrows, d.output_quiver_shafts, d.output_quiver_heads,

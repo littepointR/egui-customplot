@@ -36,6 +36,8 @@ crates/egui-customplot/
       pie.rs / clouds.rs      # PieChart / DonutChart 与 WordCloud / BubbleCloud 螺旋防重叠布局
       multivariate/           # Categorical / Parallel / Stacked / ScatterHistogram / PlotMatrix 数据
       composite.rs            # StackedPlot / ScatterHistogram / PlotMatrix 复合切片与作用域聚合
+      polar/                  # PolarCurve / PolarHistogram / Rose / PolarBubble / Compass / 自适应 fpolarplot 数据
+      graph/                  # GraphData / Circle / Force / Sugiyama Layered / TreeData / Liu EliminationTree 数据
     model/
       line.rs                 # 折线的借用描述与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -47,8 +49,8 @@ crates/egui-customplot/
       style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
       theme.rs                # 科学浅色 / 监控深色，可共享 palette
       annotation.rs           # 不参与自动范围的基础注解与 Data/Normalized EX-027 图元描述
-      layer/                  # 兼容既有 Series 的有序异构 PlotLayer 与统一样式解析（含 stage8c）
-      summary/                # 合并预处理范围、身份与跨图元 payload 指针去重（含 stage8c）
+      layer/                  # 兼容既有 Series 的有序异构 PlotLayer 与统一样式解析（含 stage8c / stage8d）
+      summary/                # 合并预处理范围、身份与跨图元 payload 指针去重（含 stage8c / stage8d）
       heatmap.rs / color_scale.rs # 数值单元描述与显式共享色域
       bars.rs / error_bars.rs  # 柱 / 误差棒样式描述，不保存视图
       stems.rs                # 借用点样本的杆、方向 / 基线与 O(1) 范围
@@ -60,30 +62,33 @@ crates/egui-customplot/
       flow.rs / spy.rs / animation.rs # Feather / Streamlines、Spy、AnimatedLine / Comet 图层模型
       bubble_swarm.rs / distribution.rs # Bubble / Swarm / Bivariate 与 Box / Violin / Raincloud 图层模型
       pie_clouds.rs / multivariate.rs   # Pie / Donut、WordCloud / BubbleCloud 与 ParallelCoords 图层模型
+      polar.rs / polar_region.rs / graph.rs # Polar* 图层、PolarRegionAnnotation 与 GraphPlot / GraphHighlight
     axis/
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
       transform.rs            # 正反坐标映射、变换空间导航运算
+      polar.rs                # PolarTransform 极坐标零点 / 方向与三种负半径映射
       aspect.rs               # 等比例约束，只扩展变换空间范围
       ticks.rs                # 坐标轴配置、主次刻度、数字格式
       grid.rs / rect.rs       # 单元可见查询、定位、f64 矩形 / 轴向线段裁剪
-      segment.rs              # 共用归一化线段裁剪、向量投影 / 精度拒绝边界
+      segment.rs              # 共用归一化线段裁剪、向量投影及图网络曲线/自环几何
       polygon.rs              # [0,1]^2 Sutherland-Hodgman 三角裁剪与点环判定
       y_axis.rs / linked.rs   # 左右归属、共享范围与变换组装
     layout/
-      plot.rs                 # 宿主空间分配、标题 / 轴标签留白
+      plot.rs / polar.rs      # 宿主空间分配、极坐标正圆排布、标题 / 轴标签留白
       legend.rs               # egui 图例排布和控件组装
       figure.rs / color_bar.rs / bubble_legend.rs # 有界 cell 网格、色条与气泡尺寸图例空间分配
     interaction/
       state.rs                # 显式视图、隐藏状态、帧快照、一次性切换
       navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
-      picking.rs / point_aux.rs / point_stage8b.rs / point_stage8c.rs # 原始点、Stage 8A/8B 及 Bubble/Swarm 点拾取
+      picking.rs / point_aux.rs / point_stage8b.rs / point_stage8c.rs / graph.rs # 原始点、Stage 8A～8D 及图节点/边拾取
+      polar.rs / polar_hover.rs # 极坐标多遍旋转/径向缩放、图例开关与点/扇区拾取
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
       link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
       cell.rs / bar.rs        # 原始单元 / 柱拾取
       quiver.rs               # 原始向量（Quiver / Feather）两锚点拾取、记录提示，复用点层距离仲裁
-      region/                 # 面积 / 多边形 / 面片 / 矩形 / 填充等高线 / 伪彩 / 图像 / AlphaShape 与 Stage 8C 区域命中仲裁
-      hover.rs                # 填充层遮挡及原始点最近距离仲裁
+      region/                 # 面积 / 多边形 / 面片 / 矩形 / 等高线 / 伪彩 / 图像 / Alpha / Stage 8C / GraphEdge 区域命中
+      hover.rs                # 填充层遮挡（含 Area / GraphEdge 共层优先级）及原始点最近距离仲裁
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
@@ -103,7 +108,7 @@ crates/egui-customplot/
       contour.rs / pcolor.rs / image.rs # 等值线/填充等高线、伪彩色节点与像素网格绘制
       triangulation.rs / flow.rs / spy.rs / animation.rs # 三角网/Voronoi/AlphaShape、流线/羽状、CSR Spy 与动画绘制
       bubble_bivariate.rs / distribution.rs / pie_clouds.rs # 气泡群、双变量分箱、统计分布与饼图/词云绘制
-      multivariate.rs / stage8c.rs # ParallelCoords 与 Stage 8C 图层派发绘制
+      multivariate.rs / stage8c.rs / polar/ / graph.rs # ParallelCoords、Stage 8C、极坐标系与图网络箭头标签绘制
       right_axis.rs           # 右 Y 刻度与标签
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
@@ -111,10 +116,11 @@ crates/egui-customplot/
         vector.rs / svg.rs    # 原生矢量与内嵌字形 / AA PNG patch、裁剪层序
         options.rs / writer.rs # 分辨率 / DPI / 局部预算和有界编码输出
     widget/
-      mod.rs                  # Plot 公开配置 builder（含 imshow_axes / spy_axes）
+      mod.rs                  # Plot 公开配置 builder（含 imshow_axes / spy_axes / graph_axes）
+      polar.rs                # 独立极坐标 PolarPlot 控件与 PolarPlotResponse::into_plot_response
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
       response.rs             # 宿主可读取的本遍返回值
-      figure/                 # Figure（含图窗级 annotations）与 cell 原生 Ui 接入，样本仍归宿主
+      figure/                 # Figure（含图窗级 annotations / polar_plot）与 cell 原生 Ui 接入，样本仍归宿主
       composite/              # StackedPlot、Pareto / PlotYY 与 ScatterHistogram / PlotMatrix 复合组件
       color_bar.rs / hover.rs # 色条与悬停的阶段组装
   tests/
@@ -147,6 +153,9 @@ crates/egui-customplot/
     bars_pareto_hist.rs / bubbles_swarm_bivariate.rs # 分组堆叠柱 / Pareto / Swarm / Bubble / 双变量回归
     distributions_pie_clouds.rs / multivariate_composite.rs # Box / Violin / Raincloud / Pie / 云图与复合子图回归
     export_stage8c.rs             # Stage 8C 多变量 / 云图 / 分布混合 SVG/PNG 导出
+    polar_plots.rs / polar_hist_regions.rs # 极坐标曲线/散点/气泡/罗盘/fpolarplot/histogram/rose/区域与交互回归
+    graphs_networks.rs / trees_elimination.rs # graph / digraph / gplot / treeplot / etreeplot（含万节点链）回归
+    export_stage8d.rs             # Stage 8D 极坐标 + 消去树混合 Figure SVG/PNG 导出
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -157,6 +166,7 @@ crates/egui-customplot/
     polygon_contour_performance.rs # 面积/面片/等高线/填充等高线/pcolor/图像 CPU
     stage8b_performance.rs    # 函数曲线/三角剖分/Voronoi/AlphaShape/流切片/100k Spy CPU
     stage8c_performance.rs    # 双变量 200k / 分布 50k / 气泡群 5k / 平行坐标 / 云图 / 4x4 散点矩阵 CPU
+    stage8d_performance.rs    # 极坐标 50k/100k 分箱/rosette/罗盘、Force/Layered 图网络与万节点消去树 CPU
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -172,6 +182,8 @@ examples/demo/src/
   geometry.rs                 # Delaunay / Voronoi / alphaShape、streamslice / feather 与 CSR spy gallery
   distributions.rs            # 分组堆叠柱、Pareto、Violin / Raincloud、Swarm / Bubble 与双变量 gallery
   multivariate.rs             # 词云 / 气泡云、平行坐标与 Stacked / ScatterHistogram / PlotMatrix gallery
+  polar.rs                    # 极坐标曲线/fpolar/ezpolar、散点/气泡、polarhistogram/rose、罗盘与极坐标区域 gallery
+  networks.rs                 # 无向 Force 图、有向 Layered DAG、gplot 网格、treeplot 与 etreeplot gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

@@ -1,7 +1,7 @@
 param(
     [string]$Executable = 'target/release/customplot-demo.exe',
     [Parameter(Mandatory = $true)][string]$Output,
-    [string[]]$Galleries = @('default', '--scalar', '--statistical', '--stairs', '--stems', '--quiver', '--polygons', '--contours', '--functions', '--geometry', '--distributions', '--multivariate')
+    [string[]]$Galleries = @('default', '--scalar', '--statistical', '--stairs', '--stems', '--quiver', '--polygons', '--contours', '--functions', '--geometry', '--distributions', '--multivariate', '--polar', '--networks')
 )
 
 $ErrorActionPreference = 'Stop'

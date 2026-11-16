@@ -213,6 +213,8 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--geometry"),
         Some("--distributions"),
         Some("--multivariate"),
+        Some("--polar"),
+        Some("--networks"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
@@ -275,3 +277,9 @@ mod distributions_tests;
 
 #[path = "multivariate_tests.rs"]
 mod multivariate_tests;
+
+#[path = "polar_tests.rs"]
+mod polar_tests;
+
+#[path = "networks_tests.rs"]
+mod networks_tests;

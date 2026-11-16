@@ -202,6 +202,12 @@ impl SpyData {
     pub fn nnz(&self) -> usize {
         self.col_indices.len()
     }
+    pub fn row_offsets(&self) -> &[u32] {
+        &self.row_offsets
+    }
+    pub fn col_indices(&self) -> &[u32] {
+        &self.col_indices
+    }
     pub fn duplicate_entries(&self) -> usize {
         self.duplicate_entries
     }

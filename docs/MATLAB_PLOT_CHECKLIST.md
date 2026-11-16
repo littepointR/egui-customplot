@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：44 项 ML、16 项 EX 与 6 项 LG 共 66 项“开发中”，其余 67 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶梯线 / 茎状图 / 二维矢量场 / Stage 8A～8C（面积多边形等高线图像、函数 / 几何 / 流线 / 稀疏 / 动画 / 图窗注解、分布 / 气泡群 / 词云 / 多变量与复合子图）见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：50 项 ML、24 项 EX 与 10 项 LG 共 84 项“开发中”，其余 49 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D：面积多边形等高线图像、函数 / 几何 / 流线 / 稀疏 / 动画 / 图窗注解、分布 / 气泡群 / 词云 / 多变量复合子图、极坐标与二维图网络 / 树）见 [阶段 8](STAGE_8.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -108,12 +108,12 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-045 | 未实现 | [`polarplot`](https://ww2.mathworks.cn/help/matlab/ref/polarplot.html) | 极坐标折线，极坐标 2D | 角度方向 / 零点、径向范围、跨周连线 |
-| ML-046 | 未实现 | [`polarhistogram`](https://ww2.mathworks.cn/help/matlab/ref/polarhistogram.html) | 极坐标直方图 / 玫瑰图，极坐标 2D | 环绕分箱、归一化、扇区宽度 |
-| ML-047 | 未实现 | [`polarscatter`](https://ww2.mathworks.cn/help/matlab/ref/polarscatter.html) | 极坐标散点，极坐标 2D | 角度 / 半径变换、逐点颜色 / 大小 |
-| ML-048 | 未实现 | [`polarbubblechart`](https://ww2.mathworks.cn/help/matlab/ref/polarbubblechart.html) | 极坐标气泡图，极坐标 2D | 极坐标定位、大小映射和图例 |
-| ML-049 | 未实现 | [`compassplot`](https://ww2.mathworks.cn/help/matlab/ref/compassplot.html) | 罗盘箭头图，极坐标 2D | 方向 / 模长、箭头样式与角刻度 |
-| ML-050 | 未实现 | [`fpolarplot`](https://ww2.mathworks.cn/help/matlab/ref/fpolarplot.html) | 函数极坐标曲线，极坐标 2D | r=f(θ) 回调、定义域、自适应采样 |
+| ML-045 | 开发中 | [`polarplot`](https://ww2.mathworks.cn/help/matlab/ref/polarplot.html) | 极坐标折线，极坐标 2D | [阶段 8](STAGE_8.md)：`PolarTransform` / `PolarCurveData` / `PolarLine` / `PolarPlot`，验证角度零点与方向（8 种组合）、负半径三种模式、跨周角度插值、多遍拖动旋转 / 滚轮径向缩放与 `--polar` / `tests/polar_plots.rs`；完整属性与视觉验收仍缺 |
+| ML-046 | 开发中 | [`polarhistogram`](https://ww2.mathworks.cn/help/matlab/ref/polarhistogram.html) | 极坐标直方图 / 玫瑰图，极坐标 2D | [阶段 8](STAGE_8.md)：`PolarHistogramData` / `PolarHistogram`（modulo `2π` 环绕分箱、6 种 `PolarHistNormalization`、非有限拒绝与扇区 Mesh 渲染），`tests/polar_hist_regions.rs` 验证积分/累计计数及 `HoveredPolarBin` 拾取；动态 bin 交互与完整验收仍缺 |
+| ML-047 | 开发中 | [`polarscatter`](https://ww2.mathworks.cn/help/matlab/ref/polarscatter.html) | 极坐标散点，极坐标 2D | [阶段 8](STAGE_8.md)：`PolarScatter`（每点独立颜色 / 半径、`MarkerShape`、`PolarTransform` 变换），`tests/polar_plots.rs` 与 `HoveredPolarPoint` 拾取验证；大规模极坐标散点实例化与完整验收仍缺 |
+| ML-048 | 开发中 | [`polarbubblechart`](https://ww2.mathworks.cn/help/matlab/ref/polarbubblechart.html) | 极坐标气泡图，极坐标 2D | [阶段 8](STAGE_8.md)：`PolarBubbleData`（面积比例半径、`with_scalars`）+ `PolarBubble` / `ColorScale` + `BubbleLegend`，`tests/polar_plots.rs` 与 `--polar` 演示；完整视觉 / 属性验收仍缺 |
+| ML-049 | 开发中 | [`compassplot`](https://ww2.mathworks.cn/help/matlab/ref/compassplot.html) | 罗盘箭头图，极坐标 2D | [阶段 8](STAGE_8.md)：`CompassData::from_polar` + `CompassPlot`（原点发射带 V 形箭头），`tests/polar_plots.rs` 与 `--polar` 演示；极坐标动画与完整验收仍缺 |
+| ML-050 | 开发中 | [`fpolarplot`](https://ww2.mathworks.cn/help/matlab/ref/fpolarplot.html) | 函数极坐标曲线，极坐标 2D | [阶段 8](STAGE_8.md)：`PolarCurveData::from_function`（自适应曲率采样与 `max_evaluations` 预算）结合 `PolarLine`，`tests/polar_plots.rs` 与 `--polar` 演示；极端奇点解析提示与完整验收仍缺 |
 
 ### A7. 等高线图：5 项
 
@@ -211,11 +211,11 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 / 方法 | 绘制能力 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| EX-018 | 未实现 | [`plot(graph)`](https://ww2.mathworks.cn/help/matlab/ref/graph.plot.html) | 无向网络图，2D / 3D | 节点 / 边属性、布局、自环、多重边与标签 |
-| EX-019 | 未实现 | [`plot(digraph)`](https://ww2.mathworks.cn/help/matlab/ref/graph.plot.html) | 有向网络图，2D / 3D | 箭头、方向、层级布局和高亮 |
-| EX-020 | 未实现 | [`gplot`](https://ww2.mathworks.cn/help/matlab/ref/gplot.html) | 邻接矩阵图 | 邻接关系与指定节点坐标 |
-| EX-021 | 未实现 | [`treeplot`](https://ww2.mathworks.cn/help/matlab/ref/treeplot.html) | 树 / 森林图 | 父索引、多根节点、层级布局 |
-| EX-022 | 未实现 | [`etreeplot`](https://ww2.mathworks.cn/help/matlab/ref/etreeplot.html) | 稀疏矩阵消去树图 | 消去树计算与层级可视化分别验证 |
+| EX-018 | 开发中 | [`plot(graph)`](https://ww2.mathworks.cn/help/matlab/ref/graph.plot.html) | 无向网络图，2D / 3D | [阶段 8](STAGE_8.md)：`GraphData::undirected`（确定性 Force / Circle / Coordinates 布局、平行多边弧线、自环）与 `GraphPlot` / `GraphHighlight` / `RegionKind::GraphEdge` 与节点拾取（`tests/graphs_networks.rs`）；二维已实现，三维网络与完整属性仍缺 |
+| EX-019 | 开发中 | [`plot(digraph)`](https://ww2.mathworks.cn/help/matlab/ref/graph.plot.html) | 有向网络图，2D / 3D | [阶段 8](STAGE_8.md)：`GraphData::directed`（Sugiyama `Layered` DAG、双向对偶相反弯曲边与节点半径裁剪箭头），`tests/graphs_networks.rs` 验证箭头及节点/边拾取；二维已实现，三维有向图与完整属性仍缺 |
+| EX-020 | 开发中 | [`gplot`](https://ww2.mathworks.cn/help/matlab/ref/gplot.html) | 邻接矩阵图 | [阶段 8](STAGE_8.md)：`GraphData::{from_adjacency_coords, from_dense_adjacency, from_spy}` 保留宿主二维节点坐标、对称无向去重并跳过非有限节点（`tests/graphs_networks.rs` / `--networks`）；完整属性与验收仍缺 |
+| EX-021 | 开发中 | [`treeplot`](https://ww2.mathworks.cn/help/matlab/ref/treeplot.html) | 树 / 森林图 | [阶段 8](STAGE_8.md)：`TreeData::{from_parents, from_optional_parents}` 验证 1-based 父索引、森林多根节点、`[0, 1]^2` 叶子居中迭代算法与环路拒绝 `GraphError::CycleDetected`（`tests/trees_elimination.rs`）；交互折叠与完整验收仍缺 |
+| EX-022 | 开发中 | [`etreeplot`](https://ww2.mathworks.cn/help/matlab/ref/etreeplot.html) | 稀疏矩阵消去树图 | [阶段 8](STAGE_8.md)：`EliminationTree::{from_symmetric_edges, from_spy}` 实现 Liu (1990) O(nnz) 路径压缩消去树，独立验证三对角 / 箭形 / 非连通 / 万节点链与层级绘制分离（`tests/trees_elimination.rs` / `--networks`）；完整符号分解统计与验收仍缺 |
 
 ### B3. 体几何与图像显示：3 项
 
@@ -236,9 +236,9 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | EX-030 | 开发中 | [`xregion`](https://ww2.mathworks.cn/help/matlab/ref/xregion.html) | X 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
 | EX-031 | 开发中 | [`yregion`](https://ww2.mathworks.cn/help/matlab/ref/yregion.html) | Y 区间填充带 | 已有区间求交、无限端点、透明叠加和变换测试；标签、导出及完整验收仍缺 |
 | EX-032 | 未实现 | [`constantplane`](https://ww2.mathworks.cn/help/matlab/ref/constantplane.html) | 三维无限参考平面 | 平面方程、可见范围裁剪与透明深度 |
-| EX-033 | 未实现 | [`thetaregion`](https://ww2.mathworks.cn/help/matlab/ref/thetaregion.html) | 极坐标角度扇区 | 跨零角度、方向和径向裁剪 |
-| EX-034 | 未实现 | [`radiusregion`](https://ww2.mathworks.cn/help/matlab/ref/radiusregion.html) | 极坐标圆盘 / 圆环 | 内外半径与角度范围裁剪 |
-| EX-035 | 未实现 | [`polarregion`](https://ww2.mathworks.cn/help/matlab/ref/polarregion.html) | 极坐标环形扇区 | 角度区间与半径区间组合 |
+| EX-033 | 开发中 | [`thetaregion`](https://ww2.mathworks.cn/help/matlab/ref/thetaregion.html) | 极坐标角度扇区 | [阶段 8](STAGE_8.md)：`PolarRegionAnnotation::theta_region` 支持跨零角 `330°..30°`、两套角度方向、全半径跨度扇形 Mesh 填充与可选边界/标签（`tests/polar_hist_regions.rs`）；完整图例协同与验收仍缺 |
+| EX-034 | 开发中 | [`radiusregion`](https://ww2.mathworks.cn/help/matlab/ref/radiusregion.html) | 极坐标圆盘 / 圆环 | [阶段 8](STAGE_8.md)：`PolarRegionAnnotation::radius_region` 支持闭合角域圆环/圆盘 Mesh 裁剪填充（`tests/polar_hist_regions.rs` / `--polar`）；负半径反射带细节与完整验收仍缺 |
+| EX-035 | 开发中 | [`polarregion`](https://ww2.mathworks.cn/help/matlab/ref/polarregion.html) | 极坐标环形扇区 | [阶段 8](STAGE_8.md)：`PolarRegionAnnotation::polar_region` 组合角度与径向边界精确细分绘制并计入 `PolarDiagnostics::output_regions`（`tests/export_stage8d.rs` 导出无 `<text`）；完整属性与验收仍缺 |
 
 ## C. 传统及历史接口对照：16 项
 
@@ -249,13 +249,13 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 | LG-001 | 开发中 | [`pie`](https://ww2.mathworks.cn/help/matlab/ref/pie.html) | 传统二维饼图 | [阶段 8](STAGE_8.md)：通过 `PieData::with_options`（explode/start_angle）+ `PieChart` 验证分离扇区与标签；小于整圆独立切片规则与完整验收仍缺 |
 | LG-002 | 未实现 | [`pie3`](https://ww2.mathworks.cn/help/matlab/ref/pie3.html) | 三维饼图 | 仍有独立视觉效果；扇区厚度、分离、遮挡与相机，不用二维饼图冒充 |
 | LG-003 | 开发中 | [`hist`](https://ww2.mathworks.cn/help/matlab/ref/hist.html) | 旧直方图，官方不推荐 | [阶段 8](STAGE_8.md)：`LegacyHistData::{new, with_centers}` 验证等宽计数与中心点最近邻语义；完整统计属性与验收仍缺 |
-| LG-004 | 未实现 | [`polar`](https://ww2.mathworks.cn/help/matlab/ref/polar.html) | 旧极坐标折线，官方不推荐 | 映射 polarplot，说明旧笛卡尔模拟轴与真实极坐标轴差异 |
-| LG-005 | 未实现 | [`compass`](https://ww2.mathworks.cn/help/matlab/ref/compass.html) | 旧罗盘图，官方不推荐 | 对照 compassplot，验证复数 / 分量输入适配 |
-| LG-006 | 未实现 | [`rose`](https://ww2.mathworks.cn/help/matlab/ref/rose.html) | 旧角直方图，官方不推荐 | 对照 polarhistogram，不默认视为分箱与归一化完全等价 |
+| LG-004 | 开发中 | [`polar`](https://ww2.mathworks.cn/help/matlab/ref/polar.html) | 旧极坐标折线，官方不推荐 | [阶段 8](STAGE_8.md)：映射 `PolarPlot` + `PolarLine` / `PolarCurveData::from_theta_r`（`tests/polar_plots.rs` / `--polar`）；区别在于本库使用真实 `PolarTransform`（可配零点/方向/负半径模式），而非旧笛卡尔模拟网格，完整迁移属性仍缺 |
+| LG-005 | 开发中 | [`compass`](https://ww2.mathworks.cn/help/matlab/ref/compass.html) | 旧罗盘图，官方不推荐 | [阶段 8](STAGE_8.md)：对照 `CompassPlot` 补充 `CompassData::from_cartesian` 与 `from_complex` 复数/直角分量适配（`tests/polar_plots.rs` / `--polar`）；完整迁移属性与验收仍缺 |
+| LG-006 | 开发中 | [`rose`](https://ww2.mathworks.cn/help/matlab/ref/rose.html) | 旧角直方图，官方不推荐 | [阶段 8](STAGE_8.md)：`RoseData::{new, with_centers}::to_polar_curve()` 生成原点起闭扇形花瓣轮廓（`4*nbins+` 顶点，非 `polarhistogram` 填充归一化扇区），经 `tests/polar_hist_regions.rs` 与 `--polar` 验证；完整验收仍缺 |
 | LG-007 | 开发中 | [`plotyy`](https://ww2.mathworks.cn/help/matlab/ref/plotyy.html) | 旧双 Y 轴组合，官方不推荐 | [阶段 8](STAGE_8.md)：`PlotYy::{new, lines}` 封装显式左/右轴、双图例与独立缩放联动；完整句柄属性仍缺 |
 | LG-008 | 开发中 | [`ezplot`](https://ww2.mathworks.cn/help/matlab/ref/ezplot.html) | 旧二维函数图，官方不推荐 | 对照 fplot / fimplicit；显式、参数与隐式曲线 |
 | LG-009 | 未实现 | [`ezplot3`](https://ww2.mathworks.cn/help/matlab/ref/ezplot3.html) | 旧三维参数曲线，官方不推荐 | 对照 fplot3 |
-| LG-010 | 未实现 | [`ezpolar`](https://ww2.mathworks.cn/help/matlab/ref/ezpolar.html) | 旧极坐标函数图，官方不推荐 | 对照 fpolarplot |
+| LG-010 | 开发中 | [`ezpolar`](https://ww2.mathworks.cn/help/matlab/ref/ezpolar.html) | 旧极坐标函数图，官方不推荐 | [阶段 8](STAGE_8.md)：`PolarCurveData::ezpolar(max_evals, f)` 默认 `[0, 2π]` 自适应采样 + `max_evaluations` 预算限制（非字符串解析器），对照 `fpolarplot` 经 `tests/polar_plots.rs` 与 `--polar` 验证；完整验收仍缺 |
 | LG-011 | 开发中 | [`ezcontour`](https://ww2.mathworks.cn/help/matlab/ref/ezcontour.html) | 旧函数等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`ContourData::ezcontour` 默认 `[-2π, 2π]^2` 定义域与 `max_evaluations` 预算限制（非字符串表达式解释器） |
 | LG-012 | 开发中 | [`ezcontourf`](https://ww2.mathworks.cn/help/matlab/ref/ezcontourf.html) | 旧函数填充等高线，官方不推荐 | [阶段 8](STAGE_8.md)：`FilledContourData::ezcontourf` 默认 `[-2π, 2π]^2` 采样 + `FilledContours` 半平面带填充 |
 | LG-013 | 未实现 | [`ezmesh`](https://ww2.mathworks.cn/help/matlab/ref/ezmesh.html) | 旧函数网格，官方不推荐 | 对照 fmesh |

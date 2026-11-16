@@ -2,6 +2,7 @@
 
 mod bar;
 mod cell;
+mod graph;
 mod hover;
 mod link;
 mod navigation;
@@ -9,6 +10,8 @@ mod picking;
 mod point_aux;
 mod point_stage8b;
 mod point_stage8c;
+mod polar;
+mod polar_hover;
 mod quiver;
 mod region;
 mod secondary;
@@ -22,6 +25,10 @@ pub(crate) use hover::{HoverPick, pick_hover};
 pub use link::{AxisLink, LinkError, LinkReport};
 pub(crate) use navigation::{NavigationOptions, navigate};
 pub use picking::HoveredPoint;
+pub use polar::PolarState;
+pub(crate) use polar::navigate_polar;
+pub use polar_hover::{HoveredPolarBin, HoveredPolarPoint};
+pub(crate) use polar_hover::{pick_polar_hover, show_polar_legend};
 pub use quiver::{HoveredVector, VectorAnchor};
 pub use region::{HoveredRegion, RegionKind};
 pub(crate) use secondary::navigate_secondary;

@@ -204,5 +204,6 @@ fn with_y_axis(layer: PlotLayer<'_>, axis: YAxis) -> PlotLayer<'_> {
         PlotLayer::BubbleCloud(s) => PlotLayer::from(s.y_axis(axis)),
         PlotLayer::CategoricalHeatmap(s) => PlotLayer::from(s.y_axis(axis)),
         PlotLayer::ParallelPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::Graph(s) => PlotLayer::from(s.y_axis(axis)),
     }
 }

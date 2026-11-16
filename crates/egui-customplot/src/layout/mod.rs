@@ -5,6 +5,7 @@ mod color_bar;
 mod figure;
 mod legend;
 mod plot;
+mod polar;
 
 pub use bubble_legend::{BubbleLegend, BubbleLegendResponse};
 pub(crate) use bubble_legend::{bubble_legend_size, bubble_pixel_radius, paint_bubble_legend};
@@ -14,3 +15,4 @@ pub(crate) use figure::FigureLayout;
 pub use legend::LegendEntry;
 pub(crate) use legend::{legend_rect, show_legend};
 pub(crate) use plot::{allocate_plot, data_rect};
+pub(crate) use polar::compute_polar_layout;

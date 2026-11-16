@@ -1,0 +1,13 @@
+date=2026-11-16T11:40:02.1232167+08:00
+cpu=Intel(R) Core(TM) i9-14900KF
+os=Microsoft Windows NT 10.0.26300.0
+rust=rustc 1.100.0 (0ef1bc386 2026-11-09)
+git_head=c1c15bcd47076434fece92fd7c3c683a7a2821f6
+source=uncommitted stage8d polar coordinate system and 2D network/graph/tree changes on top of git_head
+completed=2026-11-16T11:43:32.7700732+08:00
+exit_code=0
+executable=target/release/build/egui-customplot/5a90f24e14ebacc3/out/stage8d_performance-5a90f24e14ebacc3.exe
+sha256=A769948D669739B02A56ECCE32C71DCDD1C462FE161A3988F609EAE215F3FF9A
+cargo=cargo 1.100.0 (3acc79c0c 2026-11-05)
+seconds_per_scene=30; 7 scenes + 7 preprocess p50; PolarPlot height=1080 / Plot::graph_axes height=1124; dpi=1; show_grid=false; show_hover=false; normal_priority
+Shared machine during development. Headless CPU UI build + egui tessellation only; excludes wgpu/glow upload, GPU rasterization, swapchain presentation, and real FPS.

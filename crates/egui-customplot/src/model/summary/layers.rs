@@ -16,6 +16,7 @@ pub(super) struct SeenPayloads {
     images: HashSet<(usize, usize)>,
     stage8b: super::stage8b::SeenStage8bPayloads,
     stage8c: super::stage8c::SeenStage8cPayloads,
+    stage8d: super::stage8d::SeenStage8dPayloads,
 }
 
 pub(super) fn accumulate_layer(
@@ -227,6 +228,9 @@ pub(super) fn accumulate_layer(
             &mut seen.points,
             &mut seen.quivers,
         ),
+        PlotLayer::Graph(_) => {
+            super::stage8d::accumulate_stage8d_layer(layer, scales, diagnostics, &mut seen.stage8d)
+        }
         other => {
             super::stage8c::accumulate_stage8c_layer(other, scales, diagnostics, &mut seen.stage8c)
         }

@@ -1,6 +1,6 @@
 # 阶段 8：二维类型补全切片
 
-日期：2026-11-16。**阶梯线、茎状图、二维矢量场、Stage 8A（面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像）、Stage 8B（函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与七类图窗注解）与 Stage 8C（统计分布 / 分组堆叠柱与 Pareto / 气泡群 / 双变量分箱 / 饼图与词云 / 平行坐标与多变量复合子图）基础切片验证通过，阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
+日期：2026-11-16。**阶段 8 全二维切片（阶梯线、茎状图、二维矢量场，Stage 8A 面积 / 多边形 / 面片 / 等高线 / 伪彩 / 图像，Stage 8B 函数曲线 / 三角剖分 Voronoi AlphaShape / 流线羽状图 / 稀疏矩阵 / 动画与七类图窗注解，Stage 8C 统计分布 / 分组堆叠柱与 Pareto / 气泡群 / 双变量分箱 / 饼图与词云 / 平行坐标与多变量复合子图，以及 Stage 8D 极坐标系统与二维网络 / 图 / 树）已实现并通过自动化测试、原生窗口烟雾与 30 秒 CPU 基准验证；阶段 8 与对应 MATLAB 类型的完整验收未完成。** 133 项对照全部保留；本页不把可绘制等同于统计 / 几何计算或完整交付。
 
 ## 阶梯线（ML-003）
 
@@ -228,6 +228,27 @@ use egui_customplot::{AreaBandData, AreaStackMode, ContourData, ContourLevels, C
 
 - **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、交换链呈现、FPS 或进程峰值内存。`violin_raincloud_50k` 合计 p95 为 `24.4733 ms`（高于 16.7 ms 交互预算），主因为雨云散点层按每点提交圆点标记几何（25k 雨滴散点在 UI 构造及 tessellation 阶段产生成本）；在未做雨滴合并绘制或显式降采样前，超大样本 Raincloud 不宣称全量实时 60 FPS。
 
+## Stage 8D：极坐标系统与二维网络 / 图 / 树
+
+- **Checklist 覆盖（18 项转为 `开发中`，阶段 8 二维专项清单切片收官）：** 本切片新增 `6` 项 `ML`（`ML-045`..`ML-050`：`polarplot`、`polarhistogram`、`polarscatter`、`polarbubblechart`、`compassplot`、`fpolarplot`）、`8` 项 `EX`（`EX-018`..`EX-022`：`plot(graph)`、`plot(digraph)`、`gplot`、`treeplot`、`etreeplot`；`EX-033`..`EX-035`：`thetaregion`、`radiusregion`、`polarregion`）与 `4` 项 `LG`（`LG-004`..`LG-006`、`LG-010`：`polar`、`compass`、`rose`、`ezpolar`）；133 项状态由 `66 开发中` 推进至 **84 开发中（50 ML + 24 EX + 10 LG）/ 49 未实现**，无条目宣称完整交付。
+- **核心模块与职责边界：**
+  - 极坐标系统：`axis/polar.rs`（`PolarTransform` 与 8 种零点/方向正反变换、三种 `NegativeRadiusMode`）、`data/polar/`（`PolarCurveData`、`PolarHistogramData` 环绕分箱与 6 种归一化、`RoseData` 花瓣轮廓、`PolarBubbleData`、`CompassData` 与自适应 `PolarFunctionData` / `ezpolar` 预算）、`layout/polar.rs`、`model/{polar.rs, polar_region.rs}`（`PolarLine` / `PolarScatter` / `PolarBubble` / `PolarHistogram` / `CompassPlot` 与 `PolarRegionAnnotation`）、`interaction/{polar.rs, polar_hover.rs}`（多遍幂等 `PolarState` 拖动旋转、滚轮径向缩放、单次图例显隐及点/扇区拾取）、`render/polar/`（含跨零角度扇区填充与 `Painter::text` 角刻度）与 `widget/polar.rs`（`PolarPlot`、`FigureCell::polar_plot` / `show_polar` 与 `into_plot_response()`）。
+  - 二维网络、图与树：`axis/segment.rs` 共用 `graph_edge_screen_polyline`（直线 / 平行多边三次贝塞尔弧 / 双向对偶相反弧 / 圆环自环与节点半径裁剪箭头）、`data/graph/`（`GraphData` 支持 `undirected` / `directed` / `from_adjacency_coords` / `from_dense_adjacency` / `from_spy`，`GraphLayout::{Circle, Force, Layered, Coordinates}`，`TreeData` 非递归森林布局与 `EliminationTree` Liu (1990) 路径压缩 O(nnz) 消去树）、`model/{graph.rs, layer/stage8d.rs, summary/stage8d.rs}`（`GraphPlot` / `GraphHighlight` 与 `PlotLayer::Graph`）、`interaction/{graph.rs, hover.rs}`（节点与 `RegionKind::GraphEdge` 共享层索引避免边遮挡节点拾取）、`render/graph.rs` 与 `Plot::graph_axes()`；`diagnostics.rs` 新增 `PolarDiagnostics` 与 `NetworkDiagnostics`。
+- **集成测试与预设核验：** 新增库单元 1 项（`axis::polar::tests::orientations_and_inverse_roundtrip_match`）、集成 10 项：`polar_plots.rs`（3 项）、`polar_hist_regions.rs`（2 项）、`graphs_networks.rs`（2 项）、`trees_elimination.rs`（2 项，含 10,000 节点链非递归安全性）与 `export_stage8d.rs`（1 项，极坐标 + 消去树混合 `Figure` 释放宿主数据后 PNG 解码与无 `<text` 混合 SVG 导出），以及 demo `--polar`（6 单元）与 `--networks`（4 单元）和多遍 / 14 预设 SVG 导出回归；`cargo test --workspace --all-features --locked` 合计 **271 项通过**（66 测试套件：库单元 39、集成 210、demo 20、rustdoc 2），全部 7 项构建 / 测试 / 严格 Clippy 见 [Stage 8D 检查记录](benchmarks/2026-11-16-stage8d-windows-final-checks.txt)。
+- **Windows 原生烟雾测试与 30 秒 CPU 实测：** 首轮 Release 构建 `customplot-demo.exe`（SHA256 `B376E1F7F8B755927134416E019061C51E12834111C72E6980979F14948CA5C9`，[首轮十四预设生命周期](benchmarks/2026-11-16-stage8d-windows-gallery-smoke.txt)）及随后完成 `cargo fmt` 与 `data/graph/edges.rs` 职责拆分后的最终 Release 构建（SHA256 `F671B8FFEB7AF7132590AA08194562128202A48F6DC9A7CABC6BBAD525C85850`，[最终十四预设 Windows 原生生命周期](benchmarks/2026-11-16-stage8d-windows-gallery-smoke-retry1.txt)）均验证，含 `--polar` 与 `--networks` 在内的全部 14 个预设均达到 `input_idle=True`、`responsive=true`、`close_requested=True` 且退出码 `0`。`stage8d_performance`（SHA256 `A769948D669739B02A56ECCE32C71DCDD1C462FE161A3988F609EAE215F3FF9A`，于 `cargo fmt` 与无语义 `edges.rs` 拆分前测量）在共享 Windows `i9-14900KF` / `egui 0.37.0` / Release bench 下测得预处理 p50（ms）：`polarplot_50k=0.0988`、`polarscatter_bubble_5k=0.0941`、`polarhist_100k_72bins=1.8723`、`fpolar_compass_1k=0.0258`、`graph_force_1k_nodes_3k_edges=41.1328`、`digraph_layered_500_nodes_1500_edges=0.2380`、`etree_sparse_10k_n_40k_nnz=3.1932`（`spy_nnz=49870`、`etree_edges=9999`）；30 秒帧耗时与资源快照（[原始 CSV](benchmarks/2026-11-16-stage8d-windows-cpu.csv)、[环境记录](benchmarks/2026-11-16-stage8d-windows-cpu-environment.txt)、[空 stderr](benchmarks/2026-11-16-stage8d-windows-cpu.stderr.txt)）：
+
+| 场景 | items | frames | UI p95 (ms) | Tess p95 (ms) | 合计 p50 / p95 / p99 (ms) | 输出图元 / meshes | 样本字节 | 访问项 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `polarplot_50k` | 50,000 | 7,546 | 1.1895 | 3.1115 | 3.7748 / 4.2255 / 4.7569 | 1 / 1 | 800,000 | 50,000 |
+| `polarscatter_bubble_5k` | 5,000 | 4,366 | 0.3179 | 6.8914 | 6.4446 / 7.1741 / 7.6261 | 5,000 / 1 | 140,000 | 5,000 |
+| `polarhist_100k_72bins` | 100,000 | 249,532 | 0.0824 | 0.0656 | 0.1125 / 0.1522 / 0.2398 | 73 / 1 | 800,000 | 360 |
+| `fpolar_compass_1k` | 1,547 | 87,073 | 0.1598 | 0.4523 | 0.2929 / 0.6109 / 0.7104 | 1,004 / 1 | 24,752 | 1,547 |
+| `graph_force_1k_nodes_3k_edges` | 4,000 | 28,308 | 0.3302 | 0.9964 | 0.9688 / 1.2973 / 1.4523 | 3,678 / 2 | 160,000 | 4,000 |
+| `digraph_layered_500_nodes_1500_edges` | 1,997 | 30,864 | 0.2490 | 0.9507 | 0.9229 / 1.1785 / 1.3054 | 3,494 / 2 | 79,856 | 1,997 |
+| `etree_sparse_10k_n_40k_nnz` | 19,999 | 3,401 | 1.4162 | 7.8905 | 8.4012 / 9.2415 / 10.4892 | 19,999 / 2 | 639,952 | 19,999 |
+
+- **严格口径与已知瓶颈：** 以上仅测 headless CPU UI 构建 + egui tessellation，不包含 wgpu/glow 上传、GPU 光栅化、交换链呈现、FPS 或进程峰值内存。7 个绘制场景 CPU 合计 p95 均低于 10 ms（最高 `etree_sparse_10k_n_40k_nnz` 为 `9.2415 ms`），但 1,000 节点 Fruchterman-Reingold 力导预处理 p50 为 `41.1328 ms`（属宿主侧一次性同步计算）；超大规模万节点以上三维/二维力导布局在引入 Barnes-Hut / 四叉树加速或后台异步求解前，不宜每帧重建。
+
 ## 剩余验收
 
-固定硬件门槛、人工及跨平台显示、GPU / 整应用资源、精确阶梯 LOD、杆 / 向量批处理与索引、Quiver 自动缩放 / 全属性和完整 MATLAB 布局兼容仍缺。阶段 8 其余极坐标（Stage 8D）与网络 / 图 / 树类型继续推进；阶段 4 / 6 / 7 / 8A～8C 遗留验收也不因本切片消失。
+固定硬件门槛、人工及跨平台显示、GPU / 整应用资源、精确阶梯 LOD、杆 / 向量批处理与索引、Quiver 自动缩放 / 全属性和完整 MATLAB 布局兼容仍缺。Stage 8 二维切片（8A～8D）已全部落地，后续按阶段 9（三维坐标与曲面 / 体 / 流绘图）、阶段 10（地理绘图）及阶段 11（全量逐项核销）推进；阶段 4 / 6 / 7 / 8A～8D 遗留验收也不因本切片完成而消失。

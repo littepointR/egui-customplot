@@ -30,6 +30,7 @@ pub enum RegionKind {
     PieSlice,
     WordCloudItem,
     BubbleCloudItem,
+    GraphEdge,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -301,6 +302,21 @@ pub(crate) fn pick_region(
                         )
                     },
                 )
+            }
+            PlotLayer::Graph(_) => {
+                crate::interaction::graph::pick_graph_edge(*layer, transform, position, diagnostics)
+                    .map(|(edge_idx, weight)| {
+                        let mut hit = base_region(
+                            layer_id,
+                            layer_index,
+                            y_axis,
+                            RegionKind::GraphEdge,
+                            edge_idx,
+                            point,
+                        );
+                        hit.scalar_value = Some(weight);
+                        hit
+                    })
             }
             _ => stage8c::pick_stage8c_region(
                 *layer,

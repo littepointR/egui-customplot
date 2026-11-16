@@ -91,6 +91,41 @@ pub struct StatDiagnostics {
     pub output_parallel_segments: usize,
 }
 
+/// Polar coordinate plot counters (Stage 8D).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PolarDiagnostics {
+    pub input_points: usize,
+    pub non_finite_points: usize,
+    pub clipped_points: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub output_paths: usize,
+    pub output_markers: usize,
+    pub output_sectors: usize,
+    pub output_arrows: usize,
+    pub output_regions: usize,
+    pub region_rejections: usize,
+    pub pick_queries: usize,
+}
+
+/// Network, graph, and tree counters (Stage 8D).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct NetworkDiagnostics {
+    pub input_nodes: usize,
+    pub input_edges: usize,
+    pub self_loops: usize,
+    pub multi_edges: usize,
+    pub invalid_items: usize,
+    pub unique_bytes: usize,
+    pub visited_nodes: usize,
+    pub visited_edges: usize,
+    pub output_edges: usize,
+    pub output_arrows: usize,
+    pub output_nodes: usize,
+    pub output_labels: usize,
+    pub pick_queries: usize,
+}
+
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
@@ -100,6 +135,8 @@ pub struct PlotDiagnostics {
     pub geometry: GeometryDiagnostics,
     pub flow: FlowDiagnostics,
     pub stats: StatDiagnostics,
+    pub polar: PolarDiagnostics,
+    pub network: NetworkDiagnostics,
     pub input_quiver_arrows: usize,
     /// Nonfinite origins/vectors or overflowed true endpoints.
     pub invalid_quiver_arrows: usize,

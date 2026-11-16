@@ -1,0 +1,10 @@
+# Stage 8D CPU; profile=bench; egui=0.37.0; canvas=2024x1124; plot=1920x1080; dpi=1; warmup=5; seconds_per_scene=30
+# preprocess_p50_ms: polarplot_50k=0.0988, polarscatter_bubble_5k=0.0941, polarhist_100k_72bins=1.8723, fpolar_compass_1k=0.0258, graph_force_1k_nodes_3k_edges=41.1328, digraph_layered_500_nodes_1500_edges=0.2380, etree_sparse_10k_n_40k_nnz=3.1932; spy_nnz=49870, etree_edges=9999
+scene,items,frames,seconds,ui_p50_ms,ui_p95_ms,ui_p99_ms,tess_p50_ms,tess_p95_ms,tess_p99_ms,total_p50_ms,total_p95_ms,total_p99_ms,output_primitives,output_meshes,geometry_capacity_bytes,sample_bytes,visited_items
+polarplot_50k,50000,7546,30.001,1.0408,1.1895,1.3029,2.7150,3.1115,3.5470,3.7748,4.2255,4.7569,1,1,0,800000,50000
+polarscatter_bubble_5k,5000,4366,30.004,0.2429,0.3179,0.3745,6.1940,6.8914,7.3460,6.4446,7.1741,7.6261,5000,1,0,140000,5000
+polarhist_100k_72bins,100000,249532,30.000,0.0648,0.0824,0.1194,0.0473,0.0656,0.1372,0.1125,0.1522,0.2398,73,1,0,800000,360
+fpolar_compass_1k,1547,87073,30.002,0.1169,0.1598,0.2142,0.1751,0.4523,0.5171,0.2929,0.6109,0.7104,1004,1,0,24752,1547
+graph_force_1k_nodes_3k_edges,4000,28308,30.001,0.2628,0.3302,0.3934,0.6992,0.9964,1.1265,0.9688,1.2973,1.4523,3678,2,0,160000,4000
+digraph_layered_500_nodes_1500_edges,1997,30864,30.001,0.1913,0.2490,0.2991,0.7402,0.9507,1.0587,0.9229,1.1785,1.3054,3494,2,0,79856,1997
+etree_sparse_10k_n_40k_nnz,19999,3401,30.008,1.2627,1.4162,1.5299,7.1215,7.8905,9.0203,8.4012,9.2415,10.4892,19999,2,0,639952,19999

@@ -14,6 +14,7 @@ mod error_bars;
 #[cfg(feature = "export")]
 mod export;
 mod flow;
+mod graph;
 mod heatmap;
 mod image;
 mod line;
@@ -26,6 +27,7 @@ mod patch;
 mod pattern;
 mod pcolor;
 mod pie_clouds;
+mod polar;
 mod polygon;
 mod quiver;
 mod right_axis;
@@ -43,5 +45,6 @@ pub(crate) use color_bar::paint_color_bar;
 #[cfg(feature = "export")]
 pub use export::{CaptureLimits, ExportError, ExportOptions, PlotSnapshot};
 pub(crate) use overlay::{paint_bar_hover, paint_cell_hover, paint_hover, paint_region_hover};
+pub(crate) use polar::paint_polar;
 pub(crate) use right_axis::paint_right_axis;
 pub(crate) use series::paint_series;

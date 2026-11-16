@@ -71,6 +71,15 @@ pub(super) fn pick_point(
                 resolved,
                 diagnostics,
             )
+        })
+        .or_else(|| {
+            super::graph::pick_graph_node(
+                *s,
+                transforms.for_axis(s.y_axis()),
+                position,
+                radius,
+                diagnostics,
+            )
         }) {
             if let Some((point_index, point, distance)) = hit
                 && closest

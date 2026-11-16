@@ -56,6 +56,10 @@ harness = false
 name = "stage8c_performance"
 harness = false
 
+[[bench]]
+name = "stage8d_performance"
+harness = false
+
 [[example]]
 name = "export_snapshot"
 required-features = ["export"]

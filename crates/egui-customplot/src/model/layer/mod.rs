@@ -2,13 +2,14 @@ use egui::IdSalt;
 
 use crate::{
     AlphaShape, Area, Bars, BinScatter, BoxChart, BubbleChart, BubbleCloud, CategoricalHeatmap,
-    Comet, Contours, ErrorBars, Feather, Fill, FilledContours, Heatmap, Histogram2, Line,
-    ParallelPlot, Patch, Pcolor, PieChart, PlotData, PlotImage, PolyShape, Quiver, Raincloud,
+    Comet, Contours, ErrorBars, Feather, Fill, FilledContours, GraphPlot, Heatmap, Histogram2,
+    Line, ParallelPlot, Patch, Pcolor, PieChart, PlotData, PlotImage, PolyShape, Quiver, Raincloud,
     Rectangles, Scatter, Series, Spy, Stems, Streamlines, SwarmChart, TriPlot, ViolinPlot, Voronoi,
     WordCloud, YAxis,
 };
 
 mod stage8c;
+mod stage8d;
 mod style;
 
 /// Ordered heterogeneous layers. This extends the plotting API without changing
@@ -50,6 +51,7 @@ pub enum PlotLayer<'a> {
     BubbleCloud(BubbleCloud<'a>),
     CategoricalHeatmap(CategoricalHeatmap<'a>),
     ParallelPlot(ParallelPlot<'a>),
+    Graph(GraphPlot<'a>),
 }
 
 impl<'a> From<Series<'a>> for PlotLayer<'a> {
@@ -210,6 +212,7 @@ impl<'a> PlotLayer<'a> {
             Self::BubbleCloud(s) => s.name,
             Self::CategoricalHeatmap(s) => s.name,
             Self::ParallelPlot(s) => s.name,
+            Self::Graph(s) => s.name,
         }
     }
 
@@ -249,6 +252,7 @@ impl<'a> PlotLayer<'a> {
             Self::BubbleCloud(s) => s.y_axis,
             Self::CategoricalHeatmap(s) => s.y_axis,
             Self::ParallelPlot(s) => s.y_axis,
+            Self::Graph(s) => s.y_axis,
         }
     }
 

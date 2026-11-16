@@ -220,6 +220,17 @@ pub(crate) fn paint_series(
                 );
                 continue;
             }
+            PlotLayer::Graph(graph) => {
+                super::graph::paint_graph(
+                    &painter,
+                    graph,
+                    transform,
+                    resolved,
+                    style.text_color,
+                    diagnostics,
+                );
+                continue;
+            }
             PlotLayer::Series(s) => s,
         };
         let color = resolved.stroke.color;

@@ -25,6 +25,8 @@ pub(super) struct Demo {
     geometry: crate::geometry::GeometryDemo,
     distributions: crate::distributions::DistributionsDemo,
     multivariate: crate::multivariate::MultivariateDemo,
+    polar: crate::polar::PolarDemo,
+    networks: crate::networks::NetworksDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -47,6 +49,8 @@ impl Default for Demo {
             geometry: crate::geometry::GeometryDemo::default(),
             distributions: crate::distributions::DistributionsDemo::default(),
             multivariate: crate::multivariate::MultivariateDemo::default(),
+            polar: crate::polar::PolarDemo::default(),
+            networks: crate::networks::NetworksDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -65,6 +69,8 @@ impl Demo {
         demo.geometry.enabled = gallery == Some("--geometry");
         demo.distributions.enabled = gallery == Some("--distributions");
         demo.multivariate.enabled = gallery == Some("--multivariate");
+        demo.polar.enabled = gallery == Some("--polar");
+        demo.networks.enabled = gallery == Some("--networks");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -92,6 +98,8 @@ impl Demo {
                     self.geometry.controls(ui);
                     self.distributions.controls(ui);
                     self.multivariate.controls(ui);
+                    self.polar.controls(ui);
+                    self.networks.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -175,6 +183,12 @@ impl Demo {
         }
         if self.multivariate.enabled {
             return self.multivariate.show(ui);
+        }
+        if self.polar.enabled {
+            return self.polar.show(ui);
+        }
+        if self.networks.enabled {
+            return self.networks.show(ui);
         }
         self.views.show(
             ui,
