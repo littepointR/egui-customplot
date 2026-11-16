@@ -1,0 +1,9 @@
+# Stage 10 CPU; profile=bench; egui=0.37.0; canvas=2024x1124; plot=1920x1080; dpi=1; warmup=5; seconds_per_scene=30
+# preprocess_p50_ms: geoplot_routes_50k_dateline=1.7880, geoscatter_20k_styled=1.6607, geodensity_10k_weighted_64x48=0.2563, geobubble_2k_categorical_legend=0.0825, geobasemap_host_tiles_cached=0.0014, geo_combo_pacific_4layers=0.0001
+scene,items,frames,seconds,ui_p50_ms,ui_p95_ms,ui_p99_ms,tess_p50_ms,tess_p95_ms,tess_p99_ms,total_p50_ms,total_p95_ms,total_p99_ms,output_primitives,output_meshes,geometry_capacity_bytes,sample_bytes,visited_items
+geoplot_routes_50k_dateline,50000,4798,30.004,3.2224,3.6480,4.1624,2.6997,3.1924,4.1025,5.9495,6.7022,8.5784,209,24,0,800000,50000
+geoscatter_20k_styled,20000,1260,30.025,11.9458,15.2462,18.7714,10.4033,14.7675,18.8382,22.3603,29.6859,36.2201,20011,24,0,960000,20000
+geodensity_10k_weighted_64x48,10000,2410,30.009,12.2380,12.7974,18.0168,0.0283,0.0439,0.0851,12.2674,12.8354,18.1353,128,25,0,240000,10000
+geobubble_2k_categorical_legend,2000,4108,30.006,1.2650,1.6189,2.0363,5.5077,6.5057,7.8113,6.7912,7.9458,9.6510,2011,25,0,128000,2000
+geobasemap_host_tiles_cached,10,193667,30.000,0.0971,0.1502,0.2853,0.0391,0.0697,0.1212,0.1366,0.2172,0.3774,22,27,0,40960,5
+geo_combo_pacific_4layers,32005,1656,30.004,13.7060,14.2810,14.6294,3.9995,4.4913,4.8429,17.7427,18.5566,19.2502,7561,25,0,1328080,26858

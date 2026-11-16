@@ -30,6 +30,7 @@ pub(super) struct Demo {
     plot3d: crate::plot3d::Plot3DDemo,
     surfaces3d: crate::surfaces3d::Surfaces3DDemo,
     volumes3d: crate::volumes3d::Volumes3DDemo,
+    geo: crate::geo::GeoDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -57,6 +58,7 @@ impl Default for Demo {
             plot3d: crate::plot3d::Plot3DDemo::default(),
             surfaces3d: crate::surfaces3d::Surfaces3DDemo::default(),
             volumes3d: crate::volumes3d::Volumes3DDemo::default(),
+            geo: crate::geo::GeoDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -80,6 +82,7 @@ impl Demo {
         demo.plot3d.enabled = gallery == Some("--plot3d");
         demo.surfaces3d.enabled = gallery == Some("--surfaces3d");
         demo.volumes3d.enabled = gallery == Some("--volumes3d");
+        demo.geo.enabled = gallery == Some("--geo");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -112,6 +115,7 @@ impl Demo {
                     self.plot3d.controls(ui);
                     self.surfaces3d.controls(ui);
                     self.volumes3d.controls(ui);
+                    self.geo.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -147,7 +151,7 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 9C: 3D Volumes & Flow");
+            ui.heading("egui-customplot / Stage 10: Geographic Plots");
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();
@@ -210,6 +214,9 @@ impl Demo {
         }
         if self.volumes3d.enabled {
             return self.volumes3d.show(ui);
+        }
+        if self.geo.enabled {
+            return self.geo.show(ui);
         }
         self.views.show(
             ui,

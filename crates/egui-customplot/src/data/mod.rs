@@ -16,6 +16,7 @@ mod extents;
 mod field2d;
 mod flow;
 mod function;
+mod geo;
 mod graph;
 mod grid;
 mod hist_legacy;
@@ -62,6 +63,12 @@ pub use flow::{FeatherData, FlowError, StreamOptions, StreamlineData, VectorFiel
 pub use function::{
     FunctionCurveData, FunctionPlotError, FunctionPlotOptions, ImplicitCurveData, ImplicitOptions,
 };
+pub(crate) use geo::coastlines::OFFLINE_LAND_RINGS;
+pub use geo::{
+    GeoAttribution, GeoBasemapStyle, GeoBubbleData, GeoBubblePoint, GeoDensityData, GeoDensityGrid,
+    GeoOfflinePolicy, GeoPathData, GeoRadiusMode, GeoRasterTile, GeoScatterData, GeoScatterPoint,
+    GeoTileCache, GeoTileKey, visible_tiles_for_bounds,
+};
 pub use graph::{
     EliminationTree, GraphData, GraphEdge, GraphError, GraphLayout, GraphLayoutKind, TreeData,
 };
@@ -99,3 +106,4 @@ pub use quiver::{QuiverArrow, QuiverData};
 pub use shapes::{DataRect, RectData};
 pub use spy::{SpyData, SpyError};
 pub use stream::{AppendReport, PlotStream, StreamError};
+pub(crate) use triangulate::triangulate_indexed_polygon;

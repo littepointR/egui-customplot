@@ -14,6 +14,7 @@ mod error_bars;
 #[cfg(feature = "export")]
 mod export;
 mod flow;
+mod geo;
 mod graph;
 mod heatmap;
 mod image;
@@ -45,6 +46,7 @@ pub use cache::PlotCache;
 pub(crate) use color_bar::paint_color_bar;
 #[cfg(feature = "export")]
 pub use export::{CaptureLimits, ExportError, ExportOptions, PlotSnapshot};
+pub(crate) use geo::paint_geo;
 pub(crate) use overlay::{paint_bar_hover, paint_cell_hover, paint_hover, paint_region_hover};
 pub(crate) use plot3d::paint_plot3d;
 pub(crate) use polar::paint_polar;

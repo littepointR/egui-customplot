@@ -2,6 +2,7 @@
 
 mod bar;
 mod cell;
+mod geo;
 mod graph;
 mod hover;
 mod link;
@@ -22,6 +23,8 @@ mod tooltip;
 pub use bar::HoveredBar;
 pub use cell::HoveredCell;
 pub(crate) use cell::pick_cell;
+pub use geo::{GeoPlotState, HoveredGeoPoint};
+pub(crate) use geo::{navigate_geo, pick_geo_hover, show_geo_legend};
 pub(crate) use hover::{HoverPick, pick_hover};
 pub use link::{AxisLink, LinkError, LinkReport};
 pub(crate) use navigation::{NavigationOptions, navigate};

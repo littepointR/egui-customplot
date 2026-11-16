@@ -3,6 +3,7 @@
 mod bubble_legend;
 mod color_bar;
 mod figure;
+mod geo;
 mod legend;
 mod plot;
 mod plot3d;
@@ -13,6 +14,7 @@ pub(crate) use bubble_legend::{bubble_legend_size, bubble_pixel_radius, paint_bu
 pub(crate) use color_bar::allocate_color_bar;
 pub use figure::FigureError;
 pub(crate) use figure::FigureLayout;
+pub(crate) use geo::compute_geo_layout;
 pub use legend::LegendEntry;
 pub(crate) use legend::{legend_rect, show_legend};
 pub(crate) use plot::{allocate_plot, data_rect};

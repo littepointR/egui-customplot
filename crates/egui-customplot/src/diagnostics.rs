@@ -145,6 +145,26 @@ pub struct Plot3DDiagnostics {
     pub pick_queries: usize,
 }
 
+/// Geographic coordinates, dateline splits, tile cache and fallback counters (Stage 10).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct GeoDiagnostics {
+    pub input_points: usize,
+    pub non_finite_points: usize,
+    pub domain_invalid_points: usize,
+    pub unique_bytes: usize,
+    pub visited_items: usize,
+    pub dateline_splits: usize,
+    pub output_paths: usize,
+    pub output_markers: usize,
+    pub output_bubbles: usize,
+    pub output_density_cells: usize,
+    pub output_basemap_polygons: usize,
+    pub tile_cache_hits: usize,
+    pub tile_cache_misses: usize,
+    pub offline_fallback_tiles: usize,
+    pub pick_queries: usize,
+}
+
 /// Per-show-pass counters, not process/GPU memory measurements.
 #[derive(Clone, Debug, Default)]
 pub struct PlotDiagnostics {
@@ -157,6 +177,7 @@ pub struct PlotDiagnostics {
     pub polar: PolarDiagnostics,
     pub network: NetworkDiagnostics,
     pub plot3d: Plot3DDiagnostics,
+    pub geo: GeoDiagnostics,
     pub input_quiver_arrows: usize,
     /// Nonfinite origins/vectors or overflowed true endpoints.
     pub invalid_quiver_arrows: usize,

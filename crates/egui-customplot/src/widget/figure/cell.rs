@@ -3,8 +3,9 @@ use std::sync::Arc;
 use egui::{Rect, Ui};
 
 use crate::{
-    Layer3D, Line, Plot, Plot3D, Plot3DResponse, Plot3DState, PlotCache, PlotLayer, PlotResponse,
-    PlotState, PlotStyle, PlotTheme, PolarLayer, PolarPlot, PolarPlotResponse, PolarState, Series,
+    GeoLayer, GeoPlot, GeoPlotResponse, GeoPlotState, GeoTileCache, Layer3D, Line, Plot, Plot3D,
+    Plot3DResponse, Plot3DState, PlotCache, PlotLayer, PlotResponse, PlotState, PlotStyle,
+    PlotTheme, PolarLayer, PolarPlot, PolarPlotResponse, PolarState, Series,
 };
 
 pub struct FigureCell<'a> {
@@ -144,5 +145,34 @@ impl<'a> FigureCell<'a> {
         layers: &[Layer3D<'_>],
     ) -> Plot3DResponse {
         self.plot3d(plot).show(self.ui, state, layers)
+    }
+
+    /// Inherit figure defaults and size the [`GeoPlot`] to this cell.
+    pub fn geo_plot(&self, mut plot: GeoPlot) -> GeoPlot {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_geo(
+        &mut self,
+        plot: GeoPlot,
+        state: &mut GeoPlotState,
+        layers: &[GeoLayer<'_>],
+    ) -> GeoPlotResponse {
+        self.geo_plot(plot).show(self.ui, state, layers)
+    }
+
+    pub fn show_geo_with_tiles(
+        &mut self,
+        plot: GeoPlot,
+        state: &mut GeoPlotState,
+        layers: &[GeoLayer<'_>],
+        tiles: &mut GeoTileCache,
+    ) -> GeoPlotResponse {
+        self.geo_plot(plot)
+            .show_with_tiles(self.ui, state, layers, tiles)
     }
 }

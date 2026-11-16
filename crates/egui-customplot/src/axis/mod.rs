@@ -2,6 +2,7 @@
 
 mod aspect;
 mod bounds;
+mod geo;
 mod grid;
 mod linked;
 mod plot3d;
@@ -15,6 +16,11 @@ mod transform;
 mod y_axis;
 
 pub use bounds::{BoundsError, PlotBounds};
+pub use geo::{
+    GeoBounds, GeoError, GeoPoint, GeoProjection, GeoTransform, haversine_km, shortest_dlon,
+    wrap_lon_180,
+};
+pub(crate) use geo::{format_lat, format_lon, geo_graticule_ticks, project_geo_polyline};
 pub(crate) use grid::{edge_cell_at, grid_cell_at, grid_cell_rect, visible_edges, visible_grid};
 pub(crate) use linked::apply_axis_ranges;
 pub use plot3d::{Axis3D, Bounds3D, Camera3D, DataAspect3D, Point3D, Projection3D, Transform3D};

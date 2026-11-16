@@ -2,7 +2,7 @@
 
 以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
 
-**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）与阶段 9 全三维能力（Stage 9A～9C：核心坐标、双深度引擎、三维基本图元、曲面网格解析隐式与体切片/等值面/四面体/三维流可视化）已实现并持续验证，尚非完整绘图库。**
+**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）、阶段 9 全三维能力（Stage 9A～9C）与阶段 10 地理绘图及离线 / 缓存底图契约（`geoplot` / `geoscatter` / `geodensityplot` / `geobubble`，133/133 清单条目均处于“开发中”）已实现并持续验证，尚非完整交付库。**
 
 已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
 
@@ -30,6 +30,7 @@ cargo run -p customplot-demo --release --locked -- --networks
 cargo run -p customplot-demo --release --locked -- --plot3d
 cargo run -p customplot-demo --release --locked -- --surfaces3d
 cargo run -p customplot-demo --release --locked -- --volumes3d
+cargo run -p customplot-demo --release --locked -- --geo
 ```
 
 - 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
@@ -48,7 +49,8 @@ cargo run -p customplot-demo --release --locked -- --volumes3d
 - `--networks` 展示无向 `GraphLayout::Force` 多边/自环/高亮、有向 `GraphLayout::Layered` DAG 与双向曲线箭头、`GraphData::from_spy` `gplot` 空间网格及 `TreeData` / `EliminationTree`（Liu 1990 `O(nnz)`）。
 - `--plot3d` 展示 `Plot3D` 三维核心（正交 / 透视、左键轨道旋转 / 右键平移 / Home 复位与 `SortedPainter` / 有界 360px 软件 `ZBuffer` 切换）与 `plot3`、`fplot3`、`ezplot3`、`comet3`、`scatter3`、`bubblechart3`、`swarmchart3`、`bar3`/`bar3h`、`stem3`、`quiver3`、`fill3`、`constantplane`、`pie3`；三维着色 / Z-buffer 网格在混合 SVG 中内嵌 PNG 栅格（无 `<text`）。
 - `--surfaces3d` 展示 Stage 9B 三维曲面与网格套件：`surf` / `surfc` / `surfl` / `surfnorm`（`Faceted` / `Flat` / `Interp` Gouraud 插值与共享 `ColorBar`）、`mesh` / `meshc` / `meshz` / `waterfall`（可选隐藏线遮挡）、`contour3`、`ribbon`、`fsurf` / `fmesh` / `ez*`、`fimplicit3`（6 四面体 Marching Tetrahedra + 极点守卫）及 `sphere` / `cylinder` / `ellipsoid` / `trisurf`（`ZBuffer` 切换）。
-- `--volumes3d` 展示 Stage 9C 三维体数据与流可视化套件：`slice`（正交 + 倾斜凸六边切片与共享 `ColorBar`）、`contourslice`、`isosurface` + `isocaps`（次级体积场着色与外边界端盖 `ZBuffer`）、`tetramesh`（共享内面剔除开关）、3D `streamline` / `streamslice` / 动画 `streamparticles` 与 `streamribbon` / `streamtube` / `coneplot`。
+- `--volumes3d` 展示 Stage 9C 三维体数据与流可视化套件：`slice`（正交 + 倾斜凸六边切片与共享 `ColorBar`）、`contourslice`、`isosurface` + `isocaps`（次级体积场着色与外边界端盖 `ZBuffer`）、`tetramesh`（共享内面剔除开关）、3D `streamline` / `streamslice` / `streamparticles` 与 `streamribbon` / `streamtube` / `coneplot`。
+- `--geo` 展示 Stage 10 地理可视化套件：`geoplot`（太平洋跨 `±180°` 日期变更线航线）、`geoscatter`（逐点大小/色值与 `ColorBar`）、`geodensityplot`（球面核密度与可切换的合成 `HostTiles` 字节预算缓存 + 离线回退）、`geobubble`（分类气泡与 `BubbleLegend`），支持 `WebMercator` / `Equirectangular` 与浅/深离线矢量底图切换；严禁声称或接入 MathWorks 在线底图服务。
 - Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
 - 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
 - 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
@@ -104,6 +106,7 @@ cargo bench -p egui-customplot --bench stage8d_performance --locked
 cargo bench -p egui-customplot --bench stage9a_performance --locked
 cargo bench -p egui-customplot --bench stage9b_performance --locked
 cargo bench -p egui-customplot --bench stage9c_performance --locked
+cargo bench -p egui-customplot --bench stage10_performance --locked
 cargo run -p egui-customplot --example export_snapshot --features export --release --locked -- target/exports/example
 ```
 
@@ -115,6 +118,7 @@ cargo run -p egui-customplot --example export_snapshot --features export --relea
 
 - [源码职责、目录和扩展规则](docs/ARCHITECTURE.md)：按 data / model / axis / layout / interaction / render / widget 分域，带架构回归检查。
 - [全量实施进度](docs/PROGRESS.md)
+- [阶段 10 地理绘图：经纬度线图、地理散点/密度/气泡与离线/缓存底图契约](docs/STAGE_10.md)
 - [阶段 9 三维与体数据：三维全能力与 Stage 9A～9C 证据](docs/STAGE_9.md)
 - [阶段 8 阶梯线 / 茎状图 / 二维矢量场及二维类型补全](docs/STAGE_8.md)
 - [阶段 7 显示快照、PNG / 混合 SVG 与字体 / 分辨率边界](docs/STAGE_7.md)

@@ -46,40 +46,48 @@ pub(super) fn prepare_markers(
         if !transform.rect().expand(radius + fringe).contains(center) {
             continue;
         }
-        if result.mesh.vertices.len() > (u32::MAX as usize).saturating_sub(64) {
+        if !push_marker(&mut result.mesh, center, radius, color, &outline, fringe) {
             result.numeric_rejections += 1;
             continue;
-        }
-        let base = result.mesh.vertices.len() as u32;
-        result.mesh.colored_vertex(center, color);
-        for unit in &outline {
-            result.mesh.colored_vertex(center + *unit * radius, color);
-        }
-        for unit in &outline {
-            result.mesh.colored_vertex(
-                center + *unit * radius + unit.normalized() * fringe,
-                Color32::TRANSPARENT,
-            );
-        }
-        let n = outline.len() as u32;
-        for edge in 0..n {
-            let next = (edge + 1) % n;
-            result
-                .mesh
-                .add_triangle(base, base + 1 + edge, base + 1 + next);
-            result
-                .mesh
-                .add_triangle(base + 1 + edge, base + 1 + n + edge, base + 1 + n + next);
-            result
-                .mesh
-                .add_triangle(base + 1 + edge, base + 1 + n + next, base + 1 + next);
         }
         result.output_markers += 1;
     }
     result
 }
 
-fn marker_outline(shape: MarkerShape) -> Vec<Vec2> {
+pub(super) fn push_marker(
+    mesh: &mut Mesh,
+    center: egui::Pos2,
+    radius: f32,
+    color: Color32,
+    outline: &[Vec2],
+    fringe: f32,
+) -> bool {
+    if mesh.vertices.len() > (u32::MAX as usize).saturating_sub(64) {
+        return false;
+    }
+    let base = mesh.vertices.len() as u32;
+    mesh.colored_vertex(center, color);
+    for unit in outline {
+        mesh.colored_vertex(center + *unit * radius, color);
+    }
+    for unit in outline {
+        mesh.colored_vertex(
+            center + *unit * radius + unit.normalized() * fringe,
+            Color32::TRANSPARENT,
+        );
+    }
+    let n = outline.len() as u32;
+    for edge in 0..n {
+        let next = (edge + 1) % n;
+        mesh.add_triangle(base, base + 1 + edge, base + 1 + next);
+        mesh.add_triangle(base + 1 + edge, base + 1 + n + edge, base + 1 + n + next);
+        mesh.add_triangle(base + 1 + edge, base + 1 + n + next, base + 1 + next);
+    }
+    true
+}
+
+pub(super) fn marker_outline(shape: MarkerShape) -> Vec<Vec2> {
     match shape {
         MarkerShape::Circle => (0..16)
             .map(|i| Vec2::angled(i as f32 * std::f32::consts::TAU / 16.0))

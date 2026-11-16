@@ -39,6 +39,7 @@ crates/egui-customplot/
       polar/                  # PolarCurve / PolarHistogram / Rose / PolarBubble / Compass / 自适应 fpolarplot 数据
       graph/                  # GraphData / Circle / Force / Sugiyama Layered / TreeData / Liu EliminationTree 数据
       plot3d/                 # Stage 9A～9C: 线/散点/柱/茎/矢量/多边形、曲面网格、ScalarVolume3D / VolumeSliceData / Isosurface3D / Isocaps3D / TetraMesh3D / VectorField3D / Stream*3D / ConePlot3D
+      geo/                    # Stage 10: GeoPathData / GeoScatterData / GeoDensityData / GeoBubbleData / OFFLINE_LAND_RINGS / GeoAttribution / GeoTileCache (零网络 I/O)
     model/
       line.rs                 # 折线的借用描述与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -65,7 +66,9 @@ crates/egui-customplot/
       pie_clouds.rs / multivariate.rs   # Pie / Donut、WordCloud / BubbleCloud 与 ParallelCoords 图层模型
       polar.rs / polar_region.rs / graph.rs # Polar* 图层、PolarRegionAnnotation 与 GraphPlot / GraphHighlight
       plot3d/                 # Stage 9A～9C: scene_opts / Layer3D / surfaces / mesh_tri / volume_flow (VolumeSlice/Iso*/TetraMesh/Stream*/ConePlot) / summarize_plot3d
+      geo.rs                  # Stage 10: GeoLine / GeoScatter / GeoDensity / GeoBubbles / GeoLayer / summarize_geo
     axis/
+      geo/                    # Stage 10: GeoPoint / GeoBounds(S^1最小弧/跨±180°) / GeoProjection(WebMercator/Equirectangular) / GeoTransform / antimeridian 分割 / 经纬刻度
       scale.rs                # Linear / Log10 数值域
       bounds.rs               # f64 范围验证、适配与基本运算
       transform.rs            # 正反坐标映射、变换空间导航运算
@@ -93,6 +96,7 @@ crates/egui-customplot/
       region/                 # 面积 / 多边形 / 面片 / 矩形 / 等高线 / 伪彩 / 图像 / Alpha / Stage 8C / GraphEdge 区域命中
       hover.rs                # 填充层遮挡（含 Area / GraphEdge 共层优先级）及原始点最近距离仲裁
       plot3d/                 # Stage 9A～9C: Plot3DState 导航、Legend、三维点/柱/填充面/扇区/曲面及体切片/四面体/流粒子实时拾取 (volume_hover)
+      geo/                    # Stage 10: GeoPlotState ±180° 平移与锚点缩放、图层/气泡类别 Legend、原始点/气泡/核密度拾取
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
@@ -115,6 +119,7 @@ crates/egui-customplot/
       multivariate.rs / stage8c.rs / polar/ / graph.rs # ParallelCoords、Stage 8C、极坐标系与图网络箭头标签绘制
       right_axis.rs           # 右 Y 刻度与标签
       plot3d/                 # Stage 9A～9C: 三背墙坐标框、SortedPainter 与 360px Gouraud ZBuffer、曲面/网格/体切片/等值面/端盖/四面体/流带流管圆锥场景收集
+      geo/                    # Stage 10: 周期经度拷贝离线海岸线三角化、HostTiles 顶点染色 Mesh 与离线回退、KDE 与经纬网格绘制
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
         raster.rs / png.rs    # 有界 CPU 预乘合成与 RGBA8 编码
@@ -174,6 +179,9 @@ crates/egui-customplot/
     plot3d_isosurface_tetramesh.rs # Stage 9C isosurface + 次级着色、isocaps 外边界端盖与 tetramesh 共享面剔除回归
     plot3d_flow_volumes.rs        # Stage 9C 3D streamline / streamslice / 幂等 streamparticles / 涡度 streamribbon / 散度 streamtube / coneplot 回归
     export_stage9c.rs             # Stage 9C SortedPainter slice+contourslice 与 ZBuffer iso+caps+streamtube+coneplot 混合导出
+    geo_projection_plot_scatter.rs # Stage 10 WebMercator/Equirectangular 逆变换、±180° 最小弧、geoplot 跨日期变更线切分/连续与 geoscatter 多遍导航
+    geo_density_bubble_basemap.rs  # Stage 10 geodensityplot 核权重与半径语义、geobubble 面积/分类图例与拾取、署名校验/有界瓦片缓存与离线回退
+    export_stage10.rs             # Stage 10 Pacific/HostTiles 双子图混合 SVG(roxmltree/resvg)/PNG 宿主释放导出
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -188,6 +196,7 @@ crates/egui-customplot/
     stage9a_performance.rs    # 三维 50k Helix / 10k 散点气泡 / 5k 蜂群 / 32x32 柱 / 2k 茎矢 / Z-buffer 面片与 fplot3+pie3 CPU
     stage9b_performance.rs    # Stage 9B Interp 128x128 / surfc+surfl / meshz / waterfall+ribbon / contour3 / fimplicit3 48^3 E2E / ZBuffer trisurf CPU
     stage9c_performance.rs    # Stage 9C 64^3 切片与轮廓切片 / 48^3 ZBuffer 等值面端盖 / 2k 四面体 / 流粒子/流带流管/千锥 CPU
+    stage10_performance.rs    # Stage 10 50k 跨日期变更线航线 / 20k 散点 / 10k 64x48 密度 / 2k 气泡 / HostTiles 缓存与太平洋四层组合 CPU
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动，不放业务功能
@@ -208,6 +217,7 @@ examples/demo/src/
   plot3d.rs                   # Stage 9A 三维线/参数曲线/comet3/散点气泡/蜂群茎/分组水平柱/矢量交叉面/参考面/3D饼图 gallery
   surfaces3d.rs               # Stage 9B surf/surfc/surfl/surfnorm/mesh*/waterfall/contour3/ribbon/fsurf/fimplicit3/sphere/cylinder/ellipsoid/trisurf gallery
   volumes3d.rs                # Stage 9C slice/contourslice/isosurface/isocaps/tetramesh/streamline/streamslice/streamparticles/streamribbon/streamtube/coneplot gallery
+  geo.rs                      # Stage 10 geoplot/geoscatter/geodensityplot/geobubble 与投影/离线海岸线/合成 HostTiles gallery
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

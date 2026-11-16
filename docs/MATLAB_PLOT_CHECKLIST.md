@@ -11,7 +11,7 @@
 - **完整性边界：** A 表对已冻结的官方总览完整覆盖；官方自己将该总览称为“常见的图形函数”，所以另补 B、C 表。本文不把它冒称为“所有 MathWorks 工具箱、所有对象重载、所有第三方自定义图表”的穷举。工具箱的完整盘点必须另行冻结产品及版本清单；D 表目前是已核对的扩展索引，不是全工具箱承诺。
 - 官方总览的函数名快照保存在 [MATLAB_PLOT_BASELINE.json](MATLAB_PLOT_BASELINE.json)，用于后续检查漏项。官方 `/help/` 页面会滚动更新，更新参考版本时应同步修改快照和本文。
 
-**当前状态：78 项 ML、35 项 EX 与 16 项 LG 共 129 项“开发中”，其余 4 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）、曲面网格与体切片流可视（Stage 9A～9C）见 [阶段 9](STAGE_9.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
+**当前状态：82 项 ML、35 项 EX 与 16 项 LG 共 133 项“开发中”，其余 0 项未实现；没有图类型通过完整交付门槛。** 基础二维见 [阶段 2](STAGE_2.md)，样式与注解见 [阶段 3](STAGE_3.md)，数值网格 / 柱 / 误差棒 / 直方见 [阶段 6](STAGE_6.md)，阶段 8 全二维切片（阶梯线 / 茎状图 / 二维矢量场与 Stage 8A～8D）见 [阶段 8](STAGE_8.md)，阶段 9 三维核心坐标、双深度模式（Painter + 软件 Z-buffer）、曲面网格与体切片流可视（Stage 9A～9C）见 [阶段 9](STAGE_9.md)，阶段 10 地理绘图及离线 / 缓存底图契约见 [阶段 10](STAGE_10.md)，[首轮记录](STAGE_1.md) 保留历史证据。收录是长期交付对照，不意味着全部进入 0.1，也不意味着复制 MATLAB 调用语法、表达式解析器或专有算法。
 
 ## 2. 怎样判定“交付”
 
@@ -97,10 +97,10 @@ egui 原生集成及性能 / 资源占用还需通过 [专项约束](EGUI_INTEGR
 
 | ID | 状态 | MATLAB 函数 | 图类型 / 维度 | 专项验收 |
 | --- | --- | --- | --- | --- |
-| ML-041 | 未实现 | [`geoplot`](https://ww2.mathworks.cn/help/matlab/ref/geoplot.html) | 经纬度线图，地理 2D | 地理投影、跨日期变更线、底图与导航 |
-| ML-042 | 未实现 | [`geoscatter`](https://ww2.mathworks.cn/help/matlab/ref/geoscatter.html) | 地理散点图，地理 2D | 经纬度定位、逐点样式、底图缩放 |
-| ML-043 | 未实现 | [`geodensityplot`](https://ww2.mathworks.cn/help/matlab/ref/geodensityplot.html) | 地理密度图，地理 2D | 空间密度、半径 / 缩放语义、权重与透明度 |
-| ML-044 | 未实现 | [`geobubble`](https://ww2.mathworks.cn/help/matlab/ref/geobubble.html) | 地理气泡图，地理 2D | 大小 / 类别映射、气泡图例、地理范围 |
+| ML-041 | 开发中 | [`geoplot`](https://ww2.mathworks.cn/help/matlab/ref/geoplot.html) | 经纬度线图，地理 2D | 地理投影、跨日期变更线、底图与导航 |
+| ML-042 | 开发中 | [`geoscatter`](https://ww2.mathworks.cn/help/matlab/ref/geoscatter.html) | 地理散点图，地理 2D | 经纬度定位、逐点样式、底图缩放 |
+| ML-043 | 开发中 | [`geodensityplot`](https://ww2.mathworks.cn/help/matlab/ref/geodensityplot.html) | 地理密度图，地理 2D | 空间密度、半径 / 缩放语义、权重与透明度 |
+| ML-044 | 开发中 | [`geobubble`](https://ww2.mathworks.cn/help/matlab/ref/geobubble.html) | 地理气泡图，地理 2D | 大小 / 类别映射、气泡图例、地理范围 |
 
 底图数据源、许可、署名、网络缓存和离线策略必须单独落实；本库支持地理绘图不意味着可直接使用 MathWorks 的底图服务。
 

@@ -3,6 +3,7 @@
 mod color_bar;
 mod composite;
 mod figure;
+mod geo;
 mod hover;
 mod plot3d;
 mod polar;
@@ -23,6 +24,7 @@ pub use composite::{
     StackedPlotResponse,
 };
 pub use figure::{Figure, FigureCell, FigureResponse};
+pub use geo::{GeoPlot, GeoPlotResponse};
 pub use plot3d::{Plot3D, Plot3DResponse};
 pub use polar::{PolarPlot, PolarPlotResponse};
 pub use response::PlotResponse;
