@@ -1,7 +1,10 @@
 use eframe::egui;
 use egui_customplot::PlotDiagnostics;
 
+use crate::i18n::{lang, tr};
+
 pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
+    let l = lang(ui.ctx());
     if d.patches.input_items != 0 {
         ui.monospace(format!(
             "patches/areas: {} | visited: {} | tris / strokes / meshes: {} / {} / {} | invalid / domain-invalid / baselines: {} / {} / {} | payload: {} B",
@@ -174,17 +177,44 @@ pub(super) fn show(ui: &mut egui::Ui, d: &PlotDiagnostics) {
     ui.monospace(format!("index: {} B | query scratch: {} B | query: {:.3} ms | cache hit/miss/rejected: {}/{}/{} | retained: {} B",
         d.unique_index_bytes, d.query_capacity_bytes, d.query_duration.as_secs_f64() * 1000.0,
         d.line_cache_hits, d.line_cache_misses, d.line_cache_rejections, d.line_cache_bytes));
-    ui.small("Per-pass CPU counters only. Excludes tessellation, process/GPU memory and presentation. Line LOD/cache do not optimize raw markers or guarantee FPS.");
+    if d.auto_lod_series != 0
+        || d.marker_lod_series != 0
+        || d.wgpu_series != 0
+        || d.wgpu_fallback_series != 0
+    {
+        ui.monospace(format!(
+            "auto LOD: {} lines, {} marker clouds | wgpu: {} active, {} fallback | wgpu upload / retained: {} B / {:.2} MiB",
+            d.auto_lod_series,
+            d.marker_lod_series,
+            d.wgpu_series,
+            d.wgpu_fallback_series,
+            d.wgpu_uploaded_bytes,
+            d.wgpu_retained_bytes as f64 / 1_048_576.0
+        ));
+    }
+    ui.small(tr(
+        l,
+        "Per-pass CPU counters only. Excludes tessellation, process/GPU memory and presentation. Line LOD/cache do not optimize raw markers or guarantee FPS.",
+        "以上为单遍 CPU 诊断计数（不含 tessellation 与显示呈现）。",
+        "各パスの CPU カウンタのみ（テッセレーション・表示処理を除く）。",
+    ));
     ui.small(format!(
-        "Annotations submitted: {} | invalid: {}",
-        d.output_annotations, d.annotation_rejections
+        "{}: {} | {}: {}",
+        tr(l, "Annotations submitted", "已提交注解", "送信済み注釈"),
+        d.output_annotations,
+        tr(l, "invalid", "无效", "無効"),
+        d.annotation_rejections
     ));
     if d.pattern_truncated || d.aspect_constraint_failed {
         ui.colored_label(
             egui::Color32::YELLOW,
             format!(
-                "Safety diagnostics: dash cap={}, unrepresentable aspect={}",
-                d.pattern_truncated, d.aspect_constraint_failed
+                "{}: {}={}, {}={}",
+                tr(l, "Safety diagnostics", "安全限流诊断", "安全診断"),
+                tr(l, "dash cap", "虚线截断", "破線上限"),
+                d.pattern_truncated,
+                tr(l, "unrepresentable aspect", "等比例越界", "アスペクト不可"),
+                d.aspect_constraint_failed
             ),
         );
     }

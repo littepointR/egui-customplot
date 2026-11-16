@@ -1,0 +1,4 @@
+# Real native window eframe+wgpu 10M swapchain benchmark; adapter=AMD Radeon RX 7800 XT (Vulkan)
+scene,points,batch_points,frames,fps,frame_p50_ms,frame_p95_ms,frame_p99_ms,prepare_p95_ms,query_p95_ms,wgpu_series,wgpu_uploaded_bytes,wgpu_retained_bytes
+wgpu_10m_waveform_live_32k,10000000,32768,2450,699.99,1.3124,1.7540,2.4983,0.0058,0.0000,1,131072,40000000
+cpu_10m_stream_ring_live_32k,10000000,32768,610,174.13,5.5789,6.3164,10.3300,0.3847,3.4089,0,0,0

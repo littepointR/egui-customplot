@@ -219,9 +219,11 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--surfaces3d"),
         Some("--volumes3d"),
         Some("--geo"),
+        Some("--dynamic-10m"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
+        demo.dynamic10m.set_capacity_for_test(4_096);
         if gallery != Some("--stairs") {
             demo.options.count = 1000;
             demo.data = DemoData::new(demo.options.scene, 1000, false);
@@ -299,3 +301,9 @@ mod volumes3d_tests;
 
 #[path = "geo_tests.rs"]
 mod geo_tests;
+
+#[path = "dynamic10m_tests.rs"]
+mod dynamic10m_tests;
+
+#[path = "i18n_tests.rs"]
+mod i18n_tests;

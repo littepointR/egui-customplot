@@ -5,6 +5,8 @@ use egui_customplot::{
     HistogramData, HistogramNormalization, Plot, PlotResponse, PlotState,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct StatisticalDemo {
     pub enabled: bool,
     pub horizontal: bool,
@@ -69,13 +71,28 @@ impl Default for StatisticalDemo {
 
 impl StatisticalDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Bars / errors / explicit-bin histogram");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Bars / errors / explicit-bin histogram",
+                "柱状图 / 误差棒 / 显式分箱直方图",
+                "棒 / 誤差棒 / ヒストグラム",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            if ui.checkbox(&mut self.horizontal, "Horizontal bars").changed() {
+            if ui
+                .checkbox(&mut self.horizontal, tr(l, "Horizontal bars", "水平柱状图", "横向き棒グラフ"))
+                .changed()
+            {
                 self.states[1].reset();
             }
-            ui.add(egui::Slider::new(&mut self.cap_width, 0.0..=24.0).text("Error cap (points)"));
+            ui.add(
+                egui::Slider::new(&mut self.cap_width, 0.0..=24.0)
+                    .text(tr(l, "Error cap (points)", "误差帽宽度 (pt)", "キャップ幅 (pt)")),
+            );
             egui::ComboBox::from_id_salt("histogram-normalization").selected_text(format!("{:?}", self.normalization))
                 .show_ui(ui, |ui| {
                     for norm in [HistogramNormalization::Count, HistogramNormalization::Probability,
@@ -84,8 +101,15 @@ impl StatisticalDemo {
                         ui.selectable_value(&mut self.normalization, norm, format!("{norm:?}"));
                     }
                 });
-            if ui.button("Fit statistical panels").clicked() { self.states.iter_mut().for_each(PlotState::reset); }
-            ui.small("4000 fixed observations; explicit 0.25 bins. Normalization uses in-range finite samples. Whiskers are asymmetric offsets, not inferred confidence intervals.");
+            if ui.button(tr(l, "Fit statistical panels", "适配统计子图", "統計ビューをフィット")).clicked() {
+                self.states.iter_mut().for_each(PlotState::reset);
+            }
+            ui.small(tr(
+                l,
+                "4000 fixed observations; explicit 0.25 bins. Normalization uses in-range finite samples. Whiskers are asymmetric offsets, not inferred confidence intervals.",
+                "4000 个固定样本、0.25 显式分箱；误差帽为非对称显式偏移量。",
+                "4000 固定標本・0.25 ビン・非対称誤差オフセット。",
+            ));
         });
         if self.built_normalization != self.normalization {
             self.histogram_bars = self.histogram.to_bars(self.normalization).unwrap();
@@ -95,6 +119,7 @@ impl StatisticalDemo {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 110.0) * 0.5).max(80.0);
         Figure::new("statistical-panels")
             .cell_height(height)
@@ -103,11 +128,19 @@ impl StatisticalDemo {
                 let plot = Plot::new("plot").allow_scroll_zoom(true).height(height);
                 if index == 0 {
                     cell.show_layers(
-                        plot.title("Explicit-bin histogram")
-                            .x_axis(Axis::new().label("Observation"))
-                            .y_axis(Axis::new().label(format!("{:?}", self.normalization))),
+                        plot.title(tr(
+                            l,
+                            "Explicit-bin histogram",
+                            "显式分箱直方图",
+                            "明示ビンヒストグラム",
+                        ))
+                        .x_axis(Axis::new().label(tr(l, "Observation", "观测值", "観測値")))
+                        .y_axis(Axis::new().label(format!("{:?}", self.normalization))),
                         &mut self.states[index],
-                        &[Bars::new(&self.histogram_bars).name("Histogram").into()],
+                        &[Bars::new(&self.histogram_bars)
+                            .id_salt("hist")
+                            .name(tr(l, "Histogram", "直方图", "ヒストグラム"))
+                            .into()],
                     )
                 } else {
                     let orientation = if self.horizontal {
@@ -116,17 +149,24 @@ impl StatisticalDemo {
                         BarOrientation::Vertical
                     };
                     cell.show_layers(
-                        plot.title("Signed bars + asymmetric errors"),
+                        plot.title(tr(
+                            l,
+                            "Signed bars + asymmetric errors",
+                            "正负柱 + 非对称误差棒",
+                            "符号付き棒＋非対称誤差棒",
+                        )),
                         &mut self.states[index],
                         &[
                             Bars::new(&self.bars)
+                                .id_salt("bars")
                                 .orientation(orientation)
-                                .name("Measurement")
+                                .name(tr(l, "Measurement", "测量值", "測定値"))
                                 .into(),
                             ErrorBars::new(&self.errors[usize::from(self.horizontal)])
+                                .id_salt("err")
                                 .color(egui::Color32::LIGHT_RED)
                                 .cap_width(self.cap_width)
-                                .name("Error offsets")
+                                .name(tr(l, "Error offsets", "误差范围", "誤差オフセット"))
                                 .into(),
                         ],
                     )

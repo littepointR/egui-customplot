@@ -9,6 +9,8 @@ use egui_customplot::{
     SortOrder, StackedPlot, TableAggregation,
 };
 
+use crate::i18n::{lang, tr};
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) enum MultivariateView {
     Overview,
@@ -203,10 +205,23 @@ impl Default for MultivariateDemo {
 
 impl MultivariateDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Multivariate & composite");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Multivariate & composite",
+                "多变量与复合子图",
+                "多変量・複合プロット",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.selectable_value(&mut self.view, MultivariateView::Overview, "Overview");
+            ui.selectable_value(
+                &mut self.view,
+                MultivariateView::Overview,
+                tr(l, "Overview", "总览面板", "概要"),
+            );
             ui.selectable_value(&mut self.view, MultivariateView::Stacked, "stackedplot");
             ui.selectable_value(
                 &mut self.view,
@@ -215,9 +230,20 @@ impl MultivariateDemo {
             );
             ui.selectable_value(&mut self.view, MultivariateView::PlotMatrix, "plotmatrix");
             if self.view == MultivariateView::Overview {
-                ui.checkbox(&mut self.hex_bins, "Hex binscatter");
+                ui.checkbox(
+                    &mut self.hex_bins,
+                    tr(l, "Hex binscatter", "六边形分箱散点", "六角ビニング"),
+                );
             }
-            if ui.button("Fit multivariate").clicked() {
+            if ui
+                .button(tr(
+                    l,
+                    "Fit multivariate",
+                    "适配多变量视图",
+                    "多変量フィット",
+                ))
+                .clicked()
+            {
                 self.overview_states.iter_mut().for_each(PlotState::reset);
                 self.stacked_states.iter_mut().for_each(PlotState::reset);
                 self.scatter_hist_state = ScatterHistogramState::default();
@@ -227,6 +253,7 @@ impl MultivariateDemo {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         match self.view {
             MultivariateView::Overview => self.show_overview(ui),
             MultivariateView::Stacked => {
@@ -235,21 +262,21 @@ impl MultivariateDemo {
                     "mv-stackedplot",
                     vec![
                         (
-                            "Signal 1",
+                            tr(l, "Signal 1", "信号 1", "信号 1"),
                             vec![PlotLayer::from(
                                 Line::new(&self.stacked_signals[0])
                                     .color(Color32::from_rgb(0, 114, 189)),
                             )],
                         ),
                         (
-                            "Envelope",
+                            tr(l, "Envelope", "包络线", "包絡線"),
                             vec![PlotLayer::from(
                                 Line::new(&self.stacked_signals[1])
                                     .color(Color32::from_rgb(217, 83, 25)),
                             )],
                         ),
                         (
-                            "Trend",
+                            tr(l, "Trend", "趋势项", "トレンド"),
                             vec![PlotLayer::from(
                                 Line::new(&self.stacked_signals[2])
                                     .color(Color32::from_rgb(119, 172, 48)),
@@ -258,8 +285,13 @@ impl MultivariateDemo {
                     ],
                 )
                 .row_height(row_h)
-                .x_label("Time (s)")
-                .title("stackedplot (Synchronized X)")
+                .x_label(tr(l, "Time (s)", "时间 (s)", "時間 (s)"))
+                .title(tr(
+                    l,
+                    "stackedplot (Synchronized X)",
+                    "stackedplot（共享 X 轴堆叠图）",
+                    "stackedplot（同期 X 軸）",
+                ))
                 .show(ui, &mut self.stacked_states)
                 .expect("stackedplot")
                 .figure
@@ -269,8 +301,16 @@ impl MultivariateDemo {
                 let cell_h = ((ui.available_height() - 120.0) * 0.48).max(120.0);
                 ScatterHistogram::new("mv-scatterhist", &self.scatter_hist)
                     .cell_height(cell_h)
-                    .labels("X Value", "Y Value")
-                    .title("scatterhistogram + Marginal KDE")
+                    .labels(
+                        tr(l, "X Value", "X 数值", "X 値"),
+                        tr(l, "Y Value", "Y 数值", "Y 値"),
+                    )
+                    .title(tr(
+                        l,
+                        "scatterhistogram + Marginal KDE",
+                        "散点边际直方图 + KDE",
+                        "scatterhistogram＋周辺 KDE",
+                    ))
                     .show(ui, &mut self.scatter_hist_state)
                     .expect("scatterhistogram")
                     .inner

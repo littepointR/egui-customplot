@@ -11,6 +11,8 @@ use egui_customplot::{
     ImplicitOptions, LinePattern, Plot, PlotBounds, PlotResponse, PlotState,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct FunctionsDemo {
     pub enabled: bool,
     pub show_poles: bool,
@@ -104,15 +106,27 @@ impl Default for FunctionsDemo {
 
 impl FunctionsDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Functions, animation & EX-027");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Functions, animation & EX-027",
+                "自适应函数、动态动画与 EX-027 注解",
+                "関数・アニメーション・EX-027 注釈",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.show_poles, "Show split tan(x) poles");
-            if ui.checkbox(&mut self.animate_live, "Live animation / comet").changed() {
+            ui.checkbox(&mut self.show_poles, tr(l, "Show split tan(x) poles", "显示 tan(x) 极点断枝", "tan(x) 特異点分割"));
+            if ui
+                .checkbox(&mut self.animate_live, tr(l, "Live animation / comet", "实时运行 / 彗星追踪动画", "ライブアニメーション"))
+                .changed()
+            {
                 self.anim.set_paused(!self.animate_live);
                 self.comet.set_playing(self.animate_live);
             }
-            if ui.button("Reset animation & views").clicked() {
+            if ui.button(tr(l, "Reset animation & views", "重置动画与视图", "アニメ・表示を初期化")).clicked() {
                 self.comet.reset();
                 self.comet.set_playing(self.animate_live);
                 self.states.iter_mut().for_each(PlotState::reset);
@@ -120,11 +134,17 @@ impl FunctionsDemo {
                     PlotBounds::new([-3.2, -2.5], [3.2, 2.5]).expect("valid bounds"),
                 );
             }
-            ui.small("Adaptive bisection / quadtree sampling on host; multi-pass safe comet & animatedline.");
+            ui.small(tr(
+                l,
+                "Adaptive bisection / quadtree sampling on host; multi-pass safe comet & animatedline.",
+                "自适应二分 / 四叉树采样；多遍安全的动态彗星与动画线。",
+                "適応二分・四分木サンプリング；マルチパス安全な動的ライン。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let now = ui.input(|i| i.time);
         let dt = self
             .last_time
@@ -211,7 +231,12 @@ impl FunctionsDemo {
                             .allow_scroll_zoom(true)
                             .legend(true)
                             .annotations(expl_annots.as_slice())
-                            .title("fplot Explicit + Pole Split + EX-027"),
+                            .title(tr(
+                                l,
+                                "fplot Explicit + Pole Split + EX-027",
+                                "fplot 显式自适应 + 极点分裂 + EX-027",
+                                "fplot 陽関数＋極分割＋EX-027",
+                            )),
                         &mut self.states[0],
                         &layers,
                     )
@@ -222,12 +247,21 @@ impl FunctionsDemo {
                         .data_aspect(1.0)
                         .allow_scroll_zoom(true)
                         .legend(true)
-                        .title("fplot Parametric Lissajous & ezplot Circle"),
+                        .title(tr(
+                            l,
+                            "fplot Parametric Lissajous & ezplot Circle",
+                            "fplot 参数利萨茹 + ezplot 圆",
+                            "fplot 媒介変数リサジュー＆円",
+                        )),
                     &mut self.states[1],
                     &[
-                        FunctionPlot::new(&self.lissajous).name("Lissajous").into(),
+                        FunctionPlot::new(&self.lissajous)
+                            .id_salt("liss")
+                            .name("Lissajous")
+                            .into(),
                         FunctionPlot::new(&self.ez_circle)
-                            .name("ezplot circle")
+                            .id_salt("ezcirc")
+                            .name(tr(l, "ezplot circle", "ezplot 圆", "ezplot 円"))
                             .into(),
                     ],
                 ),
@@ -237,7 +271,12 @@ impl FunctionsDemo {
                         .data_aspect(1.0)
                         .allow_scroll_zoom(true)
                         .legend(true)
-                        .title("fimplicit Cassini Oval Zero-Level Branches"),
+                        .title(tr(
+                            l,
+                            "fimplicit Cassini Oval Zero-Level Branches",
+                            "fimplicit 卡西尼卵形隐式零等值支",
+                            "fimplicit カッシーニ卵形陰関数",
+                        )),
                     &mut self.states[2],
                     &[ImplicitCurve::new(&self.cassini).name("Cassini F=0").into()],
                 ),
@@ -247,7 +286,12 @@ impl FunctionsDemo {
                         .allow_scroll_zoom(true)
                         .legend(true)
                         .annotations(flow_annots.as_slice())
-                        .title("animatedline + comet + EX-027 Annotations"),
+                        .title(tr(
+                            l,
+                            "animatedline + comet + EX-027 Annotations",
+                            "动画折线 + 彗星轨迹 + EX-027 注解",
+                            "animatedline＋comet＋EX-027 注釈",
+                        )),
                     &mut self.states[3],
                     &[
                         AnimatedLine::new(&self.anim).name("animatedline").into(),

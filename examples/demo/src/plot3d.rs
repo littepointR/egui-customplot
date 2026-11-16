@@ -11,6 +11,8 @@ use egui_customplot::{
     Text3D,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct Plot3DDemo {
     pub enabled: bool,
     pub perspective: bool,
@@ -174,23 +176,39 @@ impl Default for Plot3DDemo {
 
 impl Plot3DDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "3D core, discrete & planes");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "3D core, discrete & planes",
+                "三维基础、离散柱杆与平面 (--plot3d)",
+                "3D 基本・離散・平面 (--plot3d)",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.perspective, "Perspective projection");
-            ui.checkbox(&mut self.zbuffer, "Software Z-buffer (cell 5)");
-            ui.checkbox(&mut self.bar3h, "Horizontal bars (bar3h)");
-            ui.checkbox(&mut self.animate_comet, "Animate comet3");
-            if ui.button("Reset 3D cameras").clicked() {
+            ui.checkbox(&mut self.perspective, tr(l, "Perspective projection", "透视投影", "透視投影"));
+            ui.checkbox(
+                &mut self.zbuffer,
+                tr(l, "Software Z-buffer (cell 5)", "软件深度 Z-Buffer（子图 5）", "ソフト Z バッファ（セル 5）"),
+            );
+            ui.checkbox(&mut self.bar3h, tr(l, "Horizontal bars (bar3h)", "水平三维柱 (bar3h)", "横向き棒 (bar3h)"));
+            ui.checkbox(&mut self.animate_comet, tr(l, "Animate comet3", "三维彗星轨迹动画 (comet3)", "comet3 アニメーション"));
+            if ui.button(tr(l, "Reset 3D cameras", "重置 3D 相机视角", "3D カメラ初期化")).clicked() {
                 self.states.iter_mut().for_each(Plot3DState::reset);
             }
-            ui.small(
+            ui.small(tr(
+                l,
                 "plot3, fplot3, ezplot3, comet3, scatter3, bubblechart3, swarmchart3, bar3/bar3h, stem3, quiver3, fill3, constantplane, pie3.",
-            );
+                "覆盖三维曲线、散点气泡、蜂群杆、柱、矢量、交叉面片与 3D 饼图。",
+                "3D 線・散布・バブル・棒・ベクトル・平面・3D 円グラフ。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         if self.animate_comet {
             self.comet_pb.set_playing(true);
             let n = self.helix.len();
@@ -213,7 +231,7 @@ impl Plot3DDemo {
             .color_map(ColorMap::Viridis);
         let b_legend = BubbleLegend::new(self.bubble.size_extent(), self.bubble.radius_range())
             .steps(3)
-            .title("Bubble");
+            .title(tr(l, "Bubble", "气泡尺寸", "バブル"));
 
         let bars = if self.bar3h {
             &self.bars_horiz

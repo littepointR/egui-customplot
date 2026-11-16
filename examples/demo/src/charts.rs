@@ -6,7 +6,11 @@ use egui_customplot::{
 };
 
 use crate::{
-    appearance::Presentation, controls::Options, data::DemoData, performance::Performance,
+    appearance::Presentation,
+    controls::Options,
+    data::DemoData,
+    i18n::{Language, lang, tr},
+    performance::Performance,
 };
 
 #[derive(Default)]
@@ -20,16 +24,55 @@ pub(super) struct MultiViewOptions {
 
 impl MultiViewOptions {
     pub fn show(&mut self, ui: &mut egui::Ui, second_view: &mut bool) {
-        ui.checkbox(second_view, "Second Figure cell");
+        let l = lang(ui.ctx());
+        ui.checkbox(
+            second_view,
+            tr(
+                l,
+                "Second Figure cell",
+                "第二幅 Figure 子图",
+                "2番目の Figure セル",
+            ),
+        );
         ui.add_enabled_ui(*second_view, |ui| {
-            ui.checkbox(&mut self.side_by_side, "Side-by-side cells");
-            ui.checkbox(&mut self.link_x, "Link X (incompatible with equal units)");
+            ui.checkbox(
+                &mut self.side_by_side,
+                tr(l, "Side-by-side cells", "并排子图", "並べて表示"),
+            );
+            ui.checkbox(
+                &mut self.link_x,
+                tr(
+                    l,
+                    "Link X (incompatible with equal units)",
+                    "联动 X 轴（与等比例互斥）",
+                    "X 軸連動（等倍単位とは非互換）",
+                ),
+            );
         });
-        ui.checkbox(&mut self.right_y, "Secondary signal on right Y");
+        ui.checkbox(
+            &mut self.right_y,
+            tr(
+                l,
+                "Secondary signal on right Y",
+                "右 Y 轴次级信号",
+                "右 Y 軸に第2信号",
+            ),
+        );
         ui.add_enabled_ui(self.right_y, |ui| {
-            ui.checkbox(&mut self.right_log, "Right log Y");
-            ui.checkbox(&mut self.right_reversed, "Right reversed Y");
-            ui.small("Static scene: independent pressure signal; Live mode omits it.");
+            ui.checkbox(
+                &mut self.right_log,
+                tr(l, "Right log Y", "右对数 Y", "右対数 Y"),
+            );
+            ui.checkbox(
+                &mut self.right_reversed,
+                tr(l, "Right reversed Y", "右反向 Y", "右反転 Y"),
+            );
+            ui.small(tr(
+                l,
+                "Static scene: independent pressure signal; Live mode omits it.",
+                "静态模式显示独立压力信号；实时模式省略。",
+                "静的シーンでは独立圧力信号を表示（ライブ時は省略）。",
+            ));
         });
     }
 }
@@ -65,7 +108,8 @@ impl Charts {
         data: &DemoData,
         performance: &mut Performance,
     ) -> Vec<PlotResponse> {
-        let series = series(options, data, &performance.live.data);
+        let l = lang(ui.ctx());
+        let series = series(options, data, &performance.live.data, l);
         let count: usize = if options.second_view { 2 } else { 1 };
         let columns = if options.multi.side_by_side { 2 } else { 1 };
         let rows = count.div_ceil(columns);
@@ -81,14 +125,15 @@ impl Charts {
             .cell_height(height)
             .show(ui, count, |cell| {
                 let mut plot = options.appearance.configure(
-                    options.plot("plot", height),
+                    options.plot("plot", height, l),
                     presentation,
                     options.scene,
+                    l,
                 );
                 if options.multi.right_y {
                     plot = plot.right_y_axis(
                         Axis::new()
-                            .label("Pressure")
+                            .label(tr(l, "Pressure", "压力", "圧力"))
                             .scale(if options.multi.right_log {
                                 AxisScale::Log10
                             } else {
@@ -125,6 +170,7 @@ fn series<'a>(
     options: &Options,
     data: &'a DemoData,
     live: &'a egui_customplot::PlotData,
+    l: Language,
 ) -> Vec<Series<'a>> {
     let settings = &options.performance;
     let signal = if settings.streaming {
@@ -134,7 +180,7 @@ fn series<'a>(
     };
     let mut line = Line::new(signal)
         .id_salt("signal")
-        .name("Signal")
+        .name(tr(l, "Signal", "信号", "信号"))
         .sampling(settings.sampling)
         .interpolation(options.interpolation)
         .width(options.width);
@@ -158,7 +204,7 @@ fn series<'a>(
         series.push(
             Line::new(&data.reference)
                 .id_salt("reference")
-                .name("Reference")
+                .name(tr(l, "Reference", "参考线", "基準線"))
                 .sampling(settings.sampling)
                 .interpolation(options.interpolation)
                 .into(),
@@ -167,7 +213,7 @@ fn series<'a>(
             series.push(
                 Scatter::new(&data.observations)
                     .id_salt("observations")
-                    .name("Observations")
+                    .name(tr(l, "Observations", "观测点", "観測値"))
                     .shape(options.shape)
                     .colors(&data.colors)
                     .expect("matching colors")
@@ -180,7 +226,12 @@ fn series<'a>(
             series.push(
                 Line::new(&data.secondary)
                     .id_salt("pressure")
-                    .name("Pressure (right Y)")
+                    .name(tr(
+                        l,
+                        "Pressure (right Y)",
+                        "压力（右 Y 轴）",
+                        "圧力（右 Y 軸）",
+                    ))
                     .y_axis(YAxis::Right)
                     .sampling(settings.sampling)
                     .interpolation(options.interpolation)

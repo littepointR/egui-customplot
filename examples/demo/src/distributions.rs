@@ -9,6 +9,8 @@ use egui_customplot::{
     ViolinOptions, ViolinPlot, ViolinScale, WordCloud, WordCloudData,
 };
 
+use crate::i18n::{lang, tr};
+
 const PALETTE: [Color32; 4] = [
     Color32::from_rgb(0, 114, 189),
     Color32::from_rgb(217, 83, 25),
@@ -153,21 +155,52 @@ impl Default for DistributionsDemo {
 
 impl DistributionsDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Distributions & clouds");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Distributions & clouds",
+                "统计分布与云图 (Box/Violin/Pie/Cloud)",
+                "分布・円・クラウド",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.stacked_mode, "Stacked bars");
-            ui.checkbox(&mut self.half_violin, "Half-violin");
-            ui.checkbox(&mut self.donut_mode, "Donut ring");
-            if ui.button("Fit distribution panels").clicked() {
+            ui.checkbox(
+                &mut self.stacked_mode,
+                tr(l, "Stacked bars", "堆叠柱状图", "積み上げ棒グラフ"),
+            );
+            ui.checkbox(
+                &mut self.half_violin,
+                tr(l, "Half-violin", "半小提琴图", "ハーフバイオリン"),
+            );
+            ui.checkbox(
+                &mut self.donut_mode,
+                tr(l, "Donut ring", "环形饼图", "ドーナツグラフ"),
+            );
+            if ui
+                .button(tr(
+                    l,
+                    "Fit distribution panels",
+                    "适配分布图面板",
+                    "分布ビューをフィット",
+                ))
+                .clicked()
+            {
                 self.states.iter_mut().for_each(PlotState::reset);
             }
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(80.0);
-        let group_names = ["Group A", "Group B", "Group C"];
+        let group_names = [
+            tr(l, "Group A", "A 组", "グループ A"),
+            tr(l, "Group B", "B 组", "グループ B"),
+            tr(l, "Group C", "C 组", "グループ C"),
+        ];
 
         Figure::new("distribution-panels")
             .columns(4)

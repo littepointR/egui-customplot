@@ -12,6 +12,8 @@ use egui_customplot::{
     VolumeSliceData,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct Volumes3DDemo {
     pub enabled: bool,
     pub zbuffer: bool,
@@ -194,14 +196,23 @@ fn build_cube_tetramesh() -> TetraMesh3DData {
 
 impl Volumes3DDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "3D volumes, isosurfaces & flow");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "3D volumes, isosurfaces & flow",
+                "三维体切片、等值面与体流场 (--volumes3d)",
+                "3D ボリューム・等値面・流れ",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.zbuffer, "Software Z-buffer (cell 2 & 5)");
-            ui.checkbox(&mut self.arbitrary_slice, "Tilted arbitrary slice (cell 0)");
-            ui.checkbox(&mut self.boundary_only, "Boundary-only tetramesh (cell 3)");
-            ui.checkbox(&mut self.animate_particles, "Animate streamparticles (cell 4)");
-            if ui.button("Reset volume views").clicked() {
+            ui.checkbox(&mut self.zbuffer, tr(l, "Software Z-buffer (cell 2 & 5)", "软件 Z-Buffer（子图 2/5）", "Z バッファ（2・5）"));
+            ui.checkbox(&mut self.arbitrary_slice, tr(l, "Tilted arbitrary slice (cell 0)", "倾斜任意体切片（子图 0）", "任意傾斜スライス（セル 0）"));
+            ui.checkbox(&mut self.boundary_only, tr(l, "Boundary-only tetramesh (cell 3)", "四面体仅绘外表面（子图 3）", "外表面のみ表示（セル 3）"));
+            ui.checkbox(&mut self.animate_particles, tr(l, "Animate streamparticles (cell 4)", "流场粒子动画（子图 4）", "流れ粒子アニメ（セル 4）"));
+            if ui.button(tr(l, "Reset volume views", "重置体视图", "ボリューム初期化")).clicked() {
                 self.states.iter_mut().for_each(Plot3DState::reset);
             }
             ui.small(

@@ -8,6 +8,8 @@ use egui_customplot::{
     PolygonData, RectData, Rectangles,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct PolygonDemo {
     pub enabled: bool,
     pub pos_neg_split: bool,
@@ -131,20 +133,41 @@ impl PolygonDemo {
     }
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "2D areas, polygons & patches");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "2D areas, polygons & patches",
+                "二维面积、多边形与面片",
+                "2D 領域・多角形・パッチ",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.pos_neg_split, "PosNegSplit area stacking");
-            ui.checkbox(&mut self.gouraud_patch, "Gouraud vertex-colored patch");
-            ui.checkbox(&mut self.show_borders, "Show shape borders");
-            if ui.button("Fit polygon panels").clicked() {
+            ui.checkbox(
+                &mut self.pos_neg_split,
+                tr(l, "PosNegSplit area stacking", "正负分离面积堆叠", "正負分離エリア積上げ"),
+            );
+            ui.checkbox(
+                &mut self.gouraud_patch,
+                tr(l, "Gouraud vertex-colored patch", "Gouraud 顶点插值着色面片", "グーロー補間パッチ"),
+            );
+            ui.checkbox(&mut self.show_borders, tr(l, "Show shape borders", "显示轮廓边框", "境界線を表示"));
+            if ui.button(tr(l, "Fit polygon panels", "适配多边形面板", "多角形ビューフィット")).clicked() {
                 self.states.iter_mut().for_each(PlotState::reset);
             }
-            ui.small("Ear-clipped polygons/holes & Gouraud patches; SVG uses raster fallback for Gouraud meshes.");
+            ui.small(tr(
+                l,
+                "Ear-clipped polygons/holes & Gouraud patches; SVG uses raster fallback for Gouraud meshes.",
+                "支持带孔多边形耳切三角化与 Gouraud 面片（SVG 中平滑渐变网走栅格回退）。",
+                "穴あき多角形・グーローパッチ対応（SVG 出力はラスターフォールバック）。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(80.0);
         let border = if self.show_borders {
             Stroke::new(1.2, Color32::WHITE)
@@ -156,13 +179,15 @@ impl PolygonDemo {
             .color_map(ColorMap::Viridis);
         let patch_layer = if self.gouraud_patch {
             Patch::new(&self.patch)
-                .name("Gouraud patch")
+                .id_salt("poly-patch")
+                .name(tr(l, "Gouraud patch", "Gouraud 面片", "グーローパッチ"))
                 .vertex_scalars(&self.patch_scalars, scale)
                 .expect("matching vertex count")
                 .border(border)
         } else {
             Patch::new(&self.patch)
-                .name("Flat patch")
+                .id_salt("poly-patch")
+                .name(tr(l, "Flat patch", "纯色面片", "フラットパッチ"))
                 .face_colors(&self.patch_face_colors)
                 .expect("matching face count")
                 .border(border)
@@ -187,46 +212,78 @@ impl PolygonDemo {
                     .legend(true);
                 if cell.index() == 0 {
                     cell.show_layers(
-                        plot.title("Stacked Area Bands + Data-Space Line Primitive"),
+                        plot.title(tr(
+                            l,
+                            "Stacked Area Bands + Data-Space Line Primitive",
+                            "堆叠面积带 + 原始折线图元",
+                            "積上げエリア＋基本ライン",
+                        )),
                         &mut self.states[0],
                         &[
                             Area::from_band(&bands[0])
-                                .name("Band A")
+                                .id_salt("band-a")
+                                .name(tr(l, "Band A", "面积带 A", "帯 A"))
                                 .fill_color(band_fills[0])
                                 .into(),
                             Area::from_band(&bands[1])
-                                .name("Band B")
+                                .id_salt("band-b")
+                                .name(tr(l, "Band B", "面积带 B", "帯 B"))
                                 .fill_color(band_fills[1])
                                 .into(),
                             Area::from_band(&bands[2])
-                                .name("Band C")
+                                .id_salt("band-c")
+                                .name(tr(l, "Band C", "面积带 C", "帯 C"))
                                 .fill_color(band_fills[2])
                                 .into(),
                             Line::primitive(&self.reference)
-                                .name("Zero baseline (primitive)")
+                                .id_salt("band-ref")
+                                .name(tr(
+                                    l,
+                                    "Zero baseline (primitive)",
+                                    "零基线 (primitive)",
+                                    "ゼロ基準線",
+                                ))
                                 .color(Color32::WHITE)
                                 .into(),
                         ],
                     )
                 } else {
                     cell.show_layers(
-                        plot.title("Concave Fill, Holed PolyShape, Patch & Rectangles")
-                            .data_aspect(1.0),
+                        plot.title(tr(
+                            l,
+                            "Concave Fill, Holed PolyShape, Patch & Rectangles",
+                            "凹多边形、带孔 PolyShape、Patch 与圆角矩形",
+                            "凹多角形・穴あき PolyShape・Patch・角丸矩形",
+                        ))
+                        .data_aspect(1.0),
                         &mut self.states[1],
                         &[
                             Fill::new(&self.concave)
-                                .name("Concave fill")
+                                .id_salt("poly-concave")
+                                .name(tr(l, "Concave fill", "凹多边形填充", "凹多角形"))
                                 .color(Color32::from_rgba_unmultiplied(75, 155, 235, 190))
                                 .border(border)
                                 .into(),
                             PolyShape::new(&self.holed)
-                                .name("PolyShape w/ hole")
+                                .id_salt("poly-holed")
+                                .name(tr(
+                                    l,
+                                    "PolyShape w/ hole",
+                                    "带孔 PolyShape",
+                                    "穴あき PolyShape",
+                                ))
                                 .color(Color32::from_rgba_unmultiplied(235, 165, 60, 190))
                                 .border(border)
                                 .into(),
                             patch_layer.into(),
                             Rectangles::new(&self.rects)
-                                .name("Rounded & ellipse")
+                                .id_salt("poly-rects")
+                                .name(tr(
+                                    l,
+                                    "Rounded & ellipse",
+                                    "圆角矩形与椭圆",
+                                    "角丸矩形・楕円",
+                                ))
                                 .color(Color32::from_rgba_unmultiplied(110, 200, 140, 180))
                                 .border(border)
                                 .into(),

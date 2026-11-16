@@ -119,6 +119,6 @@
 
 1. **许可与发布**：全仓库已采用与 egui 相同的双重许可 `MIT OR Apache-2.0`（`LICENSE-MIT` / `LICENSE-APACHE`），workspace 包目前保持 `publish = false`，暂不发布 crates.io。
 2. **跨平台实机**：Linux / macOS / WebAssembly 显示与原生输入尚未在对应实机环境验证。
-3. **可选 `wgpu` 后端与真实渲染性能**：按阶段 5 决策保留 Painter；尚无 `egui-wgpu` 硬件光栅化实现、真实 GPU 时间或整应用长时间工作集验证。
+3. **可选 `wgpu` 后端与真实渲染性能增量记录（2026-11-16）**：在保留 Stage 5/Stage 11 历史基线的前提下，已补充实现三层高性能架构（`PlotData::new` 自动单调索引 + `LineSampling::Auto` / `MarkerSampling::Auto` + Y 分支定界拾取 + `IndexedStream` + `UniformWaveform` + 可选 `feature = "wgpu"` WGSL 计算/实例化通道及 CPU 回退）。Windows 实机归档证据包括：[CPU + tessellation 千万点基准](benchmarks/2026-11-16-dynamic-10m-cpu.csv)（4 场景 `total_p95` 为 `1.3365 ms`～`6.6787 ms`，均 `< 8.33 ms`）、[原生窗口 `eframe + wgpu` 基准](benchmarks/2026-11-16-dynamic-10m-window-wgpu.csv)（`AMD Radeon RX 7800 XT (Vulkan)`，`wgpu_10m_waveform_live_32k` = **699.99 FPS / p95 1.7540 ms**，`cpu_10m_stream_ring_live_32k` = **174.13 FPS / p95 6.3164 ms**）及 19 预设（含 `--dynamic-10m`）Windows 原生烟雾 [gallery smoke](benchmarks/2026-11-16-dynamic-10m-gallery-smoke.txt)（SHA256 `D8C0BFF83B4F521275EE2DFC820274FF860348763BEFCC79828079AC163E11A0`）。3D 曲面/体渲染与大型分布图的 GPU 管线及非 Windows GPU 实机仍保持开放。
 4. **独立印刷排版导出**：`PlotSnapshot` 为混合矢量 + 宿主字形栅格（`Stage 7`）；尚无印刷尺寸重排或纯矢量字体轮廓转换。
 5. **专业工具箱扩展**：`TB-01`～`TB-21` 仍保持与本体分账，需另行冻结领域产品范围后立项实施。

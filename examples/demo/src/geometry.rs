@@ -8,6 +8,8 @@ use egui_customplot::{
     TriPlot, VectorField2D, Voronoi, VoronoiData,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct GeometryDemo {
     pub enabled: bool,
     pub show_voronoi: bool,
@@ -112,11 +114,35 @@ impl Default for GeometryDemo {
 
 impl GeometryDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Meshes, flow & spy");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Meshes, flow & spy",
+                "三角网、流场与稀疏矩阵 (Spy)",
+                "メッシュ・流線・スパイ",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.show_voronoi, "Overlay Voronoi bisectors");
-            ui.add(egui::Slider::new(&mut self.alpha_radius, 0.45..=4.0).text("alpha radius"));
+            ui.checkbox(
+                &mut self.show_voronoi,
+                tr(
+                    l,
+                    "Overlay Voronoi bisectors",
+                    "叠加 Voronoi 垂直平分线",
+                    "ボロノイ図を重ね表示",
+                ),
+            );
+            ui.add(
+                egui::Slider::new(&mut self.alpha_radius, 0.45..=4.0).text(tr(
+                    l,
+                    "alpha radius",
+                    "alpha 半径",
+                    "alpha 半径",
+                )),
+            );
             if (self.alpha_radius - self.built_alpha).abs() > 1e-4
                 && let Ok(rebuilt) =
                     AlphaShapeData::from_sites(&self.alpha_ring, f64::from(self.alpha_radius))
@@ -124,16 +150,28 @@ impl GeometryDemo {
                 self.alpha_shape = rebuilt;
                 self.built_alpha = self.alpha_radius;
             }
-            if ui.button("Fit geometry panels").clicked() {
+            if ui
+                .button(tr(
+                    l,
+                    "Fit geometry panels",
+                    "适配几何面板",
+                    "幾何パネルをフィット",
+                ))
+                .clicked()
+            {
                 self.states.iter_mut().for_each(PlotState::reset);
             }
-            ui.small(
+            ui.small(tr(
+                l,
                 "Delaunay/Voronoi, alphaShape holes, RK4 streamslice, feather baseline & CSR spy.",
-            );
+                "Delaunay/Voronoi、带孔 alphaShape、RK4 流线切片、羽状矢量与 CSR 稀疏模式。",
+                "ドロネー/ボロノイ・穴あき alphaShape・RK4 流線・フェザー・CSR スパイ。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(80.0);
         let tri_scale = ColorScale::new([-2.0, 2.0])
             .expect("valid scale")
@@ -167,7 +205,12 @@ impl GeometryDemo {
                             .data_aspect(1.0)
                             .allow_scroll_zoom(true)
                             .legend(true)
-                            .title("Delaunay trimesh + Voronoi"),
+                            .title(tr(
+                                l,
+                                "Delaunay trimesh + Voronoi",
+                                "Delaunay 三角网 + Voronoi",
+                                "ドロネー網＋ボロノイ",
+                            )),
                         &mut self.states[0],
                         &layers,
                     )
@@ -178,7 +221,12 @@ impl GeometryDemo {
                         .data_aspect(1.0)
                         .allow_scroll_zoom(true)
                         .legend(true)
-                        .title("alphaShape with Hole"),
+                        .title(tr(
+                            l,
+                            "alphaShape with Hole",
+                            "带孔 alphaShape 轮廓",
+                            "穴あき alphaShape",
+                        )),
                     &mut self.states[1],
                     &[AlphaShape::new(&self.alpha_shape)
                         .name("alphaShape")
@@ -192,7 +240,12 @@ impl GeometryDemo {
                         .data_aspect(1.0)
                         .allow_scroll_zoom(true)
                         .legend(true)
-                        .title("streamslice RK4 + Arrows"),
+                        .title(tr(
+                            l,
+                            "streamslice RK4 + Arrows",
+                            "RK4 流线与流向箭头",
+                            "streamslice RK4＋矢印",
+                        )),
                     &mut self.states[2],
                     &[Streamlines::new(&self.streamslice)
                         .name("streamslice")
@@ -203,7 +256,12 @@ impl GeometryDemo {
                         .height(height)
                         .allow_scroll_zoom(true)
                         .legend(true)
-                        .title("feather Vectors"),
+                        .title(tr(
+                            l,
+                            "feather Vectors",
+                            "feather 羽状矢量",
+                            "feather ベクトル",
+                        )),
                     &mut self.states[3],
                     &[Feather::new(&self.feather).name("feather").into()],
                 ),
@@ -213,7 +271,12 @@ impl GeometryDemo {
                         .height(height)
                         .allow_scroll_zoom(true)
                         .legend(true)
-                        .title("spy CSR Pattern (64x64)"),
+                        .title(tr(
+                            l,
+                            "spy CSR Pattern (64x64)",
+                            "spy 稀疏矩阵非零分布 (64x64)",
+                            "spy CSR パターン (64x64)",
+                        )),
                     &mut self.states[4],
                     &[Spy::new(&self.spy).name("spy(A)").into()],
                 ),

@@ -10,6 +10,8 @@ use egui_customplot::{
     ThetaDirection, ThetaZeroLocation,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct PolarDemo {
     pub enabled: bool,
     pub clockwise_top: bool,
@@ -113,19 +115,45 @@ impl Default for PolarDemo {
 
 impl PolarDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Polar plots & histograms");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Polar plots & histograms",
+                "极坐标绘图与直方图",
+                "極座標プロット",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.clockwise_top, "Zero=Top, Clockwise");
-            ui.checkbox(&mut self.neg_reflect, "Reflect negative r through origin");
-            if ui.button("Reset polar views").clicked() {
+            ui.checkbox(
+                &mut self.clockwise_top,
+                tr(l, "Zero=Top, Clockwise", "零点朝上 / 顺时针", "上基準・時計回り"),
+            );
+            ui.checkbox(
+                &mut self.neg_reflect,
+                tr(
+                    l,
+                    "Reflect negative r through origin",
+                    "负半径过原点对称映射",
+                    "負半径を原点対称反転",
+                ),
+            );
+            if ui.button(tr(l, "Reset polar views", "重置极坐标视图", "極座標ビュー初期化")).clicked() {
                 self.states.iter_mut().for_each(PolarState::reset);
             }
-            ui.small("polarplot, fpolarplot, ezpolar, polarscatter, polarbubblechart, polarhistogram, rose, compass & regions.");
+            ui.small(tr(
+                l,
+                "polarplot, fpolarplot, ezpolar, polarscatter, polarbubblechart, polarhistogram, rose, compass & regions.",
+                "包含 polarplot/fpolarplot/ezpolar、极坐标散点气泡直方图、风玫瑰与罗盘图。",
+                "polarplot・散布図・バブル・極座標ヒストグラム・rose・compass 対応。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(110.0);
         let zero = if self.clockwise_top {
             ThetaZeroLocation::Top
@@ -147,14 +175,15 @@ impl PolarDemo {
             .color_map(ColorMap::Viridis);
         let b_legend = BubbleLegend::new(self.bubble.size_extent(), self.bubble.radius_range())
             .steps(3)
-            .title("Magnitude");
+            .title(tr(l, "Magnitude", "幅值", "強度"));
         let reg_theta =
             PolarRegionAnnotation::theta_region(330.0_f64.to_radians(), 30.0_f64.to_radians())
-                .label("Wrap Sector");
-        let reg_rad = PolarRegionAnnotation::radius_region(0.4, 0.95).label("Band");
+                .label(tr(l, "Wrap Sector", "跨零扇区", "境界セクタ"));
+        let reg_rad =
+            PolarRegionAnnotation::radius_region(0.4, 0.95).label(tr(l, "Band", "环带", "帯域"));
         let reg_pol = PolarRegionAnnotation::polar_region([1.2, 2.3], [0.6, 1.5])
             .border(Stroke::new(1.5, Color32::from_rgb(217, 95, 2)))
-            .label("Polar ROI");
+            .label(tr(l, "Polar ROI", "极区 ROI", "極 ROI"));
 
         let [s0, s1, s2, s3, s4, s5] = &mut self.states;
         Figure::new("polar-gallery")

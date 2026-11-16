@@ -8,6 +8,8 @@ use egui_customplot::{
     Ribbon3D, Ribbon3DData, Surface3D, Surface3DData, SurfaceShading, TriMesh3DData, TriSurf3D,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct Surfaces3DDemo {
     pub enabled: bool,
     pub shading: SurfaceShading,
@@ -120,20 +122,33 @@ impl Default for Surfaces3DDemo {
 
 impl Surfaces3DDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "3D surfaces, meshes & implicit");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "3D surfaces, meshes & implicit",
+                "三维曲面、网格与隐式面 (--surfaces3d)",
+                "3D 曲面・メッシュ・陰関数",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
             ui.horizontal(|ui| {
-                ui.selectable_value(&mut self.shading, SurfaceShading::Faceted, "Faceted");
-                ui.selectable_value(&mut self.shading, SurfaceShading::Flat, "Flat");
-                ui.selectable_value(&mut self.shading, SurfaceShading::Interp, "Interp");
+                ui.selectable_value(
+                    &mut self.shading,
+                    SurfaceShading::Faceted,
+                    tr(l, "Faceted", "网格面", "ファセット"),
+                );
+                ui.selectable_value(&mut self.shading, SurfaceShading::Flat, tr(l, "Flat", "平面色", "フラット"));
+                ui.selectable_value(&mut self.shading, SurfaceShading::Interp, tr(l, "Interp", "平滑插值", "補間"));
             });
-            ui.checkbox(&mut self.zbuffer, "Software Z-buffer (cell 4 & 5)");
-            ui.checkbox(&mut self.hidden_line, "Hidden-line mesh occlusion");
-            ui.checkbox(&mut self.floor_contours, "Floor contours (surfc / meshc)");
-            ui.checkbox(&mut self.show_normals, "Surface normals (surfnorm)");
-            ui.checkbox(&mut self.colormap_lighting, "Colormap lighting (surfl)");
-            if ui.button("Reset surface views").clicked() {
+            ui.checkbox(&mut self.zbuffer, tr(l, "Software Z-buffer (cell 4 & 5)", "软件 Z-Buffer（子图 4/5）", "Z バッファ（4・5）"));
+            ui.checkbox(&mut self.hidden_line, tr(l, "Hidden-line mesh occlusion", "线框隐藏线遮挡剔除", "陰線消去"));
+            ui.checkbox(&mut self.floor_contours, tr(l, "Floor contours (surfc / meshc)", "底面等高投影 (surfc/meshc)", "底面等高線 (surfc/meshc)"));
+            ui.checkbox(&mut self.show_normals, tr(l, "Surface normals (surfnorm)", "曲面法向矢量 (surfnorm)", "法線表示 (surfnorm)"));
+            ui.checkbox(&mut self.colormap_lighting, tr(l, "Colormap lighting (surfl)", "光照明暗着色 (surfl)", "照明効果 (surfl)"));
+            if ui.button(tr(l, "Reset surface views", "重置曲面视角", "曲面ビュー初期化")).clicked() {
                 self.states.iter_mut().for_each(Plot3DState::reset);
             }
             ui.small(

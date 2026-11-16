@@ -10,6 +10,7 @@ use crate::{
 };
 
 pub(super) struct Demo {
+    pub(super) lang: crate::i18n::Language,
     data: DemoData,
     options: Options,
     presentation: Presentation,
@@ -31,6 +32,7 @@ pub(super) struct Demo {
     surfaces3d: crate::surfaces3d::Surfaces3DDemo,
     volumes3d: crate::volumes3d::Volumes3DDemo,
     geo: crate::geo::GeoDemo,
+    dynamic10m: crate::dynamic10m::Dynamic10mDemo,
     export: crate::export::ExportPanel,
 }
 
@@ -38,6 +40,7 @@ impl Default for Demo {
     fn default() -> Self {
         let options = Options::default();
         Self {
+            lang: crate::i18n::Language::default(),
             data: DemoData::new(options.scene, options.count, options.gaps),
             options,
             presentation: Presentation::default(),
@@ -59,6 +62,7 @@ impl Default for Demo {
             surfaces3d: crate::surfaces3d::Surfaces3DDemo::default(),
             volumes3d: crate::volumes3d::Volumes3DDemo::default(),
             geo: crate::geo::GeoDemo::default(),
+            dynamic10m: crate::dynamic10m::Dynamic10mDemo::default(),
             export: crate::export::ExportPanel::default(),
         }
     }
@@ -83,6 +87,7 @@ impl Demo {
         demo.surfaces3d.enabled = gallery == Some("--surfaces3d");
         demo.volumes3d.enabled = gallery == Some("--volumes3d");
         demo.geo.enabled = gallery == Some("--geo");
+        demo.dynamic10m.enabled = gallery == Some("--dynamic-10m");
         if gallery == Some("--stairs") {
             demo.options.interpolation = egui_customplot::LineInterpolation::StepAfter;
             demo.options.count = 8;
@@ -93,12 +98,28 @@ impl Demo {
         demo
     }
 
+    pub fn set_language(&mut self, lang: crate::i18n::Language) {
+        self.lang = lang;
+    }
+
+    pub fn set_wgpu_info(&mut self, registered: bool, adapter_info: String) {
+        self.dynamic10m.set_wgpu_info(registered, adapter_info);
+    }
+
+    pub fn configure_window_bench(&mut self, csv_path: std::path::PathBuf) {
+        self.dynamic10m.configure_window_bench(csv_path);
+    }
+
     fn show(&mut self, ui: &mut egui::Ui) {
+        crate::i18n::sync_context(ui.ctx(), self.lang);
         self.export.flush_previous(ui.ctx());
         egui::Panel::left("controls")
-            .default_size(250.0)
+            .default_size(260.0)
             .show(ui, |ui| {
                 egui::ScrollArea::vertical().show(ui, |ui| {
+                    crate::i18n::language_selector(ui, &mut self.lang);
+                    crate::i18n::sync_context(ui.ctx(), self.lang);
+                    ui.separator();
                     let changes = controls::show(ui, &mut self.options);
                     self.scalar.controls(ui);
                     self.statistical.controls(ui);
@@ -116,6 +137,7 @@ impl Demo {
                     self.surfaces3d.controls(ui);
                     self.volumes3d.controls(ui);
                     self.geo.controls(ui);
+                    self.dynamic10m.controls(ui);
                     self.export.controls(ui);
                     if changes.rebuild {
                         self.data = DemoData::new(
@@ -151,7 +173,13 @@ impl Demo {
             );
         }
         egui::CentralPanel::default().show(ui, |ui| {
-            ui.heading("egui-customplot / Stage 11: Full 133-Item Readiness");
+            let l = crate::i18n::lang(ui.ctx());
+            ui.heading(crate::i18n::tr(
+                l,
+                "egui-customplot / Stage 11: Full 133-Item Readiness",
+                "egui-customplot / 阶段 11：133 项全量绘图就绪演示",
+                "egui-customplot / ステージ 11：全 133 項目プロット実演",
+            ));
             let responses = if self.export.request.is_some() {
                 let rect = ui.available_rect_before_wrap();
                 let mut responses = Vec::new();
@@ -217,6 +245,9 @@ impl Demo {
         }
         if self.geo.enabled {
             return self.geo.show(ui);
+        }
+        if self.dynamic10m.enabled {
+            return self.dynamic10m.show(ui);
         }
         self.views.show(
             ui,

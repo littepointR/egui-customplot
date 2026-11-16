@@ -5,6 +5,8 @@ use egui_customplot::{
     QuiverArrow, QuiverData, YAxis,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct QuiverDemo {
     pub enabled: bool,
     pub heads: bool,
@@ -56,21 +58,39 @@ impl QuiverDemo {
     }
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Explicit 2D vector field / quiver");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Explicit 2D vector field / quiver",
+                "显式二维矢量场 (Quiver)",
+                "2D ベクトル場 / quiver",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.heads, "True-endpoint arrowheads");
-            ui.checkbox(&mut self.dashed, "Dashed shafts / solid heads");
-            ui.checkbox(&mut self.reversed, "Reverse X");
-            ui.add(egui::Slider::new(&mut self.head_length, 2.0..=24.0).text("Head logical points"));
-            if ui.button("Fit vector panels").clicked() {
+            ui.checkbox(&mut self.heads, tr(l, "True-endpoint arrowheads", "真实端点箭头", "実終点矢印"));
+            ui.checkbox(&mut self.dashed, tr(l, "Dashed shafts / solid heads", "虚线杆 / 实心箭头", "破線シャフト"));
+            ui.checkbox(&mut self.reversed, tr(l, "Reverse X", "反向 X 轴", "X 軸反転"));
+            ui.add(
+                egui::Slider::new(&mut self.head_length, 2.0..=24.0)
+                    .text(tr(l, "Head logical points", "箭头长度 (pt)", "矢印長 (pt)")),
+            );
+            if ui.button(tr(l, "Fit vector panels", "适配矢量面板", "ベクトル図をフィット")).clicked() {
                 self.states.iter_mut().for_each(PlotState::reset);
             }
-            ui.small("Origin + displacement, no implicit autoscale. Hover original origins/tips, not clipped intersections or shafts. Zero vectors are not drawn. Exact scan; no vector LOD/index/cache.");
+            ui.small(tr(
+                l,
+                "Origin + displacement, no implicit autoscale. Hover original origins/tips, not clipped intersections or shafts. Zero vectors are not drawn. Exact scan; no vector LOD/index/cache.",
+                "起点+位移表示（无隐式缩放），悬停拾取原始起点或终点。",
+                "始点＋変位表示（自動スケーリングなし）。始点・終点をホバー対象とします。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 110.0) * 0.5).max(80.0);
         let pattern = if self.dashed {
             LinePattern::Dashed {
@@ -97,22 +117,49 @@ impl QuiverDemo {
                 };
                 if index == 0 {
                     cell.show_layers(
-                        plot.title("Rotational field: explicit data-space vectors")
-                            .data_aspect(1.0),
+                        plot.title(tr(
+                            l,
+                            "Rotational field: explicit data-space vectors",
+                            "旋转矢量场（数据坐标箭头）",
+                            "回転ベクトル場",
+                        ))
+                        .data_aspect(1.0),
                         &mut self.states[0],
-                        &[quiver(&self.field).name("Rotation / no autoscale").into()],
+                        &[quiver(&self.field)
+                            .id_salt("quiv-rot")
+                            .name(tr(
+                                l,
+                                "Rotation / no autoscale",
+                                "旋转场（无自动缩放）",
+                                "回転場",
+                            ))
+                            .into()],
                     )
                 } else {
                     cell.show_layers(
-                        plot.title("Straight transformed-endpoint arrows on right log Y")
-                            .right_y_axis(
-                                Axis::new().scale(AxisScale::Log10).label("Amplitude (log)"),
-                            ),
+                        plot.title(tr(
+                            l,
+                            "Straight transformed-endpoint arrows on right log Y",
+                            "右对数 Y 轴变点矢量箭头",
+                            "右対数 Y 軸ベクトル",
+                        ))
+                        .right_y_axis(
+                            Axis::new().scale(AxisScale::Log10).label(tr(
+                                l,
+                                "Amplitude (log)",
+                                "幅值（对数）",
+                                "振幅（対数）",
+                            )),
+                        ),
                         &mut self.states[1],
                         &[
-                            Line::new(&self.reference).name("Left reference").into(),
+                            Line::new(&self.reference)
+                                .id_salt("quiv-ref")
+                                .name(tr(l, "Left reference", "左参考线", "左基準線"))
+                                .into(),
                             quiver(&self.positive)
-                                .name("Right vectors")
+                                .id_salt("quiv-pos")
+                                .name(tr(l, "Right vectors", "右矢量序列", "右ベクトル"))
                                 .y_axis(YAxis::Right)
                                 .color(egui::Color32::LIGHT_RED)
                                 .into(),

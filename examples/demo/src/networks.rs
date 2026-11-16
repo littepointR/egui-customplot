@@ -5,6 +5,8 @@ use egui_customplot::{
     GraphPlot, Plot, PlotLayer, PlotResponse, PlotState, SpyData, TreeData,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct NetworksDemo {
     pub enabled: bool,
     pub highlight_path: bool,
@@ -113,18 +115,49 @@ impl Default for NetworksDemo {
 
 impl NetworksDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Networks, graphs & trees");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Networks, graphs & trees",
+                "网络图与消去树",
+                "ネットワーク・グラフ・木",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.highlight_path, "Highlight active subgraph");
-            if ui.button("Reset network views").clicked() {
+            ui.checkbox(
+                &mut self.highlight_path,
+                tr(
+                    l,
+                    "Highlight active subgraph",
+                    "高亮当前子图路径",
+                    "部分グラフを強調表示",
+                ),
+            );
+            if ui
+                .button(tr(
+                    l,
+                    "Reset network views",
+                    "重置网络图视图",
+                    "グラフビュー初期化",
+                ))
+                .clicked()
+            {
                 self.states.iter_mut().for_each(PlotState::reset);
             }
-            ui.small("plot(graph), plot(digraph) Layered DAG, gplot(Spy), treeplot & etreeplot.");
+            ui.small(tr(
+                l,
+                "plot(graph), plot(digraph) Layered DAG, gplot(Spy), treeplot & etreeplot.",
+                "支持力导向无向图、分层 DAG、gplot 网格、treeplot 与消去树。",
+                "無向 Force・階層 DAG・gplot・treeplot・消去木に対応。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(110.0);
         let cscale = ColorScale::new([1.0, 4.5])
             .expect("valid scale")
@@ -153,19 +186,23 @@ impl NetworksDemo {
                         layer = layer.highlight(hl);
                     }
                     cell.show_layers(
-                        Plot::new("net-force")
-                            .height(height)
-                            .graph_axes()
-                            .title("plot(graph) Force + Multi-edges + Self-loop"),
+                        Plot::new("net-force").height(height).graph_axes().title(tr(
+                            l,
+                            "plot(graph) Force + Multi-edges + Self-loop",
+                            "无向力导向图 + 平行多边 + 自环",
+                            "無向グラフ（多重辺＋自己ループ）",
+                        )),
                         s0,
                         &[PlotLayer::from(layer)],
                     )
                 }
                 1 => cell.show_layers(
-                    Plot::new("net-dag")
-                        .height(height)
-                        .graph_axes()
-                        .title("plot(digraph) Layered DAG + Bidir Curves"),
+                    Plot::new("net-dag").height(height).graph_axes().title(tr(
+                        l,
+                        "plot(digraph) Layered DAG + Bidir Curves",
+                        "有向分层 DAG + 双向曲边",
+                        "有向階層 DAG＋双方向曲線",
+                    )),
                     s1,
                     &[PlotLayer::from(
                         GraphPlot::new(&self.layered_digraph)
@@ -176,10 +213,12 @@ impl NetworksDemo {
                     )],
                 ),
                 2 => cell.show_layers(
-                    Plot::new("net-gplot")
-                        .height(height)
-                        .graph_axes()
-                        .title("gplot(A, Coordinates) Finite-Element Mesh"),
+                    Plot::new("net-gplot").height(height).graph_axes().title(tr(
+                        l,
+                        "gplot(A, Coordinates) Finite-Element Mesh",
+                        "gplot(A, XY) 空间有限元网格",
+                        "gplot 空間メッシュ",
+                    )),
                     s2,
                     &[PlotLayer::from(
                         GraphPlot::new(&self.gplot_mesh)

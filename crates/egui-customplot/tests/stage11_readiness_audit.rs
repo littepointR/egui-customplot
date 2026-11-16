@@ -98,7 +98,7 @@ fn checklist_capabilities_egui_perf_and_benchmarks_are_complete_and_traceable() 
         );
     }
 
-    // 5. All 18 demo galleries are listed in smoke-demo.ps1 and benchmark CSV artifacts exist through stage10.
+    // 5. All 19 demo galleries are listed in smoke-demo.ps1 and benchmark CSV artifacts exist through stage10.
     let expected_galleries = [
         "default",
         "--scalar",
@@ -118,6 +118,7 @@ fn checklist_capabilities_egui_perf_and_benchmarks_are_complete_and_traceable() 
         "--surfaces3d",
         "--volumes3d",
         "--geo",
+        "--dynamic-10m",
     ];
     for g in expected_galleries {
         assert!(

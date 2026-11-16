@@ -10,9 +10,11 @@ crates/egui-customplot/
     lib.rs                    # 库说明、私有模块声明、公开导出
     diagnostics.rs            # 跨阶段诊断契约，不执行绘制或采样
     data/
-      points.rs               # Arc 样本、坐标域联合范围缓存
-      index/                  # 显式单调 X 索引、四域 run 表、min/max 树与查询
+      points.rs               # Arc 样本、自动单调 X 树构建（>=8,192 样本，64 MiB 上限）与显式禁用入口
+      index/                  # 单调 X 索引（内联极值、gallop 划分与 2D 屏幕 AABB 最优优先原始拾取剪枝）
       stream.rs               # 固定容量环形样本、批次幂等与显式快照发布
+      stream_indexed/         # 固定容量环形缓冲 + 128 槽增量物理线段树（search.rs/pick.rs 2D 剪枝与有限预算混断发点）
+      waveform/               # 均匀步长 f32 波形源（x=x0+i*dx）+ 64 样本树（pick.rs 2D 最优优先拾取 + 脏区间上传）
       grid.rs                 # 共享边缘 / 行优先标量、数值 / log 域预处理
       extents.rs              # 独立图元四坐标域固定范围缓存
       bars.rs                 # 原始柱记录、两方向范围摘要
@@ -41,11 +43,12 @@ crates/egui-customplot/
       plot3d/                 # Stage 9A～9C: 线/散点/柱/茎/矢量/多边形、曲面网格、ScalarVolume3D / VolumeSliceData / Isosurface3D / Isocaps3D / TetraMesh3D / VectorField3D / Stream*3D / ConePlot3D
       geo/                    # Stage 10: GeoPathData / GeoScatterData / GeoDensityData / GeoBubbleData / OFFLINE_LAND_RINGS / GeoAttribution / GeoTileCache (零网络 I/O)
     model/
-      line.rs                 # 折线的借用描述与 Line::primitive
+      line.rs                 # 折线的借用描述（默认 LineSampling::Auto / RenderBackend::Auto）与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
       interpolation.rs        # 线性 / 前阶 / 后阶连接语义，原始数据不变
-      sampling.rs             # Exact / Visible / 显式近似 MinMax 语义
-      scatter.rs              # 散点描述与逐点样式校验
+      sampling.rs             # LineSampling::{Auto, Exact, Visible, MinMax} / MarkerSampling / RenderBackend
+      fast_series.rs          # StreamLine / WaveformLine 零拷贝借用描述符
+      scatter.rs              # 散点描述与逐点样式校验（默认 MarkerSampling::Auto / RenderBackend::Auto）
       marker.rs               # 标记形状与尺寸
       series.rs               # 混合序列、稳定 ID、默认色
       style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
@@ -85,9 +88,9 @@ crates/egui-customplot/
       legend.rs               # egui 图例排布和控件组装
       figure.rs / color_bar.rs / bubble_legend.rs # 有界 cell 网格、色条与气泡尺寸图例空间分配
     interaction/
-      state.rs                # 显式视图、隐藏状态、帧快照、一次性切换
+      state.rs                # 显式视图、隐藏状态、帧快照、一次性切换与 2 MiB 内置 auto_cache
       navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
-      picking.rs / point_aux.rs / point_stage8b.rs / point_stage8c.rs / graph.rs # 原始点、Stage 8A～8D 及图节点/边拾取
+      picking.rs / point_aux.rs / point_fast.rs / point_stage8b.rs / point_stage8c.rs / graph.rs # 原始点（含流与均匀波形树剪枝拾取）、Stage 8A～8D 及图节点/边拾取
       polar.rs / polar_hover.rs # 极坐标多遍旋转/径向缩放、图例开关与点/扇区拾取
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
       link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
@@ -101,7 +104,11 @@ crates/egui-customplot/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
       cache.rs                # 宿主持有的有界 pre-style 折线几何 LRU
+      fast_series.rs          # StreamLine / WaveformLine CPU 几何准备与可选 wgpu 调度
       markers.rs              # 标记批量 mesh 与物理像素羽化
+      markers_lod.rs          # MarkerSampling::Auto/PixelGrid 像素网格去重、X 索引裁剪与 8 边形圆形快路径
+      markers_grid_tree.rs    # 单调 X 散点/标记的线段树层级单格坍缩与 64 位占用掩码满格剪枝
+      wgpu/                   # 可选 feature=wgpu：复用宿主 RenderState 的 WGSL 计算规约与实例化渲染（含散点深缩过绘制节流与极端缩放防溢出，无硬件/导出时回退 Painter）
       pattern.rs              # 屏幕空间虚线 phase 与工作量安全阀
       mesh.rs                 # 16,384 三角分批 MeshBatch 与边框描边提交
       axes.rs                 # 网格、刻度文字、标题、边框绘制
@@ -198,10 +205,15 @@ crates/egui-customplot/
     stage9b_performance.rs    # Stage 9B Interp 128x128 / surfc+surfl / meshz / waterfall+ribbon / contour3 / fimplicit3 48^3 E2E / ZBuffer trisurf CPU
     stage9c_performance.rs    # Stage 9C 64^3 切片与轮廓切片 / 48^3 ZBuffer 等值面端盖 / 2k 四面体 / 流粒子/流带流管/千锥 CPU
     stage10_performance.rs    # Stage 10 50k 跨日期变更线航线 / 20k 散点 / 10k 64x48 密度 / 2k 气泡 / HostTiles 缓存与太平洋四层组合 CPU
+    dynamic_10m_performance.rs # Stage 11+ 动态千万点 IndexedStream / UniformWaveform / PlotData::new / 百万 Scatter Auto LOD CPU 基准
+    ../tests/high_perf_sources.rs # L1 自动索引/Auto LOD/分支定界拾取、L3 流/波形与无头/导出回退集成回归
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
-  main.rs                     # eframe 启动，不放业务功能
-  app.rs                      # 应用生命周期和 gallery 选择
+  main.rs                     # eframe 启动（默认 wgpu 渲染器 + register_wgpu，语言检测 --lang/--zh/--en/--ja 与 --glow / --bench-window-10m）
+  fonts.rs                    # 按 Context 幂等加载系统 CJK 回退字体（不额外引入打包字体资产或外部依赖）
+  i18n.rs                     # 多语言（简体中文 / English / 日本語）上下文同步、顶部切换栏与统一文案辅助
+  app.rs                      # 应用生命周期、语言切换和 19 项 gallery 选择
+  dynamic10m.rs               # --dynamic-10m 千万点实时 120Hz+ 交互/GPU/CPU 展示与真窗口 swapchain 基准驱动
   charts.rs                   # 折线描述、Figure / 联动 / 双轴组装
   scalar.rs                   # 数值网格与显式共享色条
   statistical.rs              # 显式直方预处理、正负柱与误差棒

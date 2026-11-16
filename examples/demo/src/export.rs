@@ -4,6 +4,8 @@ use std::{io::Write, path::PathBuf};
 use eframe::egui;
 use egui_customplot::{ExportOptions, PlotSnapshot};
 
+use crate::i18n::{Language, lang, tr};
+
 #[derive(Clone, Copy)]
 pub(super) enum Format {
     Png,
@@ -45,14 +47,46 @@ impl Default for ExportPanel {
 
 impl ExportPanel {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.label("Export displayed gallery");
+        ui.label(tr(
+            l,
+            "Export displayed gallery",
+            "导出当前展示图表",
+            "表示中ギャラリーを書出",
+        ));
         ui.text_edit_singleline(&mut self.path);
-        ui.add(egui::Slider::new(&mut self.pixels_per_point, 0.5..=3.0).text("Pixels / point"));
-        ui.checkbox(&mut self.transparent, "Transparent outer background");
+        ui.add(
+            egui::Slider::new(&mut self.pixels_per_point, 0.5..=3.0).text(tr(
+                l,
+                "Pixels / point",
+                "像素 / 逻辑点",
+                "px / pt",
+            )),
+        );
+        ui.checkbox(
+            &mut self.transparent,
+            tr(
+                l,
+                "Transparent outer background",
+                "外层透明背景",
+                "外側背景を透過",
+            ),
+        );
         let frame = ui.ctx().cumulative_frame_nr();
         ui.horizontal(|ui| {
-            for (label, format) in [("Save PNG", Format::Png), ("Save hybrid SVG", Format::Svg)] {
+            for (label, format) in [
+                (tr(l, "Save PNG", "保存 PNG", "PNG 保存"), Format::Png),
+                (
+                    tr(
+                        l,
+                        "Save hybrid SVG",
+                        "保存混合 SVG",
+                        "ハイブリッド SVG 保存",
+                    ),
+                    Format::Svg,
+                ),
+            ] {
                 if ui.button(label).clicked() && self.last_click != Some(frame) {
                     self.request = Some(format);
                     self.candidate = None;
@@ -60,7 +94,12 @@ impl ExportPanel {
                 }
             }
         });
-        ui.small("Captures displayed sampling (MinMax stays approximate). Fonts and AA mesh are embedded pixels in SVG. Scale does not relayout text. No file overwrite.");
+        ui.small(tr(
+            l,
+            "Captures displayed sampling (MinMax stays approximate). Fonts and AA mesh are embedded pixels in SVG. Scale does not relayout text. No file overwrite.",
+            "截取当前已渲染采样（含 MinMax）。字体与抗锯齿网格在 SVG 中内嵌位图，拒绝覆盖已有文件。",
+            "現在表示中のサンプリングを書出（MinMax は近似）。SVG 内の文字・AA は埋め込み画像で上書き禁止です。",
+        ));
         if !self.status.is_empty() {
             ui.small(&self.status);
         }
@@ -100,7 +139,11 @@ impl ExportPanel {
         };
         let result = candidate.and_then(|snapshot| save(&snapshot, format, &self.path, options));
         self.status = match result {
-            Ok(path) => format!("Saved {}", path.display()),
+            Ok(path) => match lang(ctx) {
+                Language::English => format!("Saved {}", path.display()),
+                Language::ZhCn => format!("已保存 {}", path.display()),
+                Language::Japanese => format!("保存完了: {}", path.display()),
+            },
             Err(e) => e,
         };
     }

@@ -6,6 +6,8 @@ use egui_customplot::{
     PlotImage, PlotResponse, PlotState, ScalarField2D,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct ContourDemo {
     pub enabled: bool,
     pub show_pcolor: bool,
@@ -84,8 +86,17 @@ impl ContourDemo {
     }
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Contours, pcolor & images");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Contours, pcolor & images",
+                "等高线、伪彩与图像",
+                "等高線・疑似カラー・画像",
+            ),
+        );
         ui.add_enabled_ui(self.enabled, |ui| {
             egui::ComboBox::from_id_salt("contour-color-map")
                 .selected_text(format!("{:?}", self.colors))
@@ -94,20 +105,32 @@ impl ContourDemo {
                         ui.selectable_value(&mut self.colors, map, format!("{map:?}"));
                     }
                 });
-            ui.checkbox(&mut self.show_pcolor, "Pcolor instead of contourf");
+            ui.checkbox(
+                &mut self.show_pcolor,
+                tr(l, "Pcolor instead of contourf", "显示 Pcolor 替换填充等高线", "contourf の代わりに Pcolor"),
+            );
             ui.add_enabled(
                 self.show_pcolor,
-                egui::Checkbox::new(&mut self.interp_shading, "Interpolated pcolor shading"),
+                egui::Checkbox::new(
+                    &mut self.interp_shading,
+                    tr(l, "Interpolated pcolor shading", "Pcolor 平滑插值着色", "Pcolor 補間シェーディング"),
+                ),
             );
-            ui.checkbox(&mut self.show_labels, "Contour level labels");
-            if ui.button("Fit contour/image panels").clicked() {
+            ui.checkbox(&mut self.show_labels, tr(l, "Contour level labels", "显示等高线层级标签", "等高線ラベル表示"));
+            if ui.button(tr(l, "Fit contour/image panels", "适配等高线/图像面板", "等高線・画像フィット")).clicked() {
                 self.states.iter_mut().for_each(PlotState::reset);
             }
-            ui.small("Marching Squares contours extracted once on host; imshow_axes reverses Y with 1:1 aspect.");
+            ui.small(tr(
+                l,
+                "Marching Squares contours extracted once on host; imshow_axes reverses Y with 1:1 aspect.",
+                "Marching Squares 等高线在宿主一次提取；imshow_axes 自动反转 Y 轴并锁定 1:1 比例。",
+                "等高線はホストで一度抽出；imshow_axes は Y 反転・等倍アスペクトを自動設定します。",
+            ));
         });
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(80.0);
         let total_h = (ui.available_height() - 100.0).max(120.0);
         let scale = ColorScale::new([-1.0, 1.35])
@@ -115,7 +138,7 @@ impl ContourDemo {
             .color_map(self.colors);
         ui.with_layout(egui::Layout::right_to_left(egui::Align::Min), |ui| {
             ColorBar::new(scale)
-                .label("Scalar z")
+                .label(tr(l, "Scalar z", "标量 z", "スカラー z"))
                 .height(total_h)
                 .show(ui);
             Figure::new("contour-panels")
@@ -133,15 +156,22 @@ impl ContourDemo {
                                 PcolorShading::Flat
                             };
                             cell.show_layers(
-                                plot.title("Pcolor Rectilinear Field + Contour Isolines"),
+                                plot.title(tr(
+                                    l,
+                                    "Pcolor Rectilinear Field + Contour Isolines",
+                                    "Pcolor 伪彩网格 + 等值线",
+                                    "Pcolor 場＋等値線",
+                                )),
                                 &mut self.states[0],
                                 &[
                                     Pcolor::new(&self.field, scale)
+                                        .id_salt("pcolor")
                                         .name("Pcolor")
                                         .shading(shading)
                                         .into(),
                                     Contours::new(&self.lines)
-                                        .name("Isolines")
+                                        .id_salt("isolines")
+                                        .name(tr(l, "Isolines", "等值线", "等値線"))
                                         .color(egui::Color32::WHITE)
                                         .show_labels(self.show_labels)
                                         .into(),
@@ -149,14 +179,26 @@ impl ContourDemo {
                             )
                         } else {
                             cell.show_layers(
-                                plot.title("Filled Contours (contourf) + Labeled Isolines"),
+                                plot.title(tr(
+                                    l,
+                                    "Filled Contours (contourf) + Labeled Isolines",
+                                    "填充等高线 (contourf) + 带标签等值线",
+                                    "塗りつぶし等高線 (contourf)＋等値線",
+                                )),
                                 &mut self.states[0],
                                 &[
                                     FilledContours::new(&self.filled, scale)
-                                        .name("Filled contours")
+                                        .id_salt("contourf")
+                                        .name(tr(
+                                            l,
+                                            "Filled contours",
+                                            "填充等高线",
+                                            "塗りつぶし等高線",
+                                        ))
                                         .into(),
                                     Contours::new(&self.lines)
-                                        .name("Isolines")
+                                        .id_salt("isolines")
+                                        .name(tr(l, "Isolines", "等值线", "等値線"))
                                         .color(egui::Color32::from_gray(235))
                                         .show_labels(self.show_labels)
                                         .into(),
@@ -170,9 +212,17 @@ impl ContourDemo {
                                 .height(height)
                                 .allow_scroll_zoom(true)
                                 .legend(true)
-                                .title("RGBA Image (imshow_axes: top-down Y, 1:1 aspect)"),
+                                .title(tr(
+                                    l,
+                                    "RGBA Image (imshow_axes: top-down Y, 1:1 aspect)",
+                                    "RGBA 图像（imshow_axes：Y 自上而下，1:1 比例）",
+                                    "RGBA 画像（imshow_axes：上向き原点・1:1 比率）",
+                                )),
                             &mut self.states[1],
-                            &[PlotImage::new(&self.image).name("RGBA image").into()],
+                            &[PlotImage::new(&self.image)
+                                .id_salt("rgba-img")
+                                .name(tr(l, "RGBA image", "RGBA 图像", "RGBA 画像"))
+                                .into()],
                         )
                     }
                 })

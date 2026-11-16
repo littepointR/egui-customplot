@@ -7,6 +7,8 @@ use egui_customplot::{
     GeoTileKey, LinePattern, MarkerShape, PlotResponse,
 };
 
+use crate::i18n::{lang, tr};
+
 pub(super) struct GeoDemo {
     pub enabled: bool,
     pub equirectangular: bool,
@@ -123,16 +125,65 @@ impl Default for GeoDemo {
 
 impl GeoDemo {
     pub fn controls(&mut self, ui: &mut egui::Ui) {
+        let l = lang(ui.ctx());
         ui.separator();
-        ui.checkbox(&mut self.enabled, "Geographic Plots Gallery (--geo)");
+        ui.checkbox(
+            &mut self.enabled,
+            tr(
+                l,
+                "Geographic Plots Gallery (--geo)",
+                "地理绘图专题 (--geo)",
+                "地理プロット (--geo)",
+            ),
+        );
         if !self.enabled {
             return;
         }
-        ui.checkbox(&mut self.equirectangular, "Equirectangular projection");
-        ui.checkbox(&mut self.dark_basemap, "Dark offline vector basemap");
-        ui.checkbox(&mut self.use_host_tiles, "Synthetic HostTiles + fallback");
-        ui.checkbox(&mut self.scroll_zoom, "Allow map scroll zoom");
-        if ui.button("Reset geo viewports").clicked() {
+        ui.checkbox(
+            &mut self.equirectangular,
+            tr(
+                l,
+                "Equirectangular projection",
+                "等距圆柱投影 (Equirectangular)",
+                "正距円筒図法",
+            ),
+        );
+        ui.checkbox(
+            &mut self.dark_basemap,
+            tr(
+                l,
+                "Dark offline vector basemap",
+                "深色离线矢量底图",
+                "ダークオフライン背景図",
+            ),
+        );
+        ui.checkbox(
+            &mut self.use_host_tiles,
+            tr(
+                l,
+                "Synthetic HostTiles + fallback",
+                "宿主合成瓦片 HostTiles + 回退",
+                "HostTiles＋フォールバック",
+            ),
+        );
+        ui.checkbox(
+            &mut self.scroll_zoom,
+            tr(
+                l,
+                "Allow map scroll zoom",
+                "允许地图滚轮缩放",
+                "ホイールズーム許可",
+            ),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Reset geo viewports",
+                "重置地理视口",
+                "地図ビュー初期化",
+            ))
+            .clicked()
+        {
             for st in &mut self.states {
                 st.reset();
             }
@@ -140,6 +191,7 @@ impl GeoDemo {
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let l = lang(ui.ctx());
         let proj = if self.equirectangular {
             GeoProjection::Equirectangular
         } else {
@@ -157,7 +209,10 @@ impl GeoDemo {
         let density_scale = ColorScale::new([0.0, 6.0])
             .expect("density scale")
             .color_map(ColorMap::BlueRed);
-        let bubble_legend = self.bubbles.bubble_legend("Pop (M)").steps(3);
+        let bubble_legend = self
+            .bubbles
+            .bubble_legend(tr(l, "Pop (M)", "人口 (百万)", "人口 (百万人)"))
+            .steps(3);
         let [s0, s1, s2, s3] = &mut self.states;
 
         Figure::new("geo-gallery")
@@ -167,7 +222,12 @@ impl GeoDemo {
                 0 => cell
                     .show_geo(
                         GeoPlot::new("geo-pacific")
-                            .title("geoplot (Pacific dateline-crossing)")
+                            .title(tr(
+                                l,
+                                "geoplot (Pacific dateline-crossing)",
+                                "geoplot (跨日期变更线太平洋弧线)",
+                                "geoplot (太平洋日付変更線横断)",
+                            ))
                             .projection(proj)
                             .basemap(vector_basemap)
                             .lat_lim([-45.0, 50.0])
@@ -176,7 +236,7 @@ impl GeoDemo {
                         s0,
                         &[GeoLayer::from(
                             GeoLine::new(&self.transpac_route)
-                                .name("Pacific Arc")
+                                .name(tr(l, "Pacific Arc", "跨洋航线", "太平洋アーク"))
                                 .color(Color32::from_rgb(225, 85, 55))
                                 .width(2.2)
                                 .pattern(LinePattern::Dashed {
@@ -189,16 +249,21 @@ impl GeoDemo {
                 1 => cell
                     .show_geo(
                         GeoPlot::new("geo-scatter")
-                            .title("geoscatter (per-point size & color)")
+                            .title(tr(
+                                l,
+                                "geoscatter (per-point size & color)",
+                                "geoscatter (按点尺寸与配色)",
+                                "geoscatter (点サイズ・色マップ)",
+                            ))
                             .projection(proj)
                             .basemap(vector_basemap)
                             .geo_bounds(GeoBounds::world())
-                            .color_bar(scatter_scale, "Temp (°C)")
+                            .color_bar(scatter_scale, tr(l, "Temp (°C)", "温度 (°C)", "気温 (°C)"))
                             .allow_scroll_zoom(self.scroll_zoom),
                         s1,
                         &[GeoLayer::from(
                             GeoScatter::new(&self.stations)
-                                .name("Stations")
+                                .name(tr(l, "Stations", "观测站", "観測点"))
                                 .marker(MarkerShape::Diamond, 6.0)
                                 .color_scale(scatter_scale),
                         )],
@@ -206,7 +271,12 @@ impl GeoDemo {
                     .into_plot_response(),
                 2 => {
                     let plot = GeoPlot::new("geo-density")
-                        .title("geodensityplot (spherical kernel + tiles)")
+                        .title(tr(
+                            l,
+                            "geodensityplot (spherical kernel + tiles)",
+                            "geodensityplot (球面核密度 + 瓦片底图)",
+                            "geodensityplot (球面カーネル密度 + タイル)",
+                        ))
                         .projection(proj)
                         .basemap(if self.use_host_tiles {
                             GeoBasemapStyle::HostTiles
@@ -217,7 +287,7 @@ impl GeoDemo {
                             GeoBounds::from_lat_lon([-50.0, 62.0], [-130.0, 145.0])
                                 .expect("density bounds"),
                         )
-                        .color_bar(density_scale, "Density")
+                        .color_bar(density_scale, tr(l, "Density", "密度", "密度"))
                         .allow_scroll_zoom(self.scroll_zoom);
                     if self.use_host_tiles {
                         cell.show_geo_with_tiles(
@@ -225,7 +295,7 @@ impl GeoDemo {
                             s2,
                             &[GeoLayer::from(
                                 GeoDensity::new(&self.density)
-                                    .name("Hotspots")
+                                    .name(tr(l, "Hotspots", "热点分布", "ホットスポット"))
                                     .color_scale(density_scale),
                             )],
                             &mut self.tile_cache,
@@ -237,7 +307,7 @@ impl GeoDemo {
                             s2,
                             &[GeoLayer::from(
                                 GeoDensity::new(&self.density)
-                                    .name("Hotspots")
+                                    .name(tr(l, "Hotspots", "热点分布", "ホットスポット"))
                                     .color_scale(density_scale),
                             )],
                         )
@@ -247,16 +317,24 @@ impl GeoDemo {
                 _ => cell
                     .show_geo(
                         GeoPlot::new("geo-bubble")
-                            .title("geobubble (categories & BubbleLegend)")
+                            .title(tr(
+                                l,
+                                "geobubble (categories & BubbleLegend)",
+                                "geobubble (分类与气泡图例)",
+                                "geobubble (カテゴリとバブル凡例)",
+                            ))
                             .projection(proj)
                             .basemap(vector_basemap)
                             .geo_bounds(GeoBounds::world())
                             .bubble_legend(bubble_legend.clone())
                             .allow_scroll_zoom(self.scroll_zoom),
                         s3,
-                        &[GeoLayer::from(
-                            GeoBubbles::new(&self.bubbles).name("Metros"),
-                        )],
+                        &[GeoLayer::from(GeoBubbles::new(&self.bubbles).name(tr(
+                            l,
+                            "Metros",
+                            "主要都市群",
+                            "主要都市",
+                        )))],
                     )
                     .into_plot_response(),
             })
