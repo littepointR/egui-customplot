@@ -23,14 +23,16 @@ public class DemoSmokeWin {
 '@
 }
 
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 $binary = (Resolve-Path -LiteralPath $Executable).Path
-@(
+$header = @(
     "date=$(Get-Date -Format o)",
     "os=$([Environment]::OSVersion.VersionString)",
     "executable=$binary",
     "sha256=$((Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash)",
     'Window lifecycle smoke only; not visual correctness, GPU timing or FPS.'
-) | Set-Content -LiteralPath $Output
+)
+[System.IO.File]::WriteAllLines($Output, [string[]]$header, $utf8NoBom)
 foreach ($gallery in $Galleries) {
     $arguments = @{ FilePath = $binary; PassThru = $true }
     if ($gallery -ne 'default') { $arguments.ArgumentList = @($gallery) }
@@ -68,12 +70,15 @@ foreach ($gallery in $Galleries) {
         if (!$close -or !$process.WaitForExit(10000)) { throw "Gallery $gallery failed graceful close" }
         $process.Refresh()
         if ($process.ExitCode -ne 0) { throw "Gallery $gallery exited with $($process.ExitCode)" }
-        "gallery=$gallery; input_idle=$idle; title=$title; responsive=true; close_requested=$close; exit_code=$($process.ExitCode)" |
-            Add-Content -LiteralPath $Output
+        [System.IO.File]::AppendAllLines(
+            $Output,
+            [string[]]@("gallery=$gallery; input_idle=$idle; title=$title; responsive=true; close_requested=$close; exit_code=$($process.ExitCode)"),
+            $utf8NoBom
+        )
     } finally {
         # Only this script's process is eligible for failure cleanup.
         if (!$process.HasExited) { $process.Kill(); $process.WaitForExit() }
         $process.Dispose()
     }
 }
-'completed=true' | Add-Content -LiteralPath $Output
+[System.IO.File]::AppendAllLines($Output, [string[]]@('completed=true'), $utf8NoBom)

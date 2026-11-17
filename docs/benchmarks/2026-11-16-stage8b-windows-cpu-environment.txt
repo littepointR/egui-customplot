@@ -1,4 +1,4 @@
-﻿date=2026-11-16T02:14:27.5567553+08:00
+date=2026-11-16T02:14:27.5567553+08:00
 cpu=Intel(R) Core(TM) i9-14900KF
 os=Microsoft Windows NT 10.0.26300.0
 rust=rustc 1.100.0 (0ef1bc386 2026-11-09)

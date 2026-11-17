@@ -30,9 +30,9 @@ impl Language {
     /// Always begins with `"egui-customplot"` so window smoke tools match reliably.
     pub const fn window_title(self) -> &'static str {
         match self {
-            Self::English => "egui-customplot | Stage 11",
-            Self::ZhCn => "egui-customplot | 阶段 11 演示",
-            Self::Japanese => "egui-customplot | ステージ 11 デモ",
+            Self::English => "egui-customplot | Interactive Demo",
+            Self::ZhCn => "egui-customplot | 交互演示",
+            Self::Japanese => "egui-customplot | インタラクティブデモ",
         }
     }
 

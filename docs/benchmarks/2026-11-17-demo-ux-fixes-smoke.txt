@@ -3,8 +3,8 @@ os=Microsoft Windows NT 10.0.26300.0
 executable=D:\littepoint\Documents\WorkingSpace\things\egui-customplot\target\release\customplot-demo.exe
 sha256=506AAB45B21DB4823112F78740927CC24DF9854B6FC8EBD7CDD32D71DDFEBFC9
 Window lifecycle smoke only; not visual correctness, GPU timing or FPS.
-gallery=default; input_idle=True; title=egui-customplot | ½×¶Î 11 ÑÝÊ¾; responsive=true; close_requested=True; exit_code=0
-gallery=--plot3d; input_idle=True; title=egui-customplot | ½×¶Î 11 ÑÝÊ¾; responsive=true; close_requested=True; exit_code=0
-gallery=--volumes3d; input_idle=True; title=egui-customplot | ½×¶Î 11 ÑÝÊ¾; responsive=true; close_requested=True; exit_code=0
-gallery=--stage16; input_idle=True; title=egui-customplot | ½×¶Î 11 ÑÝÊ¾; responsive=true; close_requested=True; exit_code=0
+gallery=default; input_idle=True; title=egui-customplot | é˜¶æ®µ 11 æ¼”ç¤º; responsive=true; close_requested=True; exit_code=0
+gallery=--plot3d; input_idle=True; title=egui-customplot | é˜¶æ®µ 11 æ¼”ç¤º; responsive=true; close_requested=True; exit_code=0
+gallery=--volumes3d; input_idle=True; title=egui-customplot | é˜¶æ®µ 11 æ¼”ç¤º; responsive=true; close_requested=True; exit_code=0
+gallery=--stage16; input_idle=True; title=egui-customplot | é˜¶æ®µ 11 æ¼”ç¤º; responsive=true; close_requested=True; exit_code=0
 completed=true

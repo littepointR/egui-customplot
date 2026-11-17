@@ -153,7 +153,7 @@ use egui_customplot::{AreaBandData, AreaStackMode, ContourData, ContourLevels, C
 
 - 新增库单元 3 项（三角化与 Eberly 孔洞桥接）、集成 16 项：`tests/area.rs`（4 项）、`tests/polygons_patches.rs`（5 项）、`tests/contours.rs`（3 项）、`tests/pcolor_image.rs`（2 项）、`tests/export_polygons_contours.rs`（2 项，含 resvg 无字体像素校验孔洞与 SVG path/raster 分流），以及 demo `--polygons` / `--contours` 测试 2 项。
 - 统一 all-features **226 项通过**（库单元 35、集成 175、demo 14、rustdoc 2），`fmt`、默认 workspace 测试、无默认 feature 检查、默认与 `--all-features` 严格 Clippy、Release demo 构建全部通过，见 [最终 7 项检查记录](benchmarks/2026-11-16-stage8a-windows-final-checks.txt)。
-- [scripts/smoke-demo.ps1](../../scripts/smoke-demo.ps1) 已修复 Windows IME 浮窗 (`UAC_InputIndicatorOverlayWnd`) 干扰 `.NET MainWindowHandle` 的问题（首轮未修前中止留档 [gallery-smoke](benchmarks/2026-11-16-stage8a-windows-gallery-smoke.txt)）；修正后八预设原生窗口（`default`、`--scalar`、`--statistical`、`--stairs`、`--stems`、`--quiver`、`--polygons`、`--contours`）均响应且正常退出，见 [retry1 窗口记录](benchmarks/2026-11-16-stage8a-windows-gallery-smoke-retry1.txt)，Release `customplot-demo.exe` SHA256 核对一致为 `8601BD85105E86D6556719B384B295164040A8FA722C9AFC7EC13ACD43EBF885`。
+- [scripts/smoke-demo.ps1](../scripts/smoke-demo.ps1) 已修复 Windows IME 浮窗 (`UAC_InputIndicatorOverlayWnd`) 干扰 `.NET MainWindowHandle` 的问题（首轮未修前中止留档 [gallery-smoke](benchmarks/2026-11-16-stage8a-windows-gallery-smoke.txt)）；修正后八预设原生窗口（`default`、`--scalar`、`--statistical`、`--stairs`、`--stems`、`--quiver`、`--polygons`、`--contours`）均响应且正常退出，见 [retry1 窗口记录](benchmarks/2026-11-16-stage8a-windows-gallery-smoke-retry1.txt)，Release `customplot-demo.exe` SHA256 核对一致为 `8601BD85105E86D6556719B384B295164040A8FA722C9AFC7EC13ACD43EBF885`。
 
 ### Stage 8A CPU 基准测量
 
