@@ -282,6 +282,21 @@ impl ScalarField2D {
         match color_scale {
             AxisScale::Linear => self.pcolor_non_finite,
             AxisScale::Log10 => self.cell_cols() * self.cell_rows() - self.pcolor_positive,
+            AxisScale::Probit | AxisScale::Weibull => {
+                let mut invalid = 0usize;
+                for r in 0..self.cell_rows() {
+                    for c in 0..self.cell_cols() {
+                        if self
+                            .node_value(c, r)
+                            .and_then(|v| color_scale.forward(v))
+                            .is_none()
+                        {
+                            invalid += 1;
+                        }
+                    }
+                }
+                invalid
+            }
         }
     }
     pub(crate) fn pcolor_non_finite_cells(&self) -> usize {

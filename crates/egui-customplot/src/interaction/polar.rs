@@ -111,12 +111,14 @@ pub(crate) struct PolarNavigation {
 }
 
 /// Multi-pass idempotent polar navigation (horizontal drag rotates theta, wheel zooms r, double-click / Home resets).
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn navigate_polar(
     ui: &Ui,
     state: &mut PolarState,
     response: &mut Response,
     auto_r_lim: [f64; 2],
     lock_r_zero: bool,
+    allow_scroll_zoom: bool,
     legend_rect: Option<Rect>,
     pixel_radius: f32,
 ) -> PolarNavigation {
@@ -140,7 +142,7 @@ pub(crate) fn navigate_polar(
                 frame.drag_delta_x = Some(dx);
             }
         }
-        if hover_pos.is_some() && frame.scroll_y.is_none() {
+        if allow_scroll_zoom && hover_pos.is_some() && frame.scroll_y.is_none() {
             let scroll = ui.input_mut(|i| {
                 let d = i.smooth_scroll_delta.y;
                 i.smooth_scroll_delta.y = 0.0;

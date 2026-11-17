@@ -31,6 +31,14 @@ pub(crate) fn navigate_secondary(
     let mut transform = candidate.and_then(with_y).unwrap_or(auto);
     if primary.reset {
         candidate = None;
+    } else if let Some(box_rect) = primary.applied_box_zoom {
+        let ya = transform.point_from_position(box_rect.left_top())[1];
+        let yb = transform.point_from_position(box_rect.left_bottom())[1];
+        let lo = ya.min(yb);
+        let hi = ya.max(yb);
+        if lo.is_finite() && hi.is_finite() && lo < hi && with_y([lo, hi]).is_some() {
+            candidate = Some([lo, hi]);
+        }
     } else {
         if let Some(delta) = primary.applied_pan
             && delta.y != 0.0

@@ -3,11 +3,17 @@ mod layers;
 mod meshes_contours;
 mod scene;
 mod solid_layers;
+mod stage13;
 mod surfaces;
+mod volshow;
+mod volshow_raycast;
 mod volume_flow;
 mod zbuffer;
+mod zbuffer_cache;
 
 use egui::Painter;
+
+pub(crate) use zbuffer_cache::ZBufferCache;
 
 use crate::{
     Axis3D, BoxStyle3D, ConstantPlane3D, DepthMode, Layer3D, Plot3DDiagnostics, Plot3DState,
@@ -17,7 +23,7 @@ use crate::{
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn paint_plot3d(
     painter: &Painter,
-    state: &Plot3DState,
+    state: &mut Plot3DState,
     layers: &[Layer3D<'_>],
     planes: &[ConstantPlane3D],
     texts: &[Text3D],
@@ -30,6 +36,41 @@ pub(crate) fn paint_plot3d(
     diagnostics: &mut Plot3DDiagnostics,
 ) {
     axes::paint_axes_3d(painter, axes, transform, box_style, title, style);
+    let area = transform.rect();
+    if depth_mode == DepthMode::ZBuffer {
+        let (w, h) = zbuffer::zbuffer_dims(area);
+        let key = zbuffer_cache::compute_zbuffer_key(
+            state, layers, planes, texts, transform, box_style, style, w, h,
+        );
+        if let Some(cache) = state.zbuffer_cache.as_ref().filter(|c| c.key == key) {
+            zbuffer_cache::emit_cached_zbuffer(cache, painter, area, style.text_color, diagnostics);
+            return;
+        }
+        let mut scene = scene::Scene3D::default();
+        layers::collect_layers_3d(
+            &mut scene,
+            state,
+            layers,
+            planes,
+            texts,
+            transform,
+            style,
+            diagnostics,
+        );
+        state.zbuffer_cache = zbuffer::emit_zbuffer(
+            &scene,
+            layers,
+            state,
+            transform,
+            painter,
+            area,
+            style.text_color,
+            key,
+            diagnostics,
+        );
+        return;
+    }
+
     let mut scene = scene::Scene3D::default();
     layers::collect_layers_3d(
         &mut scene,
@@ -41,18 +82,6 @@ pub(crate) fn paint_plot3d(
         style,
         diagnostics,
     );
-    match depth_mode {
-        DepthMode::SortedPainter => {
-            scene.emit_sorted(painter, transform.rect(), style.text_color, diagnostics);
-        }
-        DepthMode::ZBuffer => {
-            zbuffer::emit_zbuffer(
-                &scene,
-                painter,
-                transform.rect(),
-                style.text_color,
-                diagnostics,
-            );
-        }
-    }
+    volshow::paint_volumes_painter(layers, state, transform, painter, area, diagnostics);
+    scene.emit_sorted(painter, area, style.text_color, diagnostics);
 }

@@ -15,13 +15,20 @@ pub(super) fn resolve_line_levels(
     field: &ScalarField2D,
     levels: ContourLevels,
 ) -> Result<Vec<f64>, ContourError> {
+    resolve_line_levels_from_range(field.value_range(AxisScale::Linear), levels)
+}
+
+pub(crate) fn resolve_line_levels_from_range(
+    value_range: Option<[f64; 2]>,
+    levels: ContourLevels,
+) -> Result<Vec<f64>, ContourError> {
     match levels {
         ContourLevels::Explicit(mut vals) => validate_explicit(&mut vals),
         ContourLevels::Count(count) => {
             if count == 0 || count > MAX_LEVELS {
                 return Err(ContourError::InvalidLevels);
             }
-            let Some([zmin, zmax]) = field.value_range(AxisScale::Linear) else {
+            let Some([zmin, zmax]) = value_range else {
                 return Ok(Vec::new());
             };
             if zmin == zmax {
@@ -39,13 +46,20 @@ pub(super) fn resolve_band_levels(
     field: &ScalarField2D,
     levels: ContourLevels,
 ) -> Result<(Vec<f64>, Vec<[f64; 2]>), ContourError> {
+    resolve_band_levels_from_range(field.value_range(AxisScale::Linear), levels)
+}
+
+pub(crate) fn resolve_band_levels_from_range(
+    value_range: Option<[f64; 2]>,
+    levels: ContourLevels,
+) -> Result<(Vec<f64>, Vec<[f64; 2]>), ContourError> {
     let thresholds = match levels {
         ContourLevels::Explicit(mut vals) => validate_explicit(&mut vals)?,
         ContourLevels::Count(count) => {
             if count == 0 || count > MAX_LEVELS {
                 return Err(ContourError::InvalidLevels);
             }
-            let Some([zmin, zmax]) = field.value_range(AxisScale::Linear) else {
+            let Some([zmin, zmax]) = value_range else {
                 return Ok((Vec::new(), Vec::new()));
             };
             if zmin == zmax {
@@ -103,21 +117,34 @@ pub(super) fn extract_lines(field: &ScalarField2D, levels: &[f64]) -> Vec<Contou
     out
 }
 
-pub(super) fn extract_bands(field: &ScalarField2D, band_bounds: &[[f64; 2]]) -> Vec<ContourBand> {
-    if band_bounds.is_empty() {
-        return Vec::new();
+pub(crate) struct BandAccumulator<'a> {
+    band_bounds: &'a [[f64; 2]],
+    band_verts: Vec<Vec<PlotPoint>>,
+    band_tris: Vec<Vec<[u32; 3]>>,
+}
+
+impl<'a> BandAccumulator<'a> {
+    pub fn new(band_bounds: &'a [[f64; 2]]) -> Self {
+        Self {
+            band_bounds,
+            band_verts: vec![Vec::new(); band_bounds.len()],
+            band_tris: vec![Vec::new(); band_bounds.len()],
+        }
     }
-    let mut band_verts: Vec<Vec<PlotPoint>> = vec![Vec::new(); band_bounds.len()];
-    let mut band_tris: Vec<Vec<[u32; 3]>> = vec![Vec::new(); band_bounds.len()];
-    visit_subtriangles(field, |tri| {
+
+    pub fn push_triangle(&mut self, tri: [Node; 3]) {
+        if self.band_bounds.is_empty() {
+            return;
+        }
         let z_min = tri[0].z.min(tri[1].z).min(tri[2].z);
         let z_max = tri[0].z.max(tri[1].z).max(tri[2].z);
-        let start = band_bounds
+        let start = self
+            .band_bounds
             .partition_point(|b| b[1] < z_min)
-            .min(band_bounds.len());
-        let end = band_bounds.partition_point(|b| b[0] <= z_max);
+            .min(self.band_bounds.len());
+        let end = self.band_bounds.partition_point(|b| b[0] <= z_max);
         for bi in start..end {
-            let [lo, hi] = band_bounds[bi];
+            let [lo, hi] = self.band_bounds[bi];
             let mut poly = clip_halfspace(&tri, lo, true);
             if poly.len() < 3 {
                 continue;
@@ -128,24 +155,36 @@ pub(super) fn extract_bands(field: &ScalarField2D, band_bounds: &[[f64; 2]]) -> 
                     continue;
                 }
             }
-            let base = band_verts[bi].len() as u32;
-            band_verts[bi].extend(poly.iter().map(|n| n.p));
+            let base = self.band_verts[bi].len() as u32;
+            self.band_verts[bi].extend(poly.iter().map(|n| n.p));
             for j in 1..poly.len() - 1 {
-                band_tris[bi].push([base, base + j as u32, base + (j + 1) as u32]);
+                self.band_tris[bi].push([base, base + j as u32, base + (j + 1) as u32]);
             }
         }
-    });
-    band_bounds
-        .iter()
-        .zip(band_verts)
-        .zip(band_tris)
-        .map(|((&[lower, upper], verts), tris)| ContourBand {
-            lower,
-            upper,
-            vertices: verts.into_boxed_slice(),
-            triangles: tris.into_boxed_slice(),
-        })
-        .collect()
+    }
+
+    pub fn finish(self) -> Vec<ContourBand> {
+        self.band_bounds
+            .iter()
+            .zip(self.band_verts)
+            .zip(self.band_tris)
+            .map(|((&[lower, upper], verts), tris)| ContourBand {
+                lower,
+                upper,
+                vertices: verts.into_boxed_slice(),
+                triangles: tris.into_boxed_slice(),
+            })
+            .collect()
+    }
+}
+
+pub(super) fn extract_bands(field: &ScalarField2D, band_bounds: &[[f64; 2]]) -> Vec<ContourBand> {
+    if band_bounds.is_empty() {
+        return Vec::new();
+    }
+    let mut acc = BandAccumulator::new(band_bounds);
+    visit_subtriangles(field, |tri| acc.push_triangle(tri));
+    acc.finish()
 }
 
 fn visit_subtriangles(field: &ScalarField2D, mut emit: impl FnMut([Node; 3])) {

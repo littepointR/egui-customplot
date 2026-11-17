@@ -2,9 +2,25 @@ use egui::Color32;
 
 use super::{HoveredRegion, RegionKind, base_region};
 use crate::{
-    PlotLayer, PlotPoint, PlotTransform, YAxis,
+    BarOrientation, PlotLayer, PlotPoint, PlotTransform, YAxis,
     axis::{clipped_data_rect, point_in_ring_transformed, valid_extent},
 };
+
+#[inline]
+fn orient(o: BarOrientation, pos: f64, val: f64) -> PlotPoint {
+    match o {
+        BarOrientation::Vertical => [pos, val],
+        BarOrientation::Horizontal => [val, pos],
+    }
+}
+
+#[inline]
+fn split_coords(o: BarOrientation, point: PlotPoint) -> (f64, f64) {
+    match o {
+        BarOrientation::Vertical => (point[0], point[1]),
+        BarOrientation::Horizontal => (point[1], point[0]),
+    }
+}
 
 pub(super) fn pick_stage8c_region(
     layer: PlotLayer<'_>,
@@ -12,7 +28,7 @@ pub(super) fn pick_stage8c_region(
     layer_index: usize,
     y_axis: YAxis,
     point: PlotPoint,
-    p_norm: [f64; 2],
+    _p_norm: [f64; 2],
     transform: PlotTransform,
 ) -> Option<HoveredRegion> {
     match layer {
@@ -83,46 +99,50 @@ pub(super) fn pick_stage8c_region(
             None
         }
         PlotLayer::BoxChart(boxes) => {
+            let (pos_c, val_c) = split_coords(boxes.orientation, point);
             for (idx, b) in boxes.data.boxes().iter().enumerate().rev() {
-                let lo = [b.position - b.width * 0.5, b.q1];
-                let hi = [b.position + b.width * 0.5, b.q3];
-                if point[0] >= lo[0]
-                    && point[0] <= hi[0]
-                    && point[1] >= lo[1]
-                    && point[1] <= hi[1]
-                    && valid_extent(lo, hi, transform)
+                let hw = b.width * 0.5;
+                if pos_c >= b.position - hw
+                    && pos_c <= b.position + hw
+                    && val_c >= b.q1
+                    && val_c <= b.q3
                 {
-                    let mut hit = base_region(
-                        layer_id,
-                        layer_index,
-                        y_axis,
-                        RegionKind::BoxChart,
-                        idx,
-                        point,
-                    );
-                    hit.scalar_value = Some(b.median);
-                    hit.screen_rect = clipped_data_rect(lo, hi, transform);
-                    return Some(hit);
+                    let lo = orient(boxes.orientation, b.position - hw, b.q1);
+                    let hi = orient(boxes.orientation, b.position + hw, b.q3);
+                    if valid_extent(lo, hi, transform) {
+                        let mut hit = base_region(
+                            layer_id,
+                            layer_index,
+                            y_axis,
+                            RegionKind::BoxChart,
+                            idx,
+                            point,
+                        );
+                        hit.scalar_value = Some(b.median);
+                        hit.screen_rect = clipped_data_rect(lo, hi, transform);
+                        return Some(hit);
+                    }
                 }
             }
             None
         }
         PlotLayer::ViolinPlot(v) => {
+            let (pos_c, val_c) = split_coords(v.orientation, point);
             for (idx, entry) in v.data.entries().iter().enumerate().rev() {
                 let y = &entry.y;
-                if y.len() < 2 || point[1] < y[0] || point[1] > y[y.len() - 1] {
+                if y.len() < 2 || val_c < y[0] || val_c > y[y.len() - 1] {
                     continue;
                 }
                 let half_max = entry.half_widths.iter().copied().fold(0.0_f64, f64::max);
-                if (point[0] - entry.summary.position).abs() <= half_max {
+                if (pos_c - entry.summary.position).abs() <= half_max {
                     let mut poly = Vec::with_capacity(y.len() * 2);
                     for (&yi, &hw) in y.iter().zip(entry.half_widths.iter()) {
-                        poly.push([entry.summary.position + hw, yi]);
+                        poly.push(orient(v.orientation, entry.summary.position + hw, yi));
                     }
                     for (&yi, &hw) in y.iter().zip(entry.half_widths.iter()).rev() {
-                        poly.push([entry.summary.position - hw, yi]);
+                        poly.push(orient(v.orientation, entry.summary.position - hw, yi));
                     }
-                    if point_in_ring_transformed(p_norm, &poly, transform) {
+                    if point_in_ring_transformed(point, &poly, transform) {
                         let mut hit = base_region(
                             layer_id,
                             layer_index,
@@ -139,18 +159,23 @@ pub(super) fn pick_stage8c_region(
             None
         }
         PlotLayer::Raincloud(r) => {
+            let (_, val_c) = split_coords(r.orientation, point);
             for (idx, entry) in r.data.entries().iter().enumerate().rev() {
                 let y = &entry.y;
-                if y.len() < 2 || point[1] < y[0] || point[1] > y[y.len() - 1] {
+                if y.len() < 2 || val_c < y[0] || val_c > y[y.len() - 1] {
                     continue;
                 }
                 let mut poly = Vec::with_capacity(y.len() + 2);
                 for (&yi, &hw) in y.iter().zip(entry.half_widths.iter()) {
-                    poly.push([entry.summary.position + hw, yi]);
+                    poly.push(orient(r.orientation, entry.summary.position + hw, yi));
                 }
-                poly.push([entry.summary.position, y[y.len() - 1]]);
-                poly.push([entry.summary.position, y[0]]);
-                if point_in_ring_transformed(p_norm, &poly, transform) {
+                poly.push(orient(
+                    r.orientation,
+                    entry.summary.position,
+                    y[y.len() - 1],
+                ));
+                poly.push(orient(r.orientation, entry.summary.position, y[0]));
+                if point_in_ring_transformed(point, &poly, transform) {
                     let mut hit = base_region(
                         layer_id,
                         layer_index,
@@ -239,9 +264,36 @@ pub(super) fn pick_stage8c_region(
             }
             None
         }
-        _ => {
+        other => {
             let _ = Color32::TRANSPARENT;
-            None
+            super::stage13::pick_stage13_region(
+                other,
+                layer_id,
+                layer_index,
+                y_axis,
+                point,
+                transform,
+            )
+            .or_else(|| {
+                super::stage14::pick_stage14_region(
+                    other,
+                    layer_id,
+                    layer_index,
+                    y_axis,
+                    point,
+                    transform,
+                )
+            })
+            .or_else(|| {
+                super::stage16::pick_stage16_region(
+                    other,
+                    layer_id,
+                    layer_index,
+                    y_axis,
+                    point,
+                    transform,
+                )
+            })
         }
     }
 }

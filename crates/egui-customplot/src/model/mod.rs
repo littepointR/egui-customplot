@@ -6,7 +6,10 @@ mod area;
 mod bars;
 mod bubble_swarm;
 mod color_scale;
+mod confusion;
 mod contour;
+mod curvilinear;
+mod defaults;
 mod distribution;
 mod error_bars;
 mod fast_series;
@@ -21,6 +24,7 @@ mod layer;
 mod line;
 mod line_pattern;
 mod marker;
+mod modern;
 mod multivariate;
 mod patch;
 mod pcolor;
@@ -36,6 +40,9 @@ mod scatter;
 mod series;
 mod shapes;
 mod spy;
+mod stage14_spc_fin;
+mod stage14_stats;
+mod stage15;
 mod stems;
 mod style;
 mod summary;
@@ -49,7 +56,10 @@ pub(crate) use area::AreaSource;
 pub use bars::Bars;
 pub use bubble_swarm::{BinScatter, BubbleChart, Histogram2, SwarmChart};
 pub use color_scale::{ColorMap, ColorScale, ColorScaleError};
+pub use confusion::ConfusionChart;
 pub use contour::{Contours, FilledContours};
+pub use curvilinear::CurvilinearPcolor;
+pub use defaults::{PlotDefaults, plot_defaults, set_plot_defaults};
 pub use distribution::{BoxChart, Raincloud, ViolinPlot};
 pub use error_bars::ErrorBars;
 pub use fast_series::{StreamLine, WaveformLine};
@@ -65,17 +75,18 @@ pub use layer::PlotLayer;
 pub use line::Line;
 pub use line_pattern::LinePattern;
 pub use marker::{MarkerShape, MarkerStyle};
+pub use modern::{GanttChart, RadarChart, SankeyChart, SunburstChart, TreemapChart};
 pub use multivariate::{CategoricalHeatmap, ParallelPlot};
 pub use patch::{Patch, PatchColoring};
 pub use pcolor::{Pcolor, PcolorShading};
 pub use pie_clouds::{BubbleCloud, PieChart, WordCloud};
 pub(crate) use plot3d::summarize_plot3d;
 pub use plot3d::{
-    Bar3D, BoxStyle3D, Bubble3D, Comet3D, ConePlot3D, ConstantPlane3D, Contour3D, DepthMode,
-    Fill3D, Isocaps3D, Isosurface3D, Layer3D, LightSource3D, Line3D, MeshSurface3D,
-    MeshSurfaceStyle, Pie3D, Quiver3D, Ribbon3D, Scatter3D, Stem3D, StreamParticles3D,
-    StreamRibbon3D, StreamTube3D, Streamline3D, Surface3D, SurfaceShading, Swarm3D, TetraMesh3D,
-    Text3D, TriSurf3D, VolumeSlice3D,
+    AlphaShape3D, Bar3D, BoxStyle3D, Bubble3D, Comet3D, ConePlot3D, ConstantPlane3D, Contour3D,
+    DepthMode, Fill3D, Graph3D, Isocaps3D, Isosurface3D, Layer3D, LightSource3D, Line3D,
+    MeshSurface3D, MeshSurfaceStyle, Patch3D, Pie3D, PointCloud3D, Quiver3D, Ribbon3D, Scatter3D,
+    Stem3D, StreamParticles3D, StreamRibbon3D, StreamTube3D, Streamline3D, Surface3D,
+    SurfaceShading, Swarm3D, TetraMesh3D, Text3D, TriSurf3D, VolumeRender3D, VolumeSlice3D,
 };
 pub use polar::{CompassPlot, PolarBubble, PolarHistogram, PolarLayer, PolarLine, PolarScatter};
 pub use polar_region::{PolarRegionAnnotation, PolarRegionKind};
@@ -87,6 +98,9 @@ pub use scatter::{Scatter, SeriesError};
 pub use series::Series;
 pub use shapes::Rectangles;
 pub use spy::Spy;
+pub use stage14_spc_fin::{Candlestick, ControlChart, OhlcBars, Waterfall2D};
+pub use stage14_stats::{Biplot, DendrogramPlot, EcdfPlot, ProbabilityPlot};
+pub use stage15::{CwtPlot, NicholsPlot, NyquistPlot, RootLocus, ZPlanePlot};
 pub use stems::{StemOrientation, Stems};
 pub use style::{PlotStyle, SeriesStyle};
 pub(crate) use style::{ResolvedPlotStyle, ResolvedSeriesStyle, resolve_plot_style};

@@ -206,6 +206,44 @@ pub(crate) fn summarize_plot3d(
                 0,
                 s.data.domain_invalid(scales),
             ),
+            Layer3D::Patch(s) => (
+                s.data.allocation(),
+                s.data.vertices().len(),
+                s.data.triangles().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::AlphaShape(s) => (
+                s.data.allocation(),
+                s.data.mesh().map_or(0, |m| m.vertices().len()),
+                s.data.boundary_faces().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::Graph(s) => (
+                s.data.allocation(),
+                s.data.node_count(),
+                s.data.edges().len(),
+                0,
+                s.data.domain_invalid(scales),
+            ),
+            Layer3D::VolumeRender(s) => (
+                (
+                    s.volume.values().as_ptr() as usize,
+                    s.volume.values().len() * 8,
+                ),
+                s.volume.values().len(),
+                1,
+                s.volume.non_finite(),
+                0,
+            ),
+            Layer3D::PointCloud(s) => (
+                s.data.allocation(),
+                s.data.len(),
+                s.data.len(),
+                s.data.non_finite(),
+                s.data.domain_invalid(scales),
+            ),
         };
         diag.plot3d.input_points += pts;
         diag.plot3d.input_primitives += prims;

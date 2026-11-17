@@ -3,9 +3,9 @@ use std::{collections::HashSet, f64::consts::TAU, sync::Arc};
 use egui::{AsIdSalt, IdSalt, Response, Sense, Ui};
 
 use crate::{
-    AxisScale, BubbleLegend, HoveredPolarBin, HoveredPolarPoint, LegendEntry, NegativeRadiusMode,
-    PlotBounds, PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme, PlotTransform, PolarLayer,
-    PolarRegionAnnotation, PolarState, PolarTransform, ThetaDirection, ThetaZeroLocation,
+    BubbleLegend, HoveredPolarBin, HoveredPolarPoint, LegendEntry, NegativeRadiusMode,
+    PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme, PolarLayer, PolarRegionAnnotation,
+    PolarState, PolarTransform, ThetaDirection, ThetaZeroLocation,
     interaction::{navigate_polar, pick_polar_hover, show_polar_legend},
     layout::{allocate_plot, bubble_legend_size, compute_polar_layout, paint_bubble_legend},
     model::resolve_plot_style,
@@ -48,27 +48,15 @@ pub struct PolarPlotResponse {
 
 impl PolarPlotResponse {
     pub fn into_plot_response(self) -> PlotResponse {
-        let bounds = PlotBounds::new([0.0, 0.0], [1.0, 1.0]).expect("unit bounds");
-        let transform =
-            PlotTransform::with_axes(bounds, self.plot_area, [AxisScale::Linear; 2], [false; 2])
-                .expect("valid polar plot area");
-        PlotResponse {
-            outer_rect: self.outer_rect,
-            response: self.response,
-            transform,
-            right_transform: None,
-            diagnostics: self.diagnostics,
-            view_changed: self.view_changed,
-            axis_ticks: [Vec::new(), Vec::new()],
-            right_axis_ticks: Vec::new(),
-            hovered_point: None,
-            hovered_cell: None,
-            hovered_bar: None,
-            hovered_region: None,
-            hovered_vector: None,
-            hover_text: self.hover_text,
-            legend_entries: self.legend_entries,
-        }
+        PlotResponse::from_embedded(
+            self.outer_rect,
+            self.plot_area,
+            self.response,
+            self.diagnostics,
+            self.view_changed,
+            self.hover_text,
+            self.legend_entries,
+        )
     }
 }
 
@@ -157,11 +145,22 @@ impl PolarPlot {
     }
 
     pub fn show(
-        self,
+        mut self,
         ui: &mut Ui,
         state: &mut PolarState,
         layers: &[PolarLayer<'_>],
     ) -> PolarPlotResponse {
+        let mut scroll_zoom = true;
+        if let Some(defs) = crate::model::plot_defaults(ui.ctx()) {
+            defs.apply_common(
+                &mut self.theme,
+                &mut self.inherited_style,
+                &mut scroll_zoom,
+                &mut self.show_grid,
+                &mut self.show_legend,
+                &mut self.show_hover,
+            );
+        }
         let outer = allocate_plot(ui, self.height);
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
         let (mut diagnostics, present, auto_r_lim) =
@@ -194,6 +193,7 @@ impl PolarPlot {
             &mut response,
             auto_r_lim,
             self.lock_r_zero,
+            scroll_zoom,
             layout.legend_rect,
             layout.pixel_radius,
         );

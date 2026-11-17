@@ -9,6 +9,9 @@ use crate::{
 };
 
 mod hit;
+mod stage13;
+mod stage14;
+mod stage16;
 mod stage8c;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -31,6 +34,15 @@ pub enum RegionKind {
     WordCloudItem,
     BubbleCloudItem,
     GraphEdge,
+    ConfusionCell,
+    CurvilinearCell,
+    DendrogramBranch,
+    OhlcCandle,
+    WaterfallBar,
+    SankeyRibbon,
+    TreemapCell,
+    SunburstSector,
+    GanttTaskBar,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -335,7 +347,7 @@ pub(crate) fn pick_region(
     None
 }
 
-fn base_region(
+pub(super) fn base_region(
     layer_id: IdSalt,
     layer_index: usize,
     y_axis: YAxis,

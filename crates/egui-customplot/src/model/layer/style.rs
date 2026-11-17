@@ -45,6 +45,26 @@ pub(super) fn layer_id(layer: PlotLayer<'_>, index: usize) -> IdSalt {
         PlotLayer::CategoricalHeatmap(s) => s.id_salt,
         PlotLayer::ParallelPlot(s) => s.id_salt,
         PlotLayer::Graph(s) => s.id_salt,
+        PlotLayer::ConfusionChart(s) => s.id_salt,
+        PlotLayer::CurvilinearPcolor(s) => s.id_salt,
+        PlotLayer::ProbabilityPlot(s) => s.id_salt,
+        PlotLayer::EcdfPlot(s) => s.id_salt,
+        PlotLayer::DendrogramPlot(s) => s.id_salt,
+        PlotLayer::Biplot(s) => s.id_salt,
+        PlotLayer::ControlChart(s) => s.id_salt,
+        PlotLayer::Candlestick(s) => s.id_salt,
+        PlotLayer::OhlcBars(s) => s.id_salt,
+        PlotLayer::Waterfall2D(s) => s.id_salt,
+        PlotLayer::ZPlanePlot(s) => s.id_salt,
+        PlotLayer::NyquistPlot(s) => s.id_salt,
+        PlotLayer::NicholsPlot(s) => s.id_salt,
+        PlotLayer::RootLocus(s) => s.id_salt,
+        PlotLayer::CwtPlot(s) => s.id_salt,
+        PlotLayer::RadarChart(s) => s.id_salt,
+        PlotLayer::SankeyChart(s) => s.id_salt,
+        PlotLayer::TreemapChart(s) => s.id_salt,
+        PlotLayer::SunburstChart(s) => s.id_salt,
+        PlotLayer::GanttChart(s) => s.id_salt,
     };
     id_salt.unwrap_or_else(|| {
         if layer.name().is_empty() {
@@ -136,9 +156,11 @@ impl<'a> PlotLayer<'a> {
             Self::Comet(s) => plot.resolve_series(index, s.style),
             Self::BubbleChart(s) => plot.resolve_series(index, s.style),
             Self::SwarmChart(s) => plot.resolve_series(index, s.style),
-            Self::Histogram2(_) | Self::BinScatter(_) | Self::CategoricalHeatmap(_) => {
-                plot.resolve_series(index, SeriesStyle::default())
-            }
+            Self::Histogram2(_)
+            | Self::BinScatter(_)
+            | Self::CategoricalHeatmap(_)
+            | Self::ConfusionChart(_)
+            | Self::CurvilinearPcolor(_) => plot.resolve_series(index, SeriesStyle::default()),
             Self::BoxChart(s) => plot.resolve_series(index, s.style),
             Self::ViolinPlot(s) => plot.resolve_series(index, s.style),
             Self::Raincloud(s) => plot.resolve_series(index, s.style),
@@ -147,6 +169,72 @@ impl<'a> PlotLayer<'a> {
             Self::BubbleCloud(s) => plot.resolve_series(index, s.style),
             Self::ParallelPlot(s) => plot.resolve_series(index, s.style),
             Self::Graph(s) => plot.resolve_series(index, s.style),
+            Self::ProbabilityPlot(s) => plot.resolve_series(index, s.style),
+            Self::EcdfPlot(s) => plot.resolve_series(index, s.style),
+            Self::DendrogramPlot(s) => plot.resolve_series(index, s.style),
+            Self::Biplot(s) => plot.resolve_series(index, s.style),
+            Self::ControlChart(s) => plot.resolve_series(index, s.style),
+            Self::Candlestick(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: Some(s.up_color),
+                    ..Default::default()
+                },
+            ),
+            Self::OhlcBars(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: Some(s.up_color),
+                    ..Default::default()
+                },
+            ),
+            Self::Waterfall2D(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: Some(s.positive_color),
+                    ..Default::default()
+                },
+            ),
+            Self::ZPlanePlot(s) => plot.resolve_series(index, s.style),
+            Self::NyquistPlot(s) => plot.resolve_series(index, s.style),
+            Self::NicholsPlot(s) => plot.resolve_series(index, s.style),
+            Self::RootLocus(s) => plot.resolve_series(index, s.style),
+            Self::CwtPlot(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: Some(s.colors.map().sample(0.5)),
+                    ..Default::default()
+                },
+            ),
+            Self::RadarChart(s) => plot.resolve_series(index, s.style),
+            Self::SankeyChart(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: s.palette.and_then(|p| p.first().copied()),
+                    ..Default::default()
+                },
+            ),
+            Self::TreemapChart(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: s.palette.and_then(|p| p.first().copied()),
+                    ..Default::default()
+                },
+            ),
+            Self::SunburstChart(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: s.palette.and_then(|p| p.first().copied()),
+                    ..Default::default()
+                },
+            ),
+            Self::GanttChart(s) => plot.resolve_series(
+                index,
+                SeriesStyle {
+                    color: s.palette.and_then(|p| p.first().copied()),
+                    ..Default::default()
+                },
+            ),
         }
     }
 }

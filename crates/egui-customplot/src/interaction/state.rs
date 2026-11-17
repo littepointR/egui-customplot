@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use egui::{Context, Id, IdSalt, Pos2, Ui, Vec2, ViewportId};
 
+use super::selection::{ActiveGesture, SelectionCapture};
 use crate::{PlotBounds, PlotTransform};
 
 /// Application-owned view state, one instance per widget. None means auto-fit.
@@ -10,7 +11,10 @@ use crate::{PlotBounds, PlotTransform};
 pub struct PlotState {
     pub(super) bounds: Option<PlotBounds>,
     pub(super) linked_ranges: [Option<[f64; 2]>; 2],
+    pub(super) linked_manual: [bool; 2],
     pub(super) right_y_range: Option<[f64; 2]>,
+    pub(super) active_gesture: Option<ActiveGesture>,
+    pub(super) brushed_bounds: Option<PlotBounds>,
     hidden: HashSet<IdSalt>,
     pub(super) frame: Option<FrameSnapshot>,
     pub(crate) auto_cache: crate::PlotCache,
@@ -21,7 +25,10 @@ impl Default for PlotState {
         Self {
             bounds: None,
             linked_ranges: [None; 2],
+            linked_manual: [false; 2],
             right_y_range: None,
+            active_gesture: None,
+            brushed_bounds: None,
             hidden: HashSet::new(),
             frame: None,
             auto_cache: crate::PlotCache::new(2 * 1024 * 1024),
@@ -38,6 +45,8 @@ pub(super) struct FrameSnapshot {
     pub base: Option<PlotBounds>,
     pub linked_base: [Option<[f64; 2]>; 2],
     pub right_y_base: Option<[f64; 2]>,
+    pub gesture_base: Option<ActiveGesture>,
+    pub brush_base: Option<PlotBounds>,
     pub navigation: Navigation,
     pub view: Option<ViewSnapshot>,
     legend_toggled: HashSet<IdSalt>,
@@ -64,6 +73,7 @@ pub(super) struct Navigation {
     pub drag: Option<Vec2>,
     pub scroll: Option<(f32, Pos2)>,
     pub reset: bool,
+    pub selection: SelectionCapture,
 }
 
 impl PlotState {
@@ -72,12 +82,32 @@ impl PlotState {
     pub fn bounds(&self) -> Option<PlotBounds> {
         self.bounds
     }
-    /// Only resets navigation; legend visibility is a separate state.
+    /// Only resets navigation; legend visibility and brushed data bounds are separate states.
     pub fn reset(&mut self) {
         self.bounds = None;
+        self.linked_ranges = [None; 2];
+        self.linked_manual = [false; 2];
         self.right_y_range = None;
+        self.active_gesture = None;
         self.frame = None;
         self.auto_cache.clear();
+    }
+    pub fn brushed_bounds(&self) -> Option<PlotBounds> {
+        self.brushed_bounds
+    }
+    pub fn set_brushed_bounds(&mut self, bounds: Option<PlotBounds>) {
+        self.brushed_bounds = bounds;
+        self.frame = None;
+    }
+    pub fn clear_brush(&mut self) {
+        self.brushed_bounds = None;
+        self.active_gesture = None;
+        self.frame = None;
+    }
+    pub(crate) fn box_zoom_preview_rect(&self) -> Option<egui::Rect> {
+        self.active_gesture
+            .filter(|g| g.kind == super::selection::GestureKind::BoxZoom)
+            .map(|g| egui::Rect::from_two_pos(g.start, g.current))
     }
     pub fn set_bounds(&mut self, bounds: PlotBounds) {
         self.bounds = Some(bounds);
@@ -98,6 +128,7 @@ impl PlotState {
     /// AxisLink::synchronize call, otherwise the group will link it again.
     pub fn clear_axis_links(&mut self) {
         self.linked_ranges = [None; 2];
+        self.linked_manual = [false; 2];
     }
 
     pub(crate) fn record_view(
@@ -165,6 +196,8 @@ impl PlotState {
                 base: self.bounds,
                 linked_base: self.linked_ranges,
                 right_y_base: self.right_y_range,
+                gesture_base: self.active_gesture,
+                brush_base: self.brushed_bounds,
                 navigation: Navigation::default(),
                 view: None,
                 legend_toggled: HashSet::new(),

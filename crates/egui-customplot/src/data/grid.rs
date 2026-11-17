@@ -173,7 +173,9 @@ impl GridData {
             return 0;
         }
         let edges = if axis == 0 { &self.x } else { &self.y };
-        edges.partition_point(|v| *v <= 0.0).min(edges.len() - 1)
+        edges
+            .partition_point(|v| scale.forward(*v).is_none())
+            .min(edges.len() - 1)
     }
     /// A cell crossing the nonpositive log domain is omitted as a whole.
     pub(crate) fn extent(&self, scales: [AxisScale; 2]) -> Option<([f64; 2], [f64; 2])> {

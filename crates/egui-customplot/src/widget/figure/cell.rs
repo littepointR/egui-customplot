@@ -175,4 +175,89 @@ impl<'a> FigureCell<'a> {
         self.geo_plot(plot)
             .show_with_tiles(self.ui, state, layers, tiles)
     }
+
+    /// Inherit figure defaults and size the [`crate::SkyPlot`] to this cell.
+    pub fn sky_plot<'s>(&self, mut plot: crate::SkyPlot<'s>) -> crate::SkyPlot<'s> {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_skyplot<'s>(
+        &mut self,
+        plot: crate::SkyPlot<'s>,
+        state: &mut crate::SkyPlotState,
+    ) -> crate::SkyPlotResponse {
+        self.sky_plot(plot).show(self.ui, state)
+    }
+
+    /// Inherit figure defaults and size the [`crate::Clustergram`] to this cell.
+    pub fn clustergram<'s>(&self, mut plot: crate::Clustergram<'s>) -> crate::Clustergram<'s> {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_clustergram<'s>(
+        &mut self,
+        plot: crate::Clustergram<'s>,
+        state: &mut crate::ClustergramState,
+    ) -> crate::ClustergramResponse {
+        self.clustergram(plot).show(self.ui, state)
+    }
+
+    /// Inherit figure defaults and size the [`crate::SmithPlot`] to this cell.
+    pub fn smith_plot<'s>(&self, mut plot: crate::SmithPlot<'s>) -> crate::SmithPlot<'s> {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_smithplot<'s>(
+        &mut self,
+        plot: crate::SmithPlot<'s>,
+        state: &mut crate::SmithPlotState,
+    ) -> crate::SmithPlotResponse {
+        self.smith_plot(plot).show(self.ui, state)
+    }
+
+    /// Inherit figure defaults and size the [`crate::BodePlot`] to this cell.
+    pub fn bode_plot<'s>(&self, mut plot: crate::BodePlot<'s>) -> crate::BodePlot<'s> {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_bode<'s>(
+        &mut self,
+        plot: crate::BodePlot<'s>,
+        state: &mut crate::BodePlotState,
+    ) -> crate::BodePlotResponse {
+        self.bode_plot(plot).show(self.ui, state)
+    }
+
+    /// Inherit figure defaults and size the [`crate::GeoGlobePlot`] to this cell.
+    pub fn geo_globe<'s>(&self, mut plot: crate::GeoGlobePlot<'s>) -> crate::GeoGlobePlot<'s> {
+        plot.inherited_style = plot.inherited_style.over(self.style);
+        if plot.theme.is_none() {
+            plot.theme = self.theme.cloned();
+        }
+        plot.height(self.rect.height())
+    }
+
+    pub fn show_geoglobe<'s>(
+        &mut self,
+        plot: crate::GeoGlobePlot<'s>,
+        state: &mut crate::GeoGlobeState,
+    ) -> crate::GeoGlobeResponse {
+        self.geo_globe(plot).show(self.ui, state)
+    }
 }

@@ -116,7 +116,10 @@ pub(crate) fn try_paint_waveform_wgpu(
     pattern: LinePattern,
     diagnostics: &mut PlotDiagnostics,
 ) -> bool {
-    if line.backend == RenderBackend::Painter || super::is_capturing_snapshot(ui_ctx) {
+    if line.backend == RenderBackend::Painter
+        || super::is_capturing_snapshot(ui_ctx)
+        || transform.scales().iter().any(|s| s.is_probability())
+    {
         return false;
     }
     if line.backend == RenderBackend::Auto && line.data.len() < AUTO_WGPU_WAVEFORM_MIN_LEN {
@@ -164,6 +167,7 @@ pub(crate) fn try_paint_scatter_wgpu(
     if backend == RenderBackend::Painter
         || sampling == MarkerSampling::PixelGrid
         || super::is_capturing_snapshot(ui_ctx)
+        || transform.scales().iter().any(|s| s.is_probability())
     {
         return false;
     }

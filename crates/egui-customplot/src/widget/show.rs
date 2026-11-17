@@ -7,7 +7,10 @@ use crate::{
     interaction::{navigate, navigate_secondary},
     layout::{allocate_plot, data_rect, legend_rect, show_legend},
     model::{resolve_plot_style, summarize_series},
-    render::{AxesStyle, paint_annotations, paint_axes, paint_right_axis, paint_series},
+    render::{
+        AxesStyle, paint_annotations, paint_axes, paint_right_axis, paint_selection_overlays,
+        paint_series,
+    },
 };
 
 impl Plot {
@@ -91,12 +94,29 @@ impl Plot {
     }
 
     fn show_impl(
-        self,
+        mut self,
         ui: &mut Ui,
         state: &mut PlotState,
         series: &[PlotLayer<'_>],
         mut cache: Option<&mut PlotCache>,
     ) -> PlotResponse {
+        if let Some(defs) = crate::model::plot_defaults(ui.ctx()) {
+            let mut scroll_zoom = self.navigation.allow_scroll_zoom;
+            defs.apply_common(
+                &mut self.theme,
+                &mut self.inherited_style,
+                &mut scroll_zoom,
+                &mut self.show_grid,
+                &mut self.show_legend,
+                &mut self.show_hover,
+            );
+            if self.navigation.allow_drag {
+                self.navigation.allow_scroll_zoom = scroll_zoom;
+                self.navigation.allow_box_zoom =
+                    defs.resolve_box_zoom(self.navigation.allow_box_zoom);
+            }
+            self.crosshair = defs.resolve_crosshair(self.crosshair);
+        }
         let outer = allocate_plot(ui, self.height);
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
         let rect = data_rect(outer, &self.axes, &self.title, self.right_y_axis.as_ref());
@@ -125,7 +145,10 @@ impl Plot {
             .show_legend
             .then(|| legend_rect(rect, series))
             .flatten();
-        let sense = if self.navigation.allow_drag {
+        let sense = if self.navigation.allow_drag
+            || self.navigation.allow_box_zoom
+            || self.navigation.allow_brush
+        {
             Sense::click_and_drag()
         } else {
             Sense::click()
@@ -225,6 +248,12 @@ impl Plot {
                 Some(auto_cache),
             );
             paint_annotations(ui, &self.annotations, transform, &style, &mut diagnostics);
+            paint_selection_overlays(
+                ui,
+                navigation.brushed_bounds,
+                state.box_zoom_preview_rect(),
+                transform,
+            );
             if let Some(legend) = &self.bubble_legend {
                 let samples = legend.resolved_samples();
                 if !samples.is_empty() {
@@ -296,6 +325,8 @@ impl Plot {
             hovered_vector,
             hover_text,
             legend_entries,
+            brushed_bounds: navigation.brushed_bounds,
+            brush_finished: navigation.brush_finished,
         }
     }
 }

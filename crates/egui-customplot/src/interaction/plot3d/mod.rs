@@ -1,5 +1,7 @@
 mod hover;
 mod legend;
+mod pick_geom;
+mod stage13_hover;
 mod surface_hover;
 mod volume_hover;
 
@@ -11,7 +13,7 @@ pub(crate) use hover::pick_plot3d_hover;
 pub use hover::{Hovered3DBar, Hovered3DPoint, Hovered3DRegion};
 pub(crate) use legend::show_plot3d_legend;
 
-use crate::{Bounds3D, Camera3D};
+use crate::{Bounds3D, Camera3D, Projection3D};
 
 #[derive(Clone, Debug)]
 struct Plot3DFrameSnapshot {
@@ -35,6 +37,7 @@ pub struct Plot3DState {
     bounds_override: Option<Bounds3D>,
     hidden: HashSet<IdSalt>,
     frame: Option<Plot3DFrameSnapshot>,
+    pub(crate) zbuffer_cache: Option<crate::render::ZBufferCache>,
 }
 
 impl Plot3DState {
@@ -49,6 +52,7 @@ impl Plot3DState {
             ..camera
         });
         self.frame = None;
+        self.zbuffer_cache = None;
     }
     pub fn bounds(&self) -> Option<Bounds3D> {
         self.bounds_override
@@ -56,11 +60,13 @@ impl Plot3DState {
     pub fn set_bounds(&mut self, bounds: Bounds3D) {
         self.bounds_override = Some(bounds);
         self.frame = None;
+        self.zbuffer_cache = None;
     }
     pub fn reset(&mut self) {
         self.camera_override = None;
         self.bounds_override = None;
         self.frame = None;
+        self.zbuffer_cache = None;
     }
     pub fn layer_visible(&self, id: IdSalt) -> bool {
         !self.hidden.contains(&id)
@@ -71,12 +77,24 @@ impl Plot3DState {
         } else {
             self.hidden.insert(id);
         }
+        self.zbuffer_cache = None;
     }
     pub(crate) fn retain_layers(&mut self, present: &HashSet<IdSalt>) {
         self.hidden.retain(|id| present.contains(id));
     }
 
-    pub(crate) fn begin_frame(&mut self, ui: &Ui, id: Id, default_camera: Camera3D) {
+    pub(crate) fn begin_frame(
+        &mut self,
+        ui: &Ui,
+        id: Id,
+        default_camera: Camera3D,
+        forced_proj: Option<Projection3D>,
+    ) {
+        if let Some(proj) = forced_proj
+            && let Some(cam) = &mut self.camera_override
+        {
+            cam.projection = proj;
+        }
         let frame_nr = ui.ctx().cumulative_frame_nr();
         let viewport = ui.ctx().viewport_id();
         if !self.frame.as_ref().is_some_and(|f| {
@@ -95,6 +113,10 @@ impl Plot3DState {
                 reset: false,
                 legend_toggled: HashSet::new(),
             });
+        } else if let Some(proj) = forced_proj
+            && let Some(frame) = &mut self.frame
+        {
+            frame.base_camera.projection = proj;
         }
     }
 
@@ -121,12 +143,14 @@ pub(crate) struct Plot3DNavigation {
 }
 
 /// Multi-pass idempotent 3D orbit / pan / wheel zoom / Home-reset input arbitration.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn navigate_plot3d(
     ui: &Ui,
     state: &mut Plot3DState,
     response: &mut Response,
     auto_bounds: Bounds3D,
     default_camera: Camera3D,
+    forced_proj: Option<Projection3D>,
     allow_scroll_zoom: bool,
     legend_rect: Option<Rect>,
 ) -> Plot3DNavigation {
@@ -201,6 +225,15 @@ pub(crate) fn navigate_plot3d(
             state.camera_override = Some(camera);
             changed = true;
         }
+    }
+    if let Some(proj) = forced_proj {
+        camera.projection = proj;
+        if let Some(cam) = &mut state.camera_override {
+            cam.projection = proj;
+        }
+    }
+    if changed {
+        state.zbuffer_cache = None;
     }
     Plot3DNavigation {
         camera,

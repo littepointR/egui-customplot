@@ -69,6 +69,9 @@ pub(crate) fn pick_hover(
         PlotLayer::Feather(feather) => {
             Some(HoveredVector::from_quiver_data(p, feather.data.quiver()))
         }
+        PlotLayer::Biplot(bp) if p.point_index < bp.data.n_vars() => Some(
+            HoveredVector::from_quiver_data(p, bp.data.loadings_quiver()),
+        ),
         _ => None,
     });
     let (cell, bar, region) = if point.is_some() {

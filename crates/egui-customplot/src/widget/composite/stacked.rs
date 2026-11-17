@@ -17,6 +17,7 @@ pub struct StackedPlot<'a> {
     row_height: f32,
     x_label: String,
     title: String,
+    allow_scroll_zoom: bool,
 }
 
 impl<'a> StackedPlot<'a> {
@@ -27,6 +28,7 @@ impl<'a> StackedPlot<'a> {
             row_height: 150.0,
             x_label: String::new(),
             title: String::new(),
+            allow_scroll_zoom: false,
         }
     }
 
@@ -44,6 +46,11 @@ impl<'a> StackedPlot<'a> {
 
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = title.into();
+        self
+    }
+
+    pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
+        self.allow_scroll_zoom = allow;
         self
     }
 
@@ -82,6 +89,7 @@ impl<'a> StackedPlot<'a> {
                 let plot = Plot::new((self.id_salt, idx))
                     .x_axis(x_axis)
                     .y_axis(Axis::new().label(*y_label))
+                    .allow_scroll_zoom(self.allow_scroll_zoom)
                     .legend(layers.len() > 1);
                 cell.show_layers(plot, &mut states[idx], layers)
             })?;

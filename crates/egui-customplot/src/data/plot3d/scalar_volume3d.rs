@@ -12,6 +12,7 @@ pub struct ScalarVolume3D {
     bounds: Bounds3D,
     value_range: Option<[f64; 2]>,
     non_finite: usize,
+    uniform: bool,
 }
 
 impl ScalarVolume3D {
@@ -56,6 +57,7 @@ impl ScalarVolume3D {
                 non_finite += 1;
             }
         }
+        let uniform = is_uniform_axis(&x) && is_uniform_axis(&y) && is_uniform_axis(&z);
         Ok(Self {
             x,
             y,
@@ -64,6 +66,7 @@ impl ScalarVolume3D {
             bounds,
             value_range: (lo <= hi).then_some([lo, hi]),
             non_finite,
+            uniform,
         })
     }
 
@@ -193,6 +196,94 @@ impl ScalarVolume3D {
             + std::mem::size_of_val(self.y.as_ref())
             + std::mem::size_of_val(self.z.as_ref())
             + std::mem::size_of_val(self.values.as_ref())
+    }
+
+    /// O(1) uniform-grid trilinear sampling with zero-extra-fetch analytic gradient.
+    #[inline]
+    pub(crate) fn sample_and_grad_fast(
+        &self,
+        p: Point3D,
+        want_grad: bool,
+    ) -> Option<(f64, [f64; 3])> {
+        let (ix, tx, dx) = axis_pos_fast(&self.x, self.uniform, p[0])?;
+        let (iy, ty, dy) = axis_pos_fast(&self.y, self.uniform, p[1])?;
+        let (iz, tz, dz) = axis_pos_fast(&self.z, self.uniform, p[2])?;
+        let (nx, ny) = (self.x.len(), self.y.len());
+        let b0 = (iz * ny + iy) * nx + ix;
+        let b1 = (iz * ny + iy + 1) * nx + ix;
+        let b2 = ((iz + 1) * ny + iy) * nx + ix;
+        let b3 = ((iz + 1) * ny + iy + 1) * nx + ix;
+        let (c000, c100) = (self.values[b0], self.values[b0 + 1]);
+        let (c010, c110) = (self.values[b1], self.values[b1 + 1]);
+        let (c001, c101) = (self.values[b2], self.values[b2 + 1]);
+        let (c011, c111) = (self.values[b3], self.values[b3 + 1]);
+        if !c000.is_finite()
+            || !c100.is_finite()
+            || !c010.is_finite()
+            || !c110.is_finite()
+            || !c001.is_finite()
+            || !c101.is_finite()
+            || !c011.is_finite()
+            || !c111.is_finite()
+        {
+            return None;
+        }
+        let c00 = c000 + tx * (c100 - c000);
+        let c10 = c010 + tx * (c110 - c010);
+        let c01 = c001 + tx * (c101 - c001);
+        let c11 = c011 + tx * (c111 - c011);
+        let c0 = c00 + ty * (c10 - c00);
+        let c1 = c01 + ty * (c11 - c01);
+        let val = c0 + tz * (c1 - c0);
+        if !want_grad {
+            return Some((val, [0.0; 3]));
+        }
+        let omt_x = 1.0 - tx;
+        let omt_y = 1.0 - ty;
+        let omt_z = 1.0 - tz;
+        let gx = (((c100 - c000) * omt_y + (c110 - c010) * ty) * omt_z
+            + ((c101 - c001) * omt_y + (c111 - c011) * ty) * tz)
+            / dx;
+        let gy = (((c010 - c000) * omt_x + (c110 - c100) * tx) * omt_z
+            + ((c011 - c001) * omt_x + (c111 - c101) * tx) * tz)
+            / dy;
+        let gz = (((c001 - c000) * omt_x + (c101 - c100) * tx) * omt_y
+            + ((c011 - c010) * omt_x + (c111 - c110) * tx) * ty)
+            / dz;
+        Some((val, [gx, gy, gz]))
+    }
+}
+
+fn is_uniform_axis(nodes: &[f64]) -> bool {
+    if nodes.len() <= 2 {
+        return true;
+    }
+    let span = nodes[nodes.len() - 1] - nodes[0];
+    let step = span / (nodes.len() - 1) as f64;
+    let tol = span.abs() * 1e-6 + 1e-12;
+    nodes
+        .windows(2)
+        .all(|w| ((w[1] - w[0]) - step).abs() <= tol)
+}
+
+#[inline]
+fn axis_pos_fast(nodes: &[f64], uniform: bool, val: f64) -> Option<(usize, f64, f64)> {
+    let last = nodes.len() - 1;
+    if !val.is_finite() || val < nodes[0] - 1e-12 || val > nodes[last] + 1e-12 {
+        return None;
+    }
+    if uniform {
+        let v = val.clamp(nodes[0], nodes[last]);
+        let span = (nodes[last] - nodes[0]).max(1e-18);
+        let step = span / last as f64;
+        let pos = ((v - nodes[0]) / step).clamp(0.0, last as f64);
+        let idx = (pos.floor() as usize).min(last - 1);
+        let t = (pos - idx as f64).clamp(0.0, 1.0);
+        Some((idx, t, step))
+    } else {
+        let (idx, t) = cell_pos(nodes, val)?;
+        let den = (nodes[idx + 1] - nodes[idx]).max(1e-18);
+        Some((idx, t, den))
     }
 }
 

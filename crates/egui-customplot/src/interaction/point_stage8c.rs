@@ -1,9 +1,17 @@
 use egui::{Color32, Pos2};
 
 use crate::{
-    PlotDiagnostics, PlotLayer, PlotPoint, PlotTransform, axis::SeriesTransforms,
+    BarOrientation, PlotDiagnostics, PlotLayer, PlotPoint, PlotTransform, axis::SeriesTransforms,
     model::ResolvedSeriesStyle,
 };
+
+#[inline]
+fn orient(o: BarOrientation, pos: f64, val: f64) -> PlotPoint {
+    match o {
+        BarOrientation::Vertical => [pos, val],
+        BarOrientation::Horizontal => [val, pos],
+    }
+}
 
 pub(super) fn pick_stage8c_point(
     layer: PlotLayer<'_>,
@@ -44,7 +52,7 @@ pub(super) fn pick_stage8c_point(
                 consider_point(
                     &mut best,
                     idx,
-                    [box_stat.position, box_stat.median],
+                    orient(b.orientation, box_stat.position, box_stat.median),
                     transform,
                     position,
                     radius,
@@ -55,7 +63,7 @@ pub(super) fn pick_stage8c_point(
                         consider_point(
                             &mut best,
                             idx,
-                            [box_stat.position, out],
+                            orient(b.orientation, box_stat.position, out),
                             transform,
                             position,
                             radius,
@@ -71,7 +79,14 @@ pub(super) fn pick_stage8c_point(
             let mut idx = 0usize;
             for entry in rain.data.entries() {
                 for (&x, &y) in entry.drop_x.iter().zip(entry.drop_y.iter()) {
-                    consider_point(&mut best, idx, [x, y], transform, position, radius);
+                    consider_point(
+                        &mut best,
+                        idx,
+                        orient(rain.orientation, x, y),
+                        transform,
+                        position,
+                        radius,
+                    );
                     idx += 1;
                 }
             }

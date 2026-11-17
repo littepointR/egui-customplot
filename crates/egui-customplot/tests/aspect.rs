@@ -24,6 +24,7 @@ fn equal_aspect_uses_data_units_or_log_decades_and_preserves_explicit_state() {
         let q = out.transform.position_from_point(match scale {
             AxisScale::Linear => [11.0; 2],
             AxisScale::Log10 => [100.0; 2],
+            AxisScale::Probit | AxisScale::Weibull => unreachable!(),
         });
         assert!(((p.x - q.x).abs() - (p.y - q.y).abs()).abs() < 0.001);
         let fixed = state.bounds().unwrap();

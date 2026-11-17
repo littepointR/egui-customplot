@@ -2,7 +2,7 @@ use std::{collections::HashSet, sync::Arc};
 
 use crate::{AxisScale, PlotPoint, SpyData};
 
-mod edges;
+pub(crate) mod edges;
 mod layout;
 mod tree;
 
@@ -223,6 +223,12 @@ impl GraphData {
     }
     pub fn is_directed(&self) -> bool {
         self.directed
+    }
+    pub fn layout_3d(
+        &self,
+        layout: crate::GraphLayout3D,
+    ) -> Result<crate::Graph3DData, GraphError> {
+        crate::Graph3DData::from_graph(self, layout)
     }
     pub fn edges(&self) -> &[GraphEdge] {
         &self.edges

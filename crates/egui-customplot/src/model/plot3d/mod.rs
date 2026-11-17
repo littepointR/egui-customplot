@@ -1,7 +1,10 @@
 mod bars_vecs_polys;
+mod from_impls;
 mod lines_scatter;
 mod mesh_tri;
 mod scene_opts;
+mod stage13;
+mod stage16;
 mod summary;
 mod surfaces;
 mod volume_flow;
@@ -12,6 +15,8 @@ pub use bars_vecs_polys::{Bar3D, Fill3D, Pie3D, Quiver3D, Stem3D};
 pub use lines_scatter::{Bubble3D, Comet3D, Line3D, Scatter3D, Swarm3D};
 pub use mesh_tri::{Contour3D, MeshSurface3D, MeshSurfaceStyle, TriSurf3D};
 pub use scene_opts::{BoxStyle3D, ConstantPlane3D, DepthMode, Text3D};
+pub use stage13::{AlphaShape3D, Graph3D, Patch3D};
+pub use stage16::{PointCloud3D, VolumeRender3D};
 pub(crate) use summary::summarize_plot3d;
 pub use surfaces::{LightSource3D, Ribbon3D, Surface3D, SurfaceShading};
 pub use volume_flow::{
@@ -52,127 +57,11 @@ pub enum Layer3D<'a> {
     StreamRibbon(StreamRibbon3D<'a>),
     StreamTube(StreamTube3D<'a>),
     ConePlot(ConePlot3D<'a>),
-}
-
-impl<'a> From<Line3D<'a>> for Layer3D<'a> {
-    fn from(v: Line3D<'a>) -> Self {
-        Self::Line(v)
-    }
-}
-impl<'a> From<Scatter3D<'a>> for Layer3D<'a> {
-    fn from(v: Scatter3D<'a>) -> Self {
-        Self::Scatter(v)
-    }
-}
-impl<'a> From<Bubble3D<'a>> for Layer3D<'a> {
-    fn from(v: Bubble3D<'a>) -> Self {
-        Self::Bubble(v)
-    }
-}
-impl<'a> From<Swarm3D<'a>> for Layer3D<'a> {
-    fn from(v: Swarm3D<'a>) -> Self {
-        Self::Swarm(v)
-    }
-}
-impl<'a> From<Comet3D<'a>> for Layer3D<'a> {
-    fn from(v: Comet3D<'a>) -> Self {
-        Self::Comet(v)
-    }
-}
-impl<'a> From<Bar3D<'a>> for Layer3D<'a> {
-    fn from(v: Bar3D<'a>) -> Self {
-        Self::Bar(v)
-    }
-}
-impl<'a> From<Stem3D<'a>> for Layer3D<'a> {
-    fn from(v: Stem3D<'a>) -> Self {
-        Self::Stem(v)
-    }
-}
-impl<'a> From<Pie3D<'a>> for Layer3D<'a> {
-    fn from(v: Pie3D<'a>) -> Self {
-        Self::Pie(v)
-    }
-}
-impl<'a> From<Quiver3D<'a>> for Layer3D<'a> {
-    fn from(v: Quiver3D<'a>) -> Self {
-        Self::Quiver(v)
-    }
-}
-impl<'a> From<Fill3D<'a>> for Layer3D<'a> {
-    fn from(v: Fill3D<'a>) -> Self {
-        Self::Fill(v)
-    }
-}
-impl<'a> From<Surface3D<'a>> for Layer3D<'a> {
-    fn from(v: Surface3D<'a>) -> Self {
-        Self::Surface(v)
-    }
-}
-impl<'a> From<MeshSurface3D<'a>> for Layer3D<'a> {
-    fn from(v: MeshSurface3D<'a>) -> Self {
-        Self::MeshSurface(v)
-    }
-}
-impl<'a> From<Contour3D<'a>> for Layer3D<'a> {
-    fn from(v: Contour3D<'a>) -> Self {
-        Self::Contour(v)
-    }
-}
-impl<'a> From<Ribbon3D<'a>> for Layer3D<'a> {
-    fn from(v: Ribbon3D<'a>) -> Self {
-        Self::Ribbon(v)
-    }
-}
-impl<'a> From<TriSurf3D<'a>> for Layer3D<'a> {
-    fn from(v: TriSurf3D<'a>) -> Self {
-        Self::TriSurf(v)
-    }
-}
-impl<'a> From<VolumeSlice3D<'a>> for Layer3D<'a> {
-    fn from(v: VolumeSlice3D<'a>) -> Self {
-        Self::VolumeSlice(v)
-    }
-}
-impl<'a> From<Isosurface3D<'a>> for Layer3D<'a> {
-    fn from(v: Isosurface3D<'a>) -> Self {
-        Self::Isosurface(v)
-    }
-}
-impl<'a> From<Isocaps3D<'a>> for Layer3D<'a> {
-    fn from(v: Isocaps3D<'a>) -> Self {
-        Self::Isocaps(v)
-    }
-}
-impl<'a> From<TetraMesh3D<'a>> for Layer3D<'a> {
-    fn from(v: TetraMesh3D<'a>) -> Self {
-        Self::TetraMesh(v)
-    }
-}
-impl<'a> From<Streamline3D<'a>> for Layer3D<'a> {
-    fn from(v: Streamline3D<'a>) -> Self {
-        Self::Streamline(v)
-    }
-}
-impl<'a> From<StreamParticles3D<'a>> for Layer3D<'a> {
-    fn from(v: StreamParticles3D<'a>) -> Self {
-        Self::StreamParticles(v)
-    }
-}
-impl<'a> From<StreamRibbon3D<'a>> for Layer3D<'a> {
-    fn from(v: StreamRibbon3D<'a>) -> Self {
-        Self::StreamRibbon(v)
-    }
-}
-impl<'a> From<StreamTube3D<'a>> for Layer3D<'a> {
-    fn from(v: StreamTube3D<'a>) -> Self {
-        Self::StreamTube(v)
-    }
-}
-impl<'a> From<ConePlot3D<'a>> for Layer3D<'a> {
-    fn from(v: ConePlot3D<'a>) -> Self {
-        Self::ConePlot(v)
-    }
+    Patch(Patch3D<'a>),
+    AlphaShape(AlphaShape3D<'a>),
+    Graph(Graph3D<'a>),
+    VolumeRender(VolumeRender3D<'a>),
+    PointCloud(PointCloud3D<'a>),
 }
 
 impl<'a> Layer3D<'a> {
@@ -214,6 +103,11 @@ impl<'a> Layer3D<'a> {
             Self::StreamRibbon(s) => s.name,
             Self::StreamTube(s) => s.name,
             Self::ConePlot(s) => s.name,
+            Self::Patch(s) => s.name,
+            Self::AlphaShape(s) => s.name,
+            Self::Graph(s) => s.name,
+            Self::VolumeRender(s) => s.name,
+            Self::PointCloud(s) => s.name,
         }
     }
 
@@ -243,6 +137,11 @@ impl<'a> Layer3D<'a> {
             Self::StreamRibbon(s) => s.id_salt,
             Self::StreamTube(s) => s.id_salt,
             Self::ConePlot(s) => s.id_salt,
+            Self::Patch(s) => s.id_salt,
+            Self::AlphaShape(s) => s.id_salt,
+            Self::Graph(s) => s.id_salt,
+            Self::VolumeRender(s) => s.id_salt,
+            Self::PointCloud(s) => s.id_salt,
         };
         custom.unwrap_or_else(|| IdSalt::new(("layer3d", self.name(), index)))
     }
@@ -285,6 +184,11 @@ impl<'a> Layer3D<'a> {
             Self::StreamRibbon(s) => s.style,
             Self::StreamTube(s) => s.style,
             Self::ConePlot(s) => s.style,
+            Self::Patch(s) => s.style,
+            Self::AlphaShape(s) => s.style,
+            Self::Graph(s) => s.style,
+            Self::VolumeRender(_) => crate::SeriesStyle::default(),
+            Self::PointCloud(s) => s.style,
         };
         if let Some(c) = st.color {
             st.color = Some(c);
@@ -354,6 +258,21 @@ impl<'a> Layer3D<'a> {
             Self::StreamRibbon(s) => s.data.extent(scales),
             Self::StreamTube(s) => s.data.extent(scales),
             Self::ConePlot(s) => s.data.extent(scales),
+            Self::Patch(s) => s.data.extent(scales),
+            Self::AlphaShape(s) => s.data.extent(scales),
+            Self::Graph(s) => s.data.extent(scales),
+            Self::VolumeRender(s) => {
+                let lo = s.volume.bounds().min();
+                let hi = s.volume.bounds().max();
+                if (0..3).all(|i| {
+                    scales[i].forward(lo[i]).is_some() && scales[i].forward(hi[i]).is_some()
+                }) {
+                    Some([lo, hi])
+                } else {
+                    None
+                }
+            }
+            Self::PointCloud(s) => s.data.extent(scales),
         }
     }
 }

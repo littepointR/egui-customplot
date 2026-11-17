@@ -12,6 +12,7 @@ use crate::{AxisScale, PlotBounds, PlotState};
 pub struct AxisLink {
     axes: [bool; 2],
     manual: [Option<[f64; 2]>; 2],
+    was_reset: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -45,6 +46,7 @@ impl AxisLink {
         Self {
             axes,
             manual: [None; 2],
+            was_reset: false,
         }
     }
 
@@ -55,6 +57,7 @@ impl AxisLink {
     /// Set shared manual ranges on enabled axes. Domain compatibility is checked
     /// transactionally against every member at the next synchronize call.
     pub fn set_bounds(&mut self, bounds: PlotBounds) {
+        self.was_reset = false;
         for axis in 0..2 {
             if self.axes[axis] {
                 self.manual[axis] = Some([bounds.min()[axis], bounds.max()[axis]]);
@@ -66,6 +69,7 @@ impl AxisLink {
     /// linked plot with Home/double-click has the same group-wide effect.
     pub fn reset(&mut self) {
         self.manual = [None; 2];
+        self.was_reset = true;
     }
 
     /// Validate all members before mutation, then propagate ranges. Without an
@@ -105,7 +109,19 @@ impl AxisLink {
             }
         }
         let scales = scales.expect("nonempty members");
-        let mut manual = self.manual;
+        let mut manual = std::array::from_fn(|axis| {
+            if !self.axes[axis] || self.was_reset {
+                None
+            } else {
+                self.manual[axis].or_else(|| {
+                    states.iter().find_map(|s| {
+                        s.linked_manual[axis]
+                            .then_some(s.linked_ranges[axis])
+                            .flatten()
+                    })
+                })
+            }
+        });
         for (member, state) in states.iter().enumerate() {
             let view = state.frame.as_ref().unwrap().view.unwrap();
             for (axis, enabled) in self.axes.into_iter().enumerate() {
@@ -156,12 +172,17 @@ impl AxisLink {
             report.ranges[axis] = Some(range);
         }
         self.manual = manual;
+        self.was_reset = false;
         for state in states.iter_mut() {
             let mut changed = false;
             for axis in 0..2 {
-                if self.axes[axis] && state.linked_ranges[axis] != report.ranges[axis] {
-                    state.linked_ranges[axis] = report.ranges[axis];
-                    changed = true;
+                if self.axes[axis] {
+                    let is_manual = manual[axis].is_some();
+                    if state.linked_ranges[axis] != report.ranges[axis] {
+                        state.linked_ranges[axis] = report.ranges[axis];
+                        changed = true;
+                    }
+                    state.linked_manual[axis] = is_manual;
                 }
             }
             report.changed_plots += usize::from(changed);

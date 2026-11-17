@@ -20,6 +20,7 @@ pub struct Axis {
     pub(crate) visible: bool,
     pub(crate) tick_labels_visible: bool,
     max_ticks: usize,
+    time_mode: Option<super::TimeAxisMode>,
     explicit: Option<Vec<(f64, Option<String>)>>,
     formatter: Option<Arc<dyn Fn(f64) -> String + Send + Sync>>,
 }
@@ -33,6 +34,7 @@ impl fmt::Debug for Axis {
             .field("visible", &self.visible)
             .field("tick_labels_visible", &self.tick_labels_visible)
             .field("max_ticks", &self.max_ticks)
+            .field("time_mode", &self.time_mode)
             .finish_non_exhaustive()
     }
 }
@@ -47,6 +49,7 @@ impl Default for Axis {
             visible: true,
             tick_labels_visible: true,
             max_ticks: 8,
+            time_mode: None,
             explicit: None,
             formatter: None,
         }
@@ -117,6 +120,28 @@ impl Axis {
         self.explicit_ticks(pairs)
     }
 
+    /// Formats linear axis values as UTC Unix timestamps (seconds since 1970-01-01).
+    pub fn datetime(mut self) -> Self {
+        self.time_mode = Some(super::TimeAxisMode::UtcDateTime { offset_seconds: 0 });
+        self
+    }
+
+    /// Formats linear axis values as Unix timestamps shifted by a fixed timezone offset.
+    pub fn datetime_with_offset(mut self, offset_seconds: i32) -> Self {
+        self.time_mode = Some(super::TimeAxisMode::UtcDateTime { offset_seconds });
+        self
+    }
+
+    /// Formats linear axis values as elapsed durations in seconds (`HH:MM:SS` / days / ms).
+    pub fn duration(mut self) -> Self {
+        self.time_mode = Some(super::TimeAxisMode::Duration);
+        self
+    }
+
+    pub fn time_mode(&self) -> Option<super::TimeAxisMode> {
+        self.time_mode
+    }
+
     pub fn ticks(&self, range: [f64; 2], pixels: f32) -> Vec<AxisTick> {
         let [min, max] = range;
         if !self.visible
@@ -144,6 +169,30 @@ impl Axis {
                     },
                 })
                 .collect();
+        }
+        if self.scale == AxisScale::Linear
+            && let Some(mode) = self.time_mode
+        {
+            let time_count = ((pixels / 96.0) as usize).clamp(2, self.max_ticks);
+            let ticks = super::time::generate_time_ticks(
+                mode,
+                range,
+                time_count,
+                self.tick_labels_visible,
+                self.formatter.as_deref(),
+            );
+            if !ticks.is_empty() {
+                return ticks;
+            }
+        }
+        if self.scale.is_probability() {
+            return super::probability::generate_probability_ticks(
+                self.scale,
+                range,
+                pixels,
+                self.tick_labels_visible,
+                self.formatter.as_deref(),
+            );
         }
         let count = ((pixels / 80.0) as usize).clamp(2, self.max_ticks);
         let log_span = if self.scale == AxisScale::Log10 {

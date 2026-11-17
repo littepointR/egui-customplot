@@ -13,6 +13,7 @@ pub struct PlotYy<'a> {
     left_axis: Axis,
     right_axis: Axis,
     show_legend: bool,
+    allow_scroll_zoom: bool,
 }
 
 impl<'a> PlotYy<'a> {
@@ -27,6 +28,7 @@ impl<'a> PlotYy<'a> {
             left_axis: Axis::new(),
             right_axis: Axis::new(),
             show_legend: false,
+            allow_scroll_zoom: false,
         }
     }
 
@@ -70,6 +72,11 @@ impl<'a> PlotYy<'a> {
         self
     }
 
+    pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
+        self.allow_scroll_zoom = allow;
+        self
+    }
+
     pub fn show(self, ui: &mut Ui, state: &mut PlotState) -> PlotResponse {
         let mut layers = Vec::with_capacity(self.left.len() + self.right.len());
         for layer in self.left {
@@ -84,6 +91,7 @@ impl<'a> PlotYy<'a> {
             .x_axis(self.x_axis)
             .y_axis(self.left_axis)
             .right_y_axis(self.right_axis)
+            .allow_scroll_zoom(self.allow_scroll_zoom)
             .legend(self.show_legend)
             .show_layers(ui, state, &layers)
     }
@@ -98,6 +106,7 @@ pub struct ParetoChart<'a> {
     bar_color: Color32,
     line_color: Color32,
     y_label: String,
+    allow_scroll_zoom: bool,
 }
 
 impl<'a> ParetoChart<'a> {
@@ -110,6 +119,7 @@ impl<'a> ParetoChart<'a> {
             bar_color: Color32::from_rgb(0, 114, 189),
             line_color: Color32::from_rgb(217, 83, 25),
             y_label: "Value".to_owned(),
+            allow_scroll_zoom: false,
         }
     }
 
@@ -140,6 +150,11 @@ impl<'a> ParetoChart<'a> {
         self
     }
 
+    pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
+        self.allow_scroll_zoom = allow;
+        self
+    }
+
     pub fn show(self, ui: &mut Ui, state: &mut PlotState) -> PlotResponse {
         let bars = Bars::new(self.data.bars())
             .name("Count")
@@ -162,6 +177,7 @@ impl<'a> ParetoChart<'a> {
             .x_axis(x_axis)
             .y_axis(left)
             .right_y_axis(right)
+            .allow_scroll_zoom(self.allow_scroll_zoom)
             .legend(true)
             .show_layers(ui, state, &[bars.into(), line.into()])
     }
@@ -207,5 +223,25 @@ fn with_y_axis(layer: PlotLayer<'_>, axis: YAxis) -> PlotLayer<'_> {
         PlotLayer::CategoricalHeatmap(s) => PlotLayer::from(s.y_axis(axis)),
         PlotLayer::ParallelPlot(s) => PlotLayer::from(s.y_axis(axis)),
         PlotLayer::Graph(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::ConfusionChart(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::CurvilinearPcolor(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::ProbabilityPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::EcdfPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::DendrogramPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::Biplot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::ControlChart(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::Candlestick(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::OhlcBars(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::Waterfall2D(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::ZPlanePlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::NyquistPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::NicholsPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::RootLocus(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::CwtPlot(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::RadarChart(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::SankeyChart(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::TreemapChart(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::SunburstChart(s) => PlotLayer::from(s.y_axis(axis)),
+        PlotLayer::GanttChart(s) => PlotLayer::from(s.y_axis(axis)),
     }
 }

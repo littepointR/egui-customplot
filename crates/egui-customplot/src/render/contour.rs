@@ -64,16 +64,32 @@ pub(super) fn paint_contours(
         }
         if let Some((pos, _)) = label_anchor {
             let text = format_level(line.level);
-            let galley = painter.layout_no_wrap(text, font.clone(), color);
+            let pill_bg = if plot_style.background == Color32::TRANSPARENT {
+                Color32::from_rgba_unmultiplied(248, 249, 252, 225)
+            } else {
+                plot_style.background.gamma_multiply(0.92)
+            };
+            let bg_l = color_luma(pill_bg);
+            let text_fg = if (color_luma(color) - bg_l).abs() >= 95.0 {
+                color
+            } else if (color_luma(plot_style.text_color) - bg_l).abs() >= 95.0 {
+                plot_style.text_color
+            } else if bg_l > 128.0 {
+                Color32::from_gray(24)
+            } else {
+                Color32::from_gray(242)
+            };
+            let galley = painter.layout_no_wrap(text, font.clone(), text_fg);
             let rect = Align2::CENTER_CENTER.anchor_size(pos, galley.size());
-            if plot_style.background != Color32::TRANSPARENT {
-                painter.rect_filled(
-                    rect.expand2(egui::vec2(2.0, 1.0)),
-                    2.0,
-                    plot_style.background.gamma_multiply(0.85),
-                );
-            }
-            painter.galley(rect.min, galley, color);
+            let pill_rect = rect.expand2(egui::vec2(3.5, 1.5));
+            painter.rect_filled(pill_rect, 2.5, pill_bg);
+            painter.rect_stroke(
+                pill_rect,
+                2.5,
+                Stroke::new(0.8, text_fg.gamma_multiply(0.25)),
+                egui::StrokeKind::Inside,
+            );
+            painter.galley(rect.min, galley, text_fg);
             diagnostics.contours.output_labels += 1;
         }
     }
@@ -159,4 +175,9 @@ fn format_level(level: f64) -> String {
     }
     let s = format!("{level:.3}");
     s.trim_end_matches('0').trim_end_matches('.').to_string()
+}
+
+#[inline]
+fn color_luma(c: Color32) -> f32 {
+    0.2126 * f32::from(c.r()) + 0.7152 * f32::from(c.g()) + 0.0722 * f32::from(c.b())
 }

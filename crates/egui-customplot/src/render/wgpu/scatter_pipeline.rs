@@ -299,6 +299,14 @@ pub(super) fn try_paint_scatter(
         MarkerShape::TriangleDown => 4.0,
         MarkerShape::Plus => 5.0,
         MarkerShape::Cross => 6.0,
+        MarkerShape::Asterisk => 7.0,
+        MarkerShape::Pentagram => 8.0,
+        MarkerShape::Hexagram => 9.0,
+        MarkerShape::CircleHollow => 10.0,
+        MarkerShape::SquareHollow => 11.0,
+        MarkerShape::DiamondHollow => 12.0,
+        MarkerShape::TriangleUpHollow => 13.0,
+        MarkerShape::TriangleDownHollow => 14.0,
     };
     let rev = transform.reversed();
     let flags = u32::from(rev[0])

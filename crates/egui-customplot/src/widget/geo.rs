@@ -3,9 +3,9 @@ use std::{collections::HashSet, sync::Arc};
 use egui::{AsIdSalt, Color32, IdSalt, Response, Sense, Stroke, Ui};
 
 use crate::{
-    Axis, AxisScale, BubbleLegend, ColorScale, GeoAttribution, GeoBasemapStyle, GeoBounds,
-    GeoLayer, GeoPlotState, GeoProjection, GeoTileCache, GeoTransform, HoveredGeoPoint,
-    LegendEntry, PlotBounds, PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme, PlotTransform,
+    Axis, BubbleLegend, ColorScale, GeoAttribution, GeoBasemapStyle, GeoBounds, GeoLayer,
+    GeoPlotState, GeoProjection, GeoTileCache, GeoTransform, HoveredGeoPoint, LegendEntry,
+    PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme,
     interaction::{navigate_geo, pick_geo_hover, show_geo_legend},
     layout::{allocate_plot, bubble_legend_size, compute_geo_layout, paint_bubble_legend},
     model::{resolve_plot_style, summarize_geo},
@@ -51,27 +51,15 @@ pub struct GeoPlotResponse {
 
 impl GeoPlotResponse {
     pub fn into_plot_response(self) -> PlotResponse {
-        let bounds = PlotBounds::new([0.0, 0.0], [1.0, 1.0]).expect("unit bounds");
-        let transform =
-            PlotTransform::with_axes(bounds, self.plot_area, [AxisScale::Linear; 2], [false; 2])
-                .expect("valid geo plot area");
-        PlotResponse {
-            outer_rect: self.outer_rect,
-            response: self.response,
-            transform,
-            right_transform: None,
-            diagnostics: self.diagnostics,
-            view_changed: self.view_changed,
-            axis_ticks: [Vec::new(), Vec::new()],
-            right_axis_ticks: Vec::new(),
-            hovered_point: None,
-            hovered_cell: None,
-            hovered_bar: None,
-            hovered_region: None,
-            hovered_vector: None,
-            hover_text: self.hover_text,
-            legend_entries: self.legend_entries,
-        }
+        PlotResponse::from_embedded(
+            self.outer_rect,
+            self.plot_area,
+            self.response,
+            self.diagnostics,
+            self.view_changed,
+            self.hover_text,
+            self.legend_entries,
+        )
     }
 }
 
@@ -232,12 +220,22 @@ impl GeoPlot {
     }
 
     fn show_internal(
-        self,
+        mut self,
         ui: &mut Ui,
         state: &mut GeoPlotState,
         layers: &[GeoLayer<'_>],
         tile_cache: Option<&mut GeoTileCache>,
     ) -> GeoPlotResponse {
+        if let Some(defs) = crate::model::plot_defaults(ui.ctx()) {
+            defs.apply_common(
+                &mut self.theme,
+                &mut self.inherited_style,
+                &mut self.allow_scroll_zoom,
+                &mut self.show_grid,
+                &mut self.show_legend,
+                &mut self.show_hover,
+            );
+        }
         let outer = allocate_plot(ui, self.height);
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
         let (mut diagnostics, present, auto_raw) = summarize_geo(layers, state);

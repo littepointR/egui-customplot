@@ -1,27 +1,45 @@
 use egui::{Color32, Mesh, Painter, Pos2, Rect, Shape};
 
-use super::scene::{Marker3D, Scene3D, Seg3D, Tri3D};
-use crate::Plot3DDiagnostics;
+use super::{
+    scene::{Marker3D, Scene3D, Seg3D, Tri3D},
+    volshow::composite_volumes_zbuffer,
+    zbuffer_cache::{MAX_CACHED_ZBUF_SPANS, ZBufferCache},
+};
+use crate::{Layer3D, Plot3DDiagnostics, Plot3DState, Transform3D};
 
 const MAX_ZBUF_DIM: usize = 360;
 
-/// Software Z-buffer rasterizing 3D primitives into `WHITE_UV` horizontal RLE quad batches.
-pub(super) fn emit_zbuffer(
-    scene: &Scene3D,
-    painter: &Painter,
-    plot_area: Rect,
-    text_color: Color32,
-    diagnostics: &mut Plot3DDiagnostics,
-) {
-    let clipped = painter.with_clip_rect(plot_area);
+pub(super) fn zbuffer_dims(plot_area: Rect) -> (usize, usize) {
     let pw = plot_area.width().max(2.0);
     let ph = plot_area.height().max(2.0);
     let scale = (MAX_ZBUF_DIM as f32 / pw.max(ph)).min(1.0);
-    let w = ((pw * scale).round() as usize).clamp(2, MAX_ZBUF_DIM);
-    let h = ((ph * scale).round() as usize).clamp(2, MAX_ZBUF_DIM);
+    (
+        ((pw * scale).round() as usize).clamp(2, MAX_ZBUF_DIM),
+        ((ph * scale).round() as usize).clamp(2, MAX_ZBUF_DIM),
+    )
+}
+
+/// Software Z-buffer rasterizing 3D primitives into `WHITE_UV` horizontal RLE quad batches.
+#[allow(clippy::too_many_arguments)]
+pub(super) fn emit_zbuffer(
+    scene: &Scene3D,
+    layers: &[Layer3D<'_>],
+    state: &Plot3DState,
+    transform: Transform3D,
+    painter: &Painter,
+    plot_area: Rect,
+    text_color: Color32,
+    key: u64,
+    diagnostics: &mut Plot3DDiagnostics,
+) -> Option<ZBufferCache> {
+    let clipped = painter.with_clip_rect(plot_area);
+    let pw = plot_area.width().max(2.0);
+    let ph = plot_area.height().max(2.0);
+    let (w, h) = zbuffer_dims(plot_area);
     let px_count = w * h;
     let mut depth = vec![f32::INFINITY; px_count];
     let mut rgba: Vec<[u8; 4]> = vec![[0; 4]; px_count];
+    let prev_diag = *diagnostics;
     diagnostics.zbuffer_pixels += px_count;
 
     // 1. Opaque triangles
@@ -63,13 +81,32 @@ pub(super) fn emit_zbuffer(
         diagnostics.output_triangles += 1;
     }
 
+    // 4b. Direct volume raycast (depth-occluded by opaque primitives)
+    composite_volumes_zbuffer(
+        layers,
+        state,
+        transform,
+        &depth,
+        &mut rgba,
+        w,
+        h,
+        plot_area,
+        diagnostics,
+    );
+
     // 5. Horizontal run-length encode painted pixels into WHITE_UV Mesh quads
     let cw = pw / w as f32;
     let ch = ph / h as f32;
     let mut mesh = Mesh::default();
     let mut spans = 0usize;
+    let mut norm_spans: Vec<([f32; 4], Color32)> = Vec::new();
+    let mut cache_overflow = false;
+    let inv_w = 1.0 / w as f32;
+    let inv_h = 1.0 / h as f32;
     for py in 0..h {
         let row = &rgba[py * w..(py + 1) * w];
+        let v0 = py as f32 * inv_h;
+        let v1 = (py + 1) as f32 * inv_h;
         let mut x = 0usize;
         while x < w {
             let col = row[x];
@@ -94,6 +131,14 @@ pub(super) fn emit_zbuffer(
             let c32 = Color32::from_rgba_unmultiplied(col[0], col[1], col[2], col[3]);
             mesh.add_colored_rect(r, c32);
             spans += 1;
+            if !cache_overflow {
+                if norm_spans.len() < MAX_CACHED_ZBUF_SPANS {
+                    norm_spans.push(([x as f32 * inv_w, v0, end as f32 * inv_w, v1], c32));
+                } else {
+                    norm_spans.clear();
+                    cache_overflow = true;
+                }
+            }
             if mesh.indices.len() >= 12_000 * 6 {
                 clipped.add(Shape::mesh(std::mem::take(&mut mesh)));
             }
@@ -106,6 +151,7 @@ pub(super) fn emit_zbuffer(
     diagnostics.zbuffer_spans += spans;
     diagnostics.clipped_items += scene.clipped;
 
+    let mut labels = Vec::new();
     for lbl in &scene.labels {
         if plot_area.contains(lbl.pos) {
             clipped.text(
@@ -119,8 +165,29 @@ pub(super) fn emit_zbuffer(
                     lbl.color
                 },
             );
+            labels.push((
+                [
+                    (lbl.pos.x - plot_area.left()) / pw,
+                    (lbl.pos.y - plot_area.top()) / ph,
+                ],
+                lbl.text.clone(),
+                lbl.color,
+            ));
         }
     }
+
+    (!cache_overflow).then_some(ZBufferCache {
+        key,
+        norm_spans,
+        labels,
+        visited_items: diagnostics.visited_items,
+        zbuffer_pixels: diagnostics.zbuffer_pixels - prev_diag.zbuffer_pixels,
+        zbuffer_spans: diagnostics.zbuffer_spans - prev_diag.zbuffer_spans,
+        output_triangles: diagnostics.output_triangles - prev_diag.output_triangles,
+        output_segments: diagnostics.output_segments - prev_diag.output_segments,
+        output_markers: diagnostics.output_markers - prev_diag.output_markers,
+        clipped_items: diagnostics.clipped_items - prev_diag.clipped_items,
+    })
 }
 
 fn to_buf(p: Pos2, area: Rect, w: usize, h: usize) -> [f32; 2] {
@@ -128,6 +195,35 @@ fn to_buf(p: Pos2, area: Rect, w: usize, h: usize) -> [f32; 2] {
         (p.x - area.left()) / area.width() * w as f32,
         (p.y - area.top()) / area.height() * h as f32,
     ]
+}
+
+#[inline]
+fn clamp_box(
+    min_x: f32,
+    max_x: f32,
+    min_y: f32,
+    max_y: f32,
+    w: usize,
+    h: usize,
+) -> Option<[usize; 4]> {
+    if w == 0
+        || h == 0
+        || !min_x.is_finite()
+        || !max_x.is_finite()
+        || !min_y.is_finite()
+        || !max_y.is_finite()
+    {
+        return None;
+    }
+    let (wf, hf) = (w as f32, h as f32);
+    if max_x < 0.0 || min_x >= wf || max_y < 0.0 || min_y >= hf {
+        return None;
+    }
+    let x0 = (min_x.floor().max(0.0) as usize).min(w - 1);
+    let x1 = (max_x.ceil().max(0.0) as usize).min(w - 1);
+    let y0 = (min_y.floor().max(0.0) as usize).min(h - 1);
+    let y1 = (max_y.ceil().max(0.0) as usize).min(h - 1);
+    (x0 <= x1 && y0 <= y1).then_some([x0, x1, y0, y1])
 }
 
 fn raster_tri(
@@ -143,15 +239,21 @@ fn raster_tri(
     let b = to_buf(t.pos[1], area, w, h);
     let c = to_buf(t.pos[2], area, w, h);
     let area2 = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
-    if area2.abs() < 1e-4 {
+    if !area2.is_finite() || area2.abs() < 1e-4 {
         return;
     }
     let sign = area2.signum();
     let inv = 1.0 / area2;
-    let x0 = (a[0].min(b[0]).min(c[0]).floor() as i32).max(0) as usize;
-    let x1 = (a[0].max(b[0]).max(c[0]).ceil() as i32).min(w as i32 - 1) as usize;
-    let y0 = (a[1].min(b[1]).min(c[1]).floor() as i32).max(0) as usize;
-    let y1 = (a[1].max(b[1]).max(c[1]).ceil() as i32).min(h as i32 - 1) as usize;
+    let Some([x0, x1, y0, y1]) = clamp_box(
+        a[0].min(b[0]).min(c[0]),
+        a[0].max(b[0]).max(c[0]),
+        a[1].min(b[1]).min(c[1]),
+        a[1].max(b[1]).max(c[1]),
+        w,
+        h,
+    ) else {
+        return;
+    };
     let c0 = t.colors[0].to_srgba_unmultiplied();
     let c1 = t.colors[1].to_srgba_unmultiplied();
     let c2 = t.colors[2].to_srgba_unmultiplied();
@@ -197,6 +299,18 @@ fn raster_tri(
 fn raster_seg(depth: &mut [f32], rgba: &mut [[u8; 4]], w: usize, h: usize, area: Rect, s: &Seg3D) {
     let a = to_buf(s.p0, area, w, h);
     let b = to_buf(s.p1, area, w, h);
+    let (wf, hf) = (w as f32, h as f32);
+    if !a[0].is_finite()
+        || !a[1].is_finite()
+        || !b[0].is_finite()
+        || !b[1].is_finite()
+        || (a[0] < 0.0 && b[0] < 0.0)
+        || (a[0] >= wf && b[0] >= wf)
+        || (a[1] < 0.0 && b[1] < 0.0)
+        || (a[1] >= hf && b[1] >= hf)
+    {
+        return;
+    }
     let steps = (a[0] - b[0]).hypot(a[1] - b[1]).ceil().clamp(1.0, 1024.0) as usize;
     let col = s.stroke.color.to_srgba_unmultiplied();
     for i in 0..=steps {
@@ -228,11 +342,15 @@ fn raster_marker(
 ) {
     let c = to_buf(m.pos, area, w, h);
     let r_px = (m.radius * (w as f32 / area.width().max(1.0))).max(1.2);
+    if !r_px.is_finite() {
+        return;
+    }
+    let Some([x0, x1, y0, y1]) =
+        clamp_box(c[0] - r_px, c[0] + r_px, c[1] - r_px, c[1] + r_px, w, h)
+    else {
+        return;
+    };
     let r2 = r_px * r_px;
-    let x0 = ((c[0] - r_px).floor() as i32).max(0) as usize;
-    let x1 = ((c[0] + r_px).ceil() as i32).min(w as i32 - 1) as usize;
-    let y0 = ((c[1] - r_px).floor() as i32).max(0) as usize;
-    let y1 = ((c[1] + r_px).ceil() as i32).min(h as i32 - 1) as usize;
     let col = m.color.to_srgba_unmultiplied();
     let z = m.depth - 3e-4;
     for py in y0..=y1 {

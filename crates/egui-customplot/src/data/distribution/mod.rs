@@ -138,6 +138,20 @@ impl BoxChartData {
         let (lo, hi) = self.extents.extent(scales)?;
         PlotBounds::new(lo, hi).ok()
     }
+
+    pub fn bounds_oriented(
+        &self,
+        scales: [AxisScale; 2],
+        orientation: crate::BarOrientation,
+    ) -> Option<PlotBounds> {
+        match orientation {
+            crate::BarOrientation::Vertical => self.bounds(scales),
+            crate::BarOrientation::Horizontal => {
+                let (lo, hi) = self.extents.extent([scales[1], scales[0]])?;
+                PlotBounds::new([lo[1], lo[0]], [hi[1], hi[0]]).ok()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -232,6 +246,20 @@ impl ViolinData {
         let (lo, hi) = self.extents.extent(scales)?;
         PlotBounds::new(lo, hi).ok()
     }
+
+    pub fn bounds_oriented(
+        &self,
+        scales: [AxisScale; 2],
+        orientation: crate::BarOrientation,
+    ) -> Option<PlotBounds> {
+        match orientation {
+            crate::BarOrientation::Vertical => self.bounds(scales),
+            crate::BarOrientation::Horizontal => {
+                let (lo, hi) = self.extents.extent([scales[1], scales[0]])?;
+                PlotBounds::new([lo[1], lo[0]], [hi[1], hi[0]]).ok()
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -304,6 +332,20 @@ impl RaincloudData {
     pub fn bounds(&self, scales: [AxisScale; 2]) -> Option<PlotBounds> {
         let (lo, hi) = self.extents.extent(scales)?;
         PlotBounds::new(lo, hi).ok()
+    }
+
+    pub fn bounds_oriented(
+        &self,
+        scales: [AxisScale; 2],
+        orientation: crate::BarOrientation,
+    ) -> Option<PlotBounds> {
+        match orientation {
+            crate::BarOrientation::Vertical => self.bounds(scales),
+            crate::BarOrientation::Horizontal => {
+                let (lo, hi) = self.extents.extent([scales[1], scales[0]])?;
+                PlotBounds::new([lo[1], lo[0]], [hi[1], hi[0]]).ok()
+            }
+        }
     }
 }
 

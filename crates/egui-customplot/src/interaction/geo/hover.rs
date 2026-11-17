@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use egui::{Color32, Id, IdSalt, Pos2, Rect, Ui};
+use egui::{Id, IdSalt, Pos2, Rect, Ui};
 
 use super::GeoPlotState;
 use crate::{
@@ -233,6 +233,7 @@ pub(crate) fn show_geo_legend(
     egui::Frame::popup(ui.style())
         .fill(style.background)
         .stroke(style.border_stroke)
+        .inner_margin(egui::Margin::symmetric(6, 4))
         .show(&mut child, |ui| {
             ui.set_max_width((rect.width() - 16.0).max(1.0));
             egui::ScrollArea::vertical()
@@ -245,15 +246,15 @@ pub(crate) fn show_geo_legend(
                     {
                         let id = layer.id(idx);
                         let visible = state.layer_visible(id);
+                        let swatch = layer.resolved_style(idx, style).stroke.color;
                         let response = ui
                             .push_id(id, |ui| {
-                                ui.selectable_label(
+                                crate::layout::legend_item_button(
+                                    ui,
+                                    layer.name(),
+                                    swatch,
                                     visible,
-                                    egui::RichText::new(layer.name()).color(if visible {
-                                        layer.resolved_style(idx, style).stroke.color
-                                    } else {
-                                        style.text_color.gamma_multiply(0.45)
-                                    }),
+                                    style,
                                 )
                             })
                             .inner;
@@ -272,14 +273,7 @@ pub(crate) fn show_geo_legend(
                         let color = style.palette[ci % style.palette.len()];
                         let response = ui
                             .push_id(("geo-cat", ci, cat.as_str()), |ui| {
-                                ui.selectable_label(
-                                    visible,
-                                    egui::RichText::new(cat).color(if visible {
-                                        color
-                                    } else {
-                                        Color32::GRAY
-                                    }),
-                                )
+                                crate::layout::legend_item_button(ui, cat, color, visible, style)
                             })
                             .inner;
                         if response.clicked() && state.toggle_category(cat) {

@@ -16,7 +16,7 @@ pub use figure::FigureError;
 pub(crate) use figure::FigureLayout;
 pub(crate) use geo::compute_geo_layout;
 pub use legend::LegendEntry;
-pub(crate) use legend::{legend_rect, show_legend};
+pub(crate) use legend::{legend_item_button, legend_rect, show_legend};
 pub(crate) use plot::{allocate_plot, data_rect};
 pub(crate) use plot3d::{compute_auto_bounds_3d, compute_plot3d_layout};
 pub(crate) use polar::compute_polar_layout;

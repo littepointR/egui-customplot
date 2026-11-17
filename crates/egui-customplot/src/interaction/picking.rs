@@ -73,6 +73,26 @@ pub(super) fn pick_point(
             )
         })
         .or_else(|| {
+            super::point_stage14::pick_stage14_point(
+                *s,
+                transforms,
+                position,
+                radius,
+                resolved,
+                diagnostics,
+            )
+        })
+        .or_else(|| {
+            super::point_stage15::pick_stage15_point(
+                *s,
+                transforms,
+                position,
+                radius,
+                resolved,
+                diagnostics,
+            )
+        })
+        .or_else(|| {
             super::graph::pick_graph_node(
                 *s,
                 transforms.for_axis(s.y_axis()),
@@ -137,7 +157,9 @@ pub(super) fn pick_point(
         {
             continue;
         }
-        if let Some(index) = data.line_index() {
+        if let Some(index) = data.line_index()
+            && !transform.scales().iter().any(|s| s.is_probability())
+        {
             let mut stats = QueryStats::default();
             let initial_best = closest
                 .as_ref()

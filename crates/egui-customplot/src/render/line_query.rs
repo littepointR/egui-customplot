@@ -59,7 +59,8 @@ fn prepare_uncached_line(
     pixels_per_point: f32,
     diagnostics: &mut PlotDiagnostics,
 ) -> PreparedLine {
-    if line.sampling == LineSampling::Exact {
+    if line.sampling == LineSampling::Exact || transform.scales().iter().any(|s| s.is_probability())
+    {
         return prepare_line(line.data.points(), transform, line.interpolation);
     }
     let Some(index) = line.data.line_index() else {

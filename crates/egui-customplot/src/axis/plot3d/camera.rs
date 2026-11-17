@@ -245,6 +245,87 @@ impl Transform3D {
         let d = p1 - p0;
         d.is_finite().then_some(d)
     }
+
+    pub(crate) fn unit_to_data(&self, u: [f64; 3]) -> Option<Point3D> {
+        let mut out = [0.0; 3];
+        for i in 0..3 {
+            let frac = if self.reversed[i] { 1.0 - u[i] } else { u[i] };
+            let t = self.trans_min[i] + frac * self.trans_span[i];
+            out[i] = self.scales[i].inverse(t)?;
+        }
+        Some(out)
+    }
+
+    /// Intersects pixel screen ray with `[0, 1]^3` unit cube: returns `(u_origin, u_dir, t_enter, t_exit)`
+    /// parameterized by camera depth `t` such that `u(t) = u_origin + t * u_dir`.
+    pub(crate) fn screen_ray_unit(&self, pos: Pos2) -> Option<([f64; 3], [f64; 3], f64, f64)> {
+        if self.fit_radius <= 1e-9 || self.cam_dist <= 0.12 {
+            return None;
+        }
+        let c = self.rect.center();
+        let sx = f64::from(pos.x - c.x) / self.fit_radius;
+        let sy = -f64::from(pos.y - c.y) / self.fit_radius;
+        let (w0, wd) = match self.camera.projection {
+            Projection3D::Orthographic => (
+                [
+                    (sx - self.camera.pan[0]) * self.right[0]
+                        + (sy - self.camera.pan[1]) * self.up[0]
+                        - self.cam_dist * self.forward[0],
+                    (sx - self.camera.pan[0]) * self.right[1]
+                        + (sy - self.camera.pan[1]) * self.up[1]
+                        - self.cam_dist * self.forward[1],
+                    (sx - self.camera.pan[0]) * self.right[2]
+                        + (sy - self.camera.pan[1]) * self.up[2]
+                        - self.cam_dist * self.forward[2],
+                ],
+                self.forward,
+            ),
+            Projection3D::Perspective { .. } => {
+                let ux = (sx - self.camera.pan[0]) / self.cam_dist;
+                let uy = (sy - self.camera.pan[1]) / self.cam_dist;
+                (
+                    [
+                        -self.camera.pan[0] * self.right[0]
+                            - self.camera.pan[1] * self.up[0]
+                            - self.cam_dist * self.forward[0],
+                        -self.camera.pan[0] * self.right[1]
+                            - self.camera.pan[1] * self.up[1]
+                            - self.cam_dist * self.forward[1],
+                        -self.camera.pan[0] * self.right[2]
+                            - self.camera.pan[1] * self.up[2]
+                            - self.cam_dist * self.forward[2],
+                    ],
+                    [
+                        ux * self.right[0] + uy * self.up[0] + self.forward[0],
+                        ux * self.right[1] + uy * self.up[1] + self.forward[1],
+                        ux * self.right[2] + uy * self.up[2] + self.forward[2],
+                    ],
+                )
+            }
+        };
+        let u0 = std::array::from_fn(|i| w0[i] / self.box_scale[i] + 0.5);
+        let ud = std::array::from_fn(|i| wd[i] / self.box_scale[i]);
+        let (mut t0, mut t1) = (0.15_f64, 1e9_f64);
+        for i in 0..3 {
+            if ud[i].abs() < 1e-14 {
+                if u0[i] < 0.0 || u0[i] > 1.0 {
+                    return None;
+                }
+            } else {
+                let mut a = -u0[i] / ud[i];
+                let mut b = (1.0 - u0[i]) / ud[i];
+                if a > b {
+                    std::mem::swap(&mut a, &mut b);
+                }
+                t0 = t0.max(a);
+                t1 = t1.min(b);
+                if t0 > t1 {
+                    return None;
+                }
+            }
+        }
+        Some((u0, ud, t0, t1))
+    }
 }
 
 fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {

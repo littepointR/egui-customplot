@@ -81,6 +81,114 @@ pub(super) fn paint_stage8c_layer(
             pixels_per_point,
             diagnostics,
         ),
+        PlotLayer::ConfusionChart(ch) => {
+            super::confusion::paint_confusion_chart(painter, ch, transform, text_color, diagnostics)
+        }
+        PlotLayer::CurvilinearPcolor(pc) => {
+            super::curvilinear::paint_curvilinear_pcolor(painter, pc, transform, diagnostics)
+        }
+        PlotLayer::ProbabilityPlot(prob) => super::stage14_stats::paint_probability_plot(
+            painter,
+            prob,
+            transform,
+            resolved,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::EcdfPlot(ecdf) => super::stage14_stats::paint_ecdf_plot(
+            painter,
+            ecdf,
+            transform,
+            resolved,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::DendrogramPlot(dendro) => super::stage14_stats::paint_dendrogram_plot(
+            painter,
+            dendro,
+            transform,
+            resolved,
+            diagnostics,
+        ),
+        PlotLayer::Biplot(bp) => super::stage14_stats::paint_biplot(
+            painter,
+            bp,
+            transform,
+            resolved,
+            text_color,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::ControlChart(chart) => super::stage14_spc_fin::paint_control_chart(
+            painter,
+            chart,
+            transform,
+            resolved,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::Candlestick(candle) => {
+            super::stage14_spc_fin::paint_candlestick(painter, candle, transform, diagnostics)
+        }
+        PlotLayer::OhlcBars(ohlc) => {
+            super::stage14_spc_fin::paint_ohlc_bars(painter, ohlc, transform, diagnostics)
+        }
+        PlotLayer::Waterfall2D(wf) => super::stage14_spc_fin::paint_waterfall2d(
+            painter,
+            wf,
+            transform,
+            text_color,
+            diagnostics,
+        ),
+        PlotLayer::ZPlanePlot(zp) => super::stage15::paint_zplane(
+            painter,
+            zp,
+            transform,
+            resolved,
+            text_color,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::NyquistPlot(nyq) => super::stage15::paint_nyquist(
+            painter,
+            nyq,
+            transform,
+            resolved,
+            text_color,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::NicholsPlot(nich) => super::stage15::paint_nichols(
+            painter,
+            nich,
+            transform,
+            resolved,
+            text_color,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::RootLocus(rl) => super::stage15::paint_root_locus(
+            painter,
+            rl,
+            transform,
+            resolved,
+            text_color,
+            pixels_per_point,
+            diagnostics,
+        ),
+        PlotLayer::CwtPlot(cwt) => super::stage15::paint_cwt(painter, cwt, transform, diagnostics),
+        PlotLayer::RadarChart(_)
+        | PlotLayer::SankeyChart(_)
+        | PlotLayer::TreemapChart(_)
+        | PlotLayer::SunburstChart(_)
+        | PlotLayer::GanttChart(_) => super::modern::paint_modern_layer(
+            painter,
+            layer,
+            transform,
+            resolved,
+            text_color,
+            diagnostics,
+        ),
         _ => {}
     }
 }

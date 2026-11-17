@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use egui::{Color32, Pos2, Vec2};
 
-use super::markers::{PreparedMarkers, marker_outline, prepare_markers, push_marker};
+use super::markers::{PreparedMarkers, marker_outline, prepare_markers, push_shaped_marker};
 use super::markers_grid_tree::collect_indexed_grid_markers;
 use crate::{
     AxisScale, MarkerSampling, MarkerShape, MarkerStyle, PlotData, PlotPoint, PlotTransform,
@@ -149,7 +149,15 @@ fn prepare_ranges_exact(
             if !transform.rect().expand(r + fringe).contains(center) {
                 continue;
             }
-            if !push_marker(&mut result.mesh, center, r, c, &outline, fringe) {
+            if !push_shaped_marker(
+                &mut result.mesh,
+                center,
+                r,
+                c,
+                style.shape,
+                &outline,
+                fringe,
+            ) {
                 result.numeric_rejections += 1;
                 continue;
             }
@@ -331,7 +339,7 @@ fn emit_chosen_marker_mesh(
     let n = outline.len();
     result.mesh.vertices.reserve(chosen.len() * (1 + 2 * n));
     result.mesh.indices.reserve(chosen.len() * 9 * n);
-    if radii.is_none() {
+    if radii.is_none() && !style.shape.is_hollow() {
         let inner: Vec<Vec2> = outline.iter().map(|u| *u * style.radius).collect();
         let outer: Vec<Vec2> = outline
             .iter()
@@ -371,7 +379,15 @@ fn emit_chosen_marker_mesh(
         }
     } else {
         for (center, r, c) in chosen {
-            if !push_marker(&mut result.mesh, center, r, c, &outline, fringe) {
+            if !push_shaped_marker(
+                &mut result.mesh,
+                center,
+                r,
+                c,
+                style.shape,
+                &outline,
+                fringe,
+            ) {
                 result.numeric_rejections += 1;
                 continue;
             }

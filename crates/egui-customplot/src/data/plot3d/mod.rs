@@ -1,12 +1,18 @@
+mod adaptive_surf;
+mod alphashape;
 mod analytic_surf;
 mod cones3d;
 mod contour3;
 mod curve;
+mod delaunay3d;
 mod discrete;
 mod flow3d;
+mod graph3d;
 mod implicit3;
 mod isosurface;
 mod particles3d;
+mod patch3d;
+mod pointcloud;
 mod scalar_volume3d;
 mod scatter;
 mod stream_geom;
@@ -15,10 +21,12 @@ mod tetramesh;
 mod trisurf;
 mod vector_field3d;
 mod vector_poly;
+mod volshow;
 mod volume;
 
 use std::sync::Arc;
 
+pub use alphashape::AlphaShape3DData;
 pub use analytic_surf::Ribbon3DData;
 pub use cones3d::{Cone3DItem, ConePlot3DData};
 pub use contour3::{Contour3DData, Contour3DLine};
@@ -27,9 +35,12 @@ pub use discrete::{
     Bar3DBox, Bar3DData, Bar3DMode, Bar3DOrientation, Pie3DData, Pie3DSlice, Stem3DData,
 };
 pub use flow3d::{Stream3DOptions, Streamline3DData, Streamline3DLine};
+pub use graph3d::{Graph3DData, GraphLayout3D};
 pub use implicit3::ImplicitSurface3DData;
 pub use isosurface::{IsocapThreshold, Isocaps3DData, Isosurface3DData};
 pub use particles3d::{StreamParticles3DData, StreamParticlesPlayback};
+pub use patch3d::Patch3DData;
+pub use pointcloud::PointCloud3DData;
 pub use scalar_volume3d::ScalarVolume3D;
 pub use scatter::{Bubble3DData, Bubble3DPoint, Swarm3DData, Swarm3DPoint};
 pub use stream_geom::{StreamRibbon3DData, StreamTube3DData};
@@ -38,6 +49,7 @@ pub use tetramesh::TetraMesh3DData;
 pub use trisurf::TriMesh3DData;
 pub use vector_field3d::VectorField3D;
 pub use vector_poly::{Polygon3D, Polygon3DData, Quiver3DArrow, Quiver3DData};
+pub use volshow::{TransferStop, VolumeRenderMode, VolumeTransferFunction};
 pub use volume::{SlicePlane3D, VolumeSliceData};
 
 use crate::{AxisScale, Point3D};

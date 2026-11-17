@@ -162,11 +162,32 @@ impl PlotData {
     }
 
     pub(crate) fn extent(&self, scales: [AxisScale; 2]) -> Option<(PlotPoint, PlotPoint)> {
-        self.extents[Self::scale_mask(scales)]
+        if !scales[0].is_probability() && !scales[1].is_probability() {
+            return self.extents[Self::scale_mask(scales)];
+        }
+        let mut min = [f64::INFINITY; 2];
+        let mut max = [f64::NEG_INFINITY; 2];
+        let mut any = false;
+        for &p in self.points.iter() {
+            if scales[0].forward(p[0]).is_some() && scales[1].forward(p[1]).is_some() {
+                min[0] = min[0].min(p[0]);
+                min[1] = min[1].min(p[1]);
+                max[0] = max[0].max(p[0]);
+                max[1] = max[1].max(p[1]);
+                any = true;
+            }
+        }
+        any.then_some((min, max))
     }
 
     pub fn invalid_points(&self, scales: [AxisScale; 2]) -> usize {
-        self.len() - self.valid_counts[Self::scale_mask(scales)]
+        if !scales[0].is_probability() && !scales[1].is_probability() {
+            return self.len() - self.valid_counts[Self::scale_mask(scales)];
+        }
+        self.points
+            .iter()
+            .filter(|p| scales[0].forward(p[0]).is_none() || scales[1].forward(p[1]).is_none())
+            .count()
     }
 
     fn scale_mask(scales: [AxisScale; 2]) -> usize {
@@ -176,6 +197,36 @@ impl PlotData {
 
     pub(crate) fn identity(&self) -> *const PlotPoint {
         self.points.as_ptr()
+    }
+
+    /// Collects sorted point indices whose `(x, y)` coordinates fall inside `bounds`.
+    /// Uses the monotonic-X index when available to avoid scanning points outside X bounds.
+    pub fn brushed_indices(&self, bounds: PlotBounds) -> Vec<usize> {
+        let [lo, hi] = [bounds.min(), bounds.max()];
+        let mut indices = Vec::new();
+        if let Some(index) = self.line_index() {
+            let mut stats = super::QueryStats::default();
+            let ranges = index.candidates(
+                &self.points,
+                [AxisScale::Linear; 2],
+                [lo[0], hi[0]],
+                &mut stats,
+            );
+            for range in ranges {
+                for (offset, p) in self.points[range.clone()].iter().enumerate() {
+                    if p[0] >= lo[0] && p[0] <= hi[0] && p[1] >= lo[1] && p[1] <= hi[1] {
+                        indices.push(range.start + offset);
+                    }
+                }
+            }
+            return indices;
+        }
+        for (i, p) in self.points.iter().enumerate() {
+            if p[0] >= lo[0] && p[0] <= hi[0] && p[1] >= lo[1] && p[1] <= hi[1] {
+                indices.push(i);
+            }
+        }
+        indices
     }
 }
 

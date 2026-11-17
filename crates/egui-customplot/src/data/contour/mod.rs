@@ -3,6 +3,8 @@ use std::sync::Arc;
 use super::{FunctionContourError, ScalarField2D, polygon::domain_index};
 use crate::{AxisScale, PlotBounds, PlotPoint};
 
+pub(crate) mod adaptive;
+mod adaptive_contours;
 pub(crate) mod extract;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -145,9 +147,7 @@ pub struct FilledContourData {
 }
 
 impl FilledContourData {
-    pub fn from_field(field: &ScalarField2D, levels: ContourLevels) -> Result<Self, ContourError> {
-        let (levels, band_bounds) = extract::resolve_band_levels(field, levels)?;
-        let bands = extract::extract_bands(field, &band_bounds);
+    pub(crate) fn from_raw_bands(levels: Vec<f64>, bands: Vec<ContourBand>) -> Self {
         let mut extents = [None; 4];
         let mut domain_invalid = [0; 4];
         let mut total_bytes = levels.len() * 8;
@@ -168,13 +168,19 @@ impl FilledContourData {
                 }
             }
         }
-        Ok(Self {
+        Self {
             levels: Arc::from(levels),
             bands: Arc::from(bands),
             extents,
             domain_invalid,
             total_bytes,
-        })
+        }
+    }
+
+    pub fn from_field(field: &ScalarField2D, levels: ContourLevels) -> Result<Self, ContourError> {
+        let (levels, band_bounds) = extract::resolve_band_levels(field, levels)?;
+        let bands = extract::extract_bands(field, &band_bounds);
+        Ok(Self::from_raw_bands(levels, bands))
     }
 
     pub fn from_function(

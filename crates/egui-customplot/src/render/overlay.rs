@@ -1,10 +1,46 @@
-use egui::{Pos2, Stroke, Ui};
+use egui::{Color32, Pos2, Rect, Stroke, Ui};
 
 use crate::{
-    HoveredBar, HoveredCell, HoveredPoint, HoveredRegion, PlotTransform,
+    HoveredBar, HoveredCell, HoveredPoint, HoveredRegion, PlotBounds, PlotTransform,
     axis::{clipped_data_rect, grid_cell_rect},
     model::ResolvedPlotStyle,
 };
+
+pub(crate) fn paint_selection_overlays(
+    ui: &Ui,
+    brushed_bounds: Option<PlotBounds>,
+    box_zoom_preview: Option<Rect>,
+    transform: PlotTransform,
+) {
+    let painter = ui.painter().with_clip_rect(transform.rect());
+    if let Some(bounds) = brushed_bounds
+        && let Some(rect) = clipped_data_rect(bounds.min(), bounds.max(), transform)
+    {
+        painter.rect_filled(rect, 0.0, Color32::from_rgba_unmultiplied(70, 145, 240, 38));
+        painter.rect_stroke(
+            rect,
+            0.0,
+            Stroke::new(1.2, Color32::from_rgba_unmultiplied(70, 145, 240, 210)),
+            egui::StrokeKind::Inside,
+        );
+    }
+    if let Some(raw) = box_zoom_preview {
+        let clamped = raw.intersect(transform.rect());
+        if clamped.is_positive() {
+            painter.rect_filled(
+                clamped,
+                0.0,
+                Color32::from_rgba_unmultiplied(245, 175, 45, 36),
+            );
+            painter.rect_stroke(
+                clamped,
+                0.0,
+                Stroke::new(1.5, Color32::from_rgba_unmultiplied(245, 175, 45, 230)),
+                egui::StrokeKind::Inside,
+            );
+        }
+    }
+}
 
 pub(crate) fn paint_bar_hover(
     ui: &Ui,

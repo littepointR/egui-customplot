@@ -274,6 +274,45 @@ pub(super) fn collect_layers_3d(
                     diagnostics,
                 );
             }
+            Layer3D::Patch(p) => {
+                super::stage13::collect_patch3d(
+                    scene,
+                    p,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::AlphaShape(ash) => {
+                super::stage13::collect_alphashape3d(
+                    scene,
+                    ash,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::Graph(g) => {
+                super::stage13::collect_graph3d(
+                    scene,
+                    g,
+                    resolved.stroke.color,
+                    resolved.marker.shape,
+                    resolved.marker.radius,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::PointCloud(pc) => {
+                super::volshow::collect_point_cloud3d(
+                    scene,
+                    pc,
+                    resolved.stroke.color,
+                    transform,
+                    diagnostics,
+                );
+            }
+            Layer3D::VolumeRender(_) => {}
         }
     }
 

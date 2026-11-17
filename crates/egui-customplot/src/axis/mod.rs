@@ -3,15 +3,20 @@
 mod aspect;
 mod bounds;
 mod geo;
+mod geoglobe;
 mod grid;
 mod linked;
 mod plot3d;
 mod polar;
 mod polygon;
+mod probability;
 mod rect;
 mod scale;
 mod segment;
+mod sky;
+mod smith;
 mod ticks;
+mod time;
 mod transform;
 mod y_axis;
 
@@ -21,6 +26,7 @@ pub use geo::{
     wrap_lon_180,
 };
 pub(crate) use geo::{format_lat, format_lon, geo_graticule_ticks, project_geo_polyline};
+pub use geoglobe::GeoGlobeTransform;
 pub(crate) use grid::{edge_cell_at, grid_cell_at, grid_cell_rect, visible_edges, visible_grid};
 pub(crate) use linked::apply_axis_ranges;
 pub use plot3d::{Axis3D, Bounds3D, Camera3D, DataAspect3D, Point3D, Projection3D, Transform3D};
@@ -32,13 +38,20 @@ pub use polar::{NegativeRadiusMode, PolarTransform, ThetaDirection, ThetaZeroLoc
 pub(crate) use polygon::{
     ClipVertex, clip_normalized_triangle, point_in_ring_transformed, project_boundary_segment,
 };
+pub use probability::{norm_cdf, norm_inv};
+pub(crate) use probability::{norm_cdf_clamped, weibull_forward, weibull_inverse};
 pub(crate) use rect::{clipped_axis_segment, clipped_data_rect, rect_edges, valid_extent};
 pub use scale::AxisScale;
 pub(crate) use segment::{
     clip_normalized_segment, graph_edge_screen_polyline, point_polyline_distance,
     project_vector_segment,
 };
+pub use sky::SkyTransform;
+pub use smith::{SmithGridKind, SmithTransform};
 pub use ticks::{Axis, AxisTick};
+pub use time::{
+    CivilDateTime, TimeAxisMode, civil_to_unix_secs, format_duration_hms, unix_secs_to_civil,
+};
 pub use transform::PlotTransform;
 pub use y_axis::YAxis;
 pub(crate) use y_axis::{SeriesTransforms, secondary_auto};

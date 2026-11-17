@@ -5,8 +5,8 @@ use egui::{AsIdSalt, IdSalt, Response, Sense, Ui};
 use crate::{
     Axis, Axis3D, AxisScale, Bounds3D, BoxStyle3D, BubbleLegend, Camera3D, ColorScale,
     ConstantPlane3D, DataAspect3D, DepthMode, Hovered3DBar, Hovered3DPoint, Hovered3DRegion,
-    Layer3D, LegendEntry, Plot3DState, PlotBounds, PlotDiagnostics, PlotResponse, PlotStyle,
-    PlotTheme, PlotTransform, Projection3D, Text3D, Transform3D,
+    Layer3D, LegendEntry, Plot3DState, PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme,
+    Projection3D, Text3D, Transform3D,
     interaction::{navigate_plot3d, pick_plot3d_hover, show_plot3d_legend},
     layout::{
         allocate_plot, bubble_legend_size, compute_auto_bounds_3d, compute_plot3d_layout,
@@ -23,6 +23,7 @@ pub struct Plot3D {
     title: String,
     axes: [Axis3D; 3],
     camera: Camera3D,
+    explicit_projection: Option<Projection3D>,
     aspect: DataAspect3D,
     depth_mode: DepthMode,
     box_style: BoxStyle3D,
@@ -55,27 +56,15 @@ pub struct Plot3DResponse {
 
 impl Plot3DResponse {
     pub fn into_plot_response(self) -> PlotResponse {
-        let bounds = PlotBounds::new([0.0, 0.0], [1.0, 1.0]).expect("unit bounds");
-        let transform =
-            PlotTransform::with_axes(bounds, self.plot_area, [AxisScale::Linear; 2], [false; 2])
-                .expect("valid 3d plot area");
-        PlotResponse {
-            outer_rect: self.outer_rect,
-            response: self.response,
-            transform,
-            right_transform: None,
-            diagnostics: self.diagnostics,
-            view_changed: self.view_changed,
-            axis_ticks: [Vec::new(), Vec::new()],
-            right_axis_ticks: Vec::new(),
-            hovered_point: None,
-            hovered_cell: None,
-            hovered_bar: None,
-            hovered_region: None,
-            hovered_vector: None,
-            hover_text: self.hover_text,
-            legend_entries: self.legend_entries,
-        }
+        PlotResponse::from_embedded(
+            self.outer_rect,
+            self.plot_area,
+            self.response,
+            self.diagnostics,
+            self.view_changed,
+            self.hover_text,
+            self.legend_entries,
+        )
     }
 }
 
@@ -87,6 +76,7 @@ impl Plot3D {
             title: String::new(),
             axes: [Axis3D::new(), Axis3D::new(), Axis3D::new()],
             camera: Camera3D::default(),
+            explicit_projection: None,
             aspect: DataAspect3D::Auto,
             depth_mode: DepthMode::SortedPainter,
             box_style: BoxStyle3D::BackPlanes,
@@ -138,7 +128,10 @@ impl Plot3D {
         self.axes[2] = self.axes[2].clone().label(label);
         self
     }
-    pub fn camera(mut self, camera: Camera3D) -> Self {
+    pub fn camera(mut self, mut camera: Camera3D) -> Self {
+        if let Some(proj) = self.explicit_projection {
+            camera.projection = proj;
+        }
         self.camera = camera;
         self
     }
@@ -149,6 +142,7 @@ impl Plot3D {
     }
     pub fn projection(mut self, projection: Projection3D) -> Self {
         self.camera.projection = projection;
+        self.explicit_projection = Some(projection);
         self
     }
     pub fn data_aspect(mut self, aspect: DataAspect3D) -> Self {
@@ -201,11 +195,27 @@ impl Plot3D {
     }
 
     pub fn show(
-        self,
+        mut self,
         ui: &mut Ui,
         state: &mut Plot3DState,
         layers: &[Layer3D<'_>],
     ) -> Plot3DResponse {
+        let mut forced_proj = self.explicit_projection;
+        if let Some(defs) = crate::model::plot_defaults(ui.ctx()) {
+            let mut dummy_grid = true;
+            defs.apply_common(
+                &mut self.theme,
+                &mut self.inherited_style,
+                &mut self.allow_scroll_zoom,
+                &mut dummy_grid,
+                &mut self.show_legend,
+                &mut self.show_hover,
+            );
+            forced_proj = forced_proj.or(defs.projection_3d);
+        }
+        if let Some(proj) = forced_proj {
+            self.camera.projection = proj;
+        }
         let scales = [
             self.axes[0].axis_scale(),
             self.axes[1].axis_scale(),
@@ -254,7 +264,7 @@ impl Plot3D {
         );
 
         let id = ui.make_persistent_id(self.id_salt);
-        state.begin_frame(ui, id, self.camera);
+        state.begin_frame(ui, id, self.camera, forced_proj);
         let mut response = ui.interact(layout.plot_area, id, Sense::click_and_drag());
         let nav = navigate_plot3d(
             ui,
@@ -262,6 +272,7 @@ impl Plot3D {
             &mut response,
             auto_bounds,
             self.camera,
+            forced_proj,
             self.allow_scroll_zoom,
             layout.legend_rect,
         );

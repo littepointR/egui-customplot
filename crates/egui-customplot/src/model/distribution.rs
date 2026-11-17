@@ -1,6 +1,6 @@
 use egui::{AsIdSalt, Color32, IdSalt};
 
-use crate::{BoxChartData, RaincloudData, SeriesStyle, ViolinData, YAxis};
+use crate::{BarOrientation, BoxChartData, RaincloudData, SeriesStyle, ViolinData, YAxis};
 
 /// Box-and-whisker distribution layer (`boxchart`, `ML-024`).
 #[derive(Clone, Copy, Debug)]
@@ -11,6 +11,7 @@ pub struct BoxChart<'a> {
     pub(crate) notched: bool,
     pub(crate) show_mean: bool,
     pub(crate) show_outliers: bool,
+    pub(crate) orientation: BarOrientation,
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) y_axis: YAxis,
@@ -25,6 +26,7 @@ impl<'a> BoxChart<'a> {
             notched: false,
             show_mean: false,
             show_outliers: true,
+            orientation: BarOrientation::Vertical,
             name: "",
             id_salt: None,
             y_axis: YAxis::Left,
@@ -64,6 +66,10 @@ impl<'a> BoxChart<'a> {
         self.show_outliers = show;
         self
     }
+    pub fn orientation(mut self, orientation: BarOrientation) -> Self {
+        self.orientation = orientation;
+        self
+    }
     pub fn style(mut self, style: SeriesStyle) -> Self {
         self.style = style.over(self.style);
         self
@@ -81,6 +87,7 @@ pub struct ViolinPlot<'a> {
     pub(crate) fill_alpha: f32,
     pub(crate) show_box: Option<bool>,
     pub(crate) show_median: bool,
+    pub(crate) orientation: BarOrientation,
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) y_axis: YAxis,
@@ -94,6 +101,7 @@ impl<'a> ViolinPlot<'a> {
             fill_alpha: 0.45,
             show_box: None,
             show_median: true,
+            orientation: BarOrientation::Vertical,
             name: "",
             id_salt: None,
             y_axis: YAxis::Left,
@@ -129,6 +137,10 @@ impl<'a> ViolinPlot<'a> {
         self.show_median = show;
         self
     }
+    pub fn orientation(mut self, orientation: BarOrientation) -> Self {
+        self.orientation = orientation;
+        self
+    }
     pub fn style(mut self, style: SeriesStyle) -> Self {
         self.style = style.over(self.style);
         self
@@ -145,6 +157,7 @@ pub struct Raincloud<'a> {
     pub(crate) style: SeriesStyle,
     pub(crate) fill_alpha: f32,
     pub(crate) drop_radius: f32,
+    pub(crate) orientation: BarOrientation,
     pub(crate) name: &'a str,
     pub(crate) id_salt: Option<IdSalt>,
     pub(crate) y_axis: YAxis,
@@ -157,6 +170,7 @@ impl<'a> Raincloud<'a> {
             style: SeriesStyle::default(),
             fill_alpha: 0.45,
             drop_radius: 2.6,
+            orientation: BarOrientation::Vertical,
             name: "",
             id_salt: None,
             y_axis: YAxis::Left,
@@ -188,6 +202,10 @@ impl<'a> Raincloud<'a> {
         if radius.is_finite() {
             self.drop_radius = radius.clamp(1.0, 12.0);
         }
+        self
+    }
+    pub fn orientation(mut self, orientation: BarOrientation) -> Self {
+        self.orientation = orientation;
         self
     }
     pub fn style(mut self, style: SeriesStyle) -> Self {

@@ -30,6 +30,7 @@ pub struct ScatterHistogram<'a> {
     x_label: String,
     y_label: String,
     title: String,
+    allow_scroll_zoom: bool,
 }
 
 impl<'a> ScatterHistogram<'a> {
@@ -41,6 +42,7 @@ impl<'a> ScatterHistogram<'a> {
             x_label: "X".to_owned(),
             y_label: "Y".to_owned(),
             title: String::new(),
+            allow_scroll_zoom: false,
         }
     }
 
@@ -59,6 +61,11 @@ impl<'a> ScatterHistogram<'a> {
 
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = title.into();
+        self
+    }
+
+    pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
+        self.allow_scroll_zoom = allow;
         self
     }
 
@@ -89,16 +96,19 @@ impl<'a> ScatterHistogram<'a> {
                     }
                     let plot = Plot::new((self.id_salt, "top"))
                         .title(self.title.clone())
+                        .allow_scroll_zoom(self.allow_scroll_zoom)
                         .x_axis(Axis::new().tick_labels_visible(false))
                         .y_axis(Axis::new().label("Density"));
                     cell.show_layers(plot, &mut state.top, &layers)
                 }
                 1 => {
-                    let empty = Plot::new((self.id_salt, "spacer")).canvas_axes().show(
-                        cell.ui(),
-                        &mut PlotState::default(),
-                        &[],
-                    );
+                    let empty = Plot::new((self.id_salt, "spacer"))
+                        .canvas_axes()
+                        .show_frame(false)
+                        .show_grid(false)
+                        .show_hover(false)
+                        .allow_drag(false)
+                        .show(cell.ui(), &mut PlotState::default(), &[]);
                     let rect = cell.rect();
                     let label = match self.data.marginal {
                         MarginalKind::Histogram => "Marginal: Histogram",
@@ -134,6 +144,7 @@ impl<'a> ScatterHistogram<'a> {
                         );
                     }
                     let plot = Plot::new((self.id_salt, "scatter"))
+                        .allow_scroll_zoom(self.allow_scroll_zoom)
                         .x_axis(Axis::new().label(self.x_label.clone()))
                         .y_axis(Axis::new().label(self.y_label.clone()))
                         .legend(self.data.groups.len() > 1);
@@ -155,6 +166,7 @@ impl<'a> ScatterHistogram<'a> {
                         );
                     }
                     let plot = Plot::new((self.id_salt, "right"))
+                        .allow_scroll_zoom(self.allow_scroll_zoom)
                         .x_axis(Axis::new().label("Density"))
                         .y_axis(Axis::new().tick_labels_visible(false));
                     cell.show_layers(plot, &mut state.right, &layers)
@@ -174,6 +186,7 @@ pub struct PlotMatrix<'a> {
     id_salt: &'a str,
     data: &'a PlotMatrixData,
     cell_height: f32,
+    allow_scroll_zoom: bool,
 }
 
 impl<'a> PlotMatrix<'a> {
@@ -182,6 +195,7 @@ impl<'a> PlotMatrix<'a> {
             id_salt,
             data,
             cell_height: 155.0,
+            allow_scroll_zoom: false,
         }
     }
 
@@ -189,6 +203,11 @@ impl<'a> PlotMatrix<'a> {
         if height.is_finite() {
             self.cell_height = height.max(80.0);
         }
+        self
+    }
+
+    pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
+        self.allow_scroll_zoom = allow;
         self
     }
 
@@ -220,6 +239,7 @@ impl<'a> PlotMatrix<'a> {
                     y_axis = y_axis.label(self.data.names[r].clone());
                 }
                 let plot = Plot::new((self.id_salt, r, c))
+                    .allow_scroll_zoom(self.allow_scroll_zoom)
                     .x_axis(x_axis)
                     .y_axis(y_axis);
                 if r == c {

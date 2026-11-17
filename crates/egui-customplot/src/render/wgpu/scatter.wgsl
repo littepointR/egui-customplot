@@ -105,7 +105,20 @@ fn vs_scatter(
     return out;
 }
 
-fn marker_sdf(p: vec2<f32>, r: f32, shape_id: u32) -> f32 {
+fn sd_equilateral_tri(p: vec2<f32>, r: f32, down: bool) -> f32 {
+    let py = select(p.y, -p.y, down);
+    let k = sqrt(3.0);
+    var q = vec2<f32>(abs(p.x) / r, -py / r);
+    q.x = q.x - 0.8660254;
+    q.y = q.y + 0.5;
+    if (q.x + k * q.y) > 0.0 {
+        q = vec2<f32>(q.x - k * q.y, -k * q.x - q.y) * 0.5;
+    }
+    q.x -= clamp(q.x, -1.7320508, 0.0);
+    return (-length(q) * sign(q.y)) * r;
+}
+
+fn marker_sdf_solid(p: vec2<f32>, r: f32, shape_id: u32) -> f32 {
     switch shape_id {
         case 1u: { // Square
             let d = abs(p) - vec2<f32>(r);
@@ -115,16 +128,7 @@ fn marker_sdf(p: vec2<f32>, r: f32, shape_id: u32) -> f32 {
             return (abs(p.x) + abs(p.y)) * 0.70710677 - r * 0.70710677;
         }
         case 3u, 4u: { // TriangleUp / TriangleDown
-            let py = select(p.y, -p.y, shape_id == 4u);
-            let k = sqrt(3.0);
-            var q = vec2<f32>(abs(p.x) / r, -py / r);
-            q.x = q.x - 0.8660254;
-            q.y = q.y + 0.5;
-            if (q.x + k * q.y) > 0.0 {
-                q = vec2<f32>(q.x - k * q.y, -k * q.x - q.y) * 0.5;
-            }
-            q.x -= clamp(q.x, -1.7320508, 0.0);
-            return (-length(q) * sign(q.y)) * r;
+            return sd_equilateral_tri(p, r, shape_id == 4u);
         }
         case 5u: { // Plus
             let t = r * 0.3;
@@ -139,10 +143,49 @@ fn marker_sdf(p: vec2<f32>, r: f32, shape_id: u32) -> f32 {
             let dv = max(abs(rot.x) - t, abs(rot.y) - r);
             return min(dh, dv);
         }
+        case 7u: { // Asterisk
+            let t = r * 0.14;
+            let d0 = max(abs(p.x) - r, abs(p.y) - t);
+            let c60 = 0.5;
+            let s60 = 0.8660254;
+            let p1 = vec2<f32>(p.x * c60 + p.y * s60, -p.x * s60 + p.y * c60);
+            let d1 = max(abs(p1.x) - r, abs(p1.y) - t);
+            let p2 = vec2<f32>(p.x * c60 - p.y * s60, p.x * s60 + p.y * c60);
+            let d2 = max(abs(p2.x) - r, abs(p2.y) - t);
+            return min(d0, min(d1, d2));
+        }
+        case 8u: { // Pentagram
+            let k1 = vec2<f32>(0.80901699, -0.58778525);
+            let k2 = vec2<f32>(-k1.x, k1.y);
+            var q = vec2<f32>(abs(p.x), -p.y);
+            q -= 2.0 * max(dot(k1, q), 0.0) * k1;
+            q -= 2.0 * max(dot(k2, q), 0.0) * k2;
+            q.x = abs(q.x);
+            q.y -= r;
+            let ba = 0.42 * vec2<f32>(-k1.y, k1.x) - vec2<f32>(0.0, 1.0);
+            let h = clamp(dot(q, ba) / dot(ba, ba), 0.0, r);
+            return length(q - ba * h) * sign(q.y * ba.x - q.x * ba.y);
+        }
+        case 9u: { // Hexagram
+            return min(sd_equilateral_tri(p, r, false), sd_equilateral_tri(p, r, true));
+        }
         default: { // Circle
             return length(p) - r;
         }
     }
+}
+
+fn marker_sdf(p: vec2<f32>, r: f32, shape_id: u32) -> f32 {
+    if shape_id >= 10u {
+        let base_id = shape_id - 10u;
+        let d0 = marker_sdf_solid(p, r, base_id);
+        let sw = clamp(r * 0.38, 1.1, 2.6);
+        if r <= sw + 0.15 {
+            return d0;
+        }
+        return abs(d0 + sw * 0.5) - sw * 0.5;
+    }
+    return marker_sdf_solid(p, r, shape_id);
 }
 
 fn linear_from_gamma(srgb: vec3<f32>) -> vec3<f32> {

@@ -85,6 +85,10 @@ harness = false
 name = "dynamic_10m_performance"
 harness = false
 
+[[bench]]
+name = "stage16_performance"
+harness = false
+
 [[example]]
 name = "export_snapshot"
 required-features = ["export"]

@@ -41,7 +41,7 @@ pub struct GraphEdge {
     pub bidirectional_pair: bool,
 }
 
-pub(super) struct AnnotatedEdges {
+pub(crate) struct AnnotatedEdges {
     pub edges: Vec<GraphEdge>,
     pub self_loops: usize,
     pub multi_edges: usize,
@@ -49,7 +49,7 @@ pub(super) struct AnnotatedEdges {
     pub out_degree: Vec<usize>,
 }
 
-pub(super) fn annotate_edges(
+pub(crate) fn annotate_edges(
     node_count: usize,
     directed: bool,
     raw_edges: &[[usize; 2]],
