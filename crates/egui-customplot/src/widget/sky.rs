@@ -11,6 +11,9 @@ use crate::{
     render::paint_sky,
 };
 
+/// Layout geometry, [`SkyTransform`], hover item, and diagnostics returned by [`SkyPlot::show`].
+///
+/// [`SkyPlot::show`] 返回的星空图区域、方位角-仰角投影、悬停卫星命中与诊断信息。
 pub struct SkyPlotResponse {
     pub outer_rect: Rect,
     pub plot_area: Rect,
@@ -38,6 +41,8 @@ impl SkyPlotResponse {
 }
 
 /// Azimuth-elevation sky plot widget (`skyplot`, `EXT-07`).
+///
+/// 方位角-仰角极投影星空图控件：支持卫星轨迹、最低仰角掩膜环、图例交互与滚轮缩放。
 pub struct SkyPlot<'a> {
     id_salt: IdSalt,
     data: &'a SkyPlotData,

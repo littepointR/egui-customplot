@@ -30,6 +30,9 @@ use crate::{
     model::{ResolvedPlotStyle, ResolvedSeriesStyle},
 };
 
+/// Ordered 3D scene layers submitted to [`crate::Plot3D::show`].
+///
+/// 提交给 [`crate::Plot3D::show`] 的三维场景图层枚举（覆盖三维曲线/散点/柱/杆、参数曲面/网格/等值面、体切片/体渲染及八叉树点云）。
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum Layer3D<'a> {

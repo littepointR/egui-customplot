@@ -13,6 +13,8 @@ use crate::{
 };
 
 /// Polar coordinate chart widget (`polarplot`, `polarscatter`, `polarbubblechart`, `polarhistogram`, `compassplot`).
+///
+/// 极坐标绘图控件：支持零角方位与顺/逆时针设置、负半径模式、扇区标注、气泡图例及悬停/缩放交互。
 pub struct PolarPlot {
     id_salt: IdSalt,
     height: f32,
@@ -33,6 +35,9 @@ pub struct PolarPlot {
     pub(crate) theme: Option<Arc<PlotTheme>>,
 }
 
+/// Layout rect, transform, hit-test result, and diagnostics returned by `PolarPlot::show`.
+///
+/// `PolarPlot::show` 返回的极坐标布局、坐标变换、拾取命中与诊断信息。
 pub struct PolarPlotResponse {
     pub outer_rect: egui::Rect,
     pub plot_area: egui::Rect,

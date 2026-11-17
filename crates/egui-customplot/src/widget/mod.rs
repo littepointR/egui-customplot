@@ -39,7 +39,11 @@ pub use response::PlotResponse;
 pub use sky::{SkyPlot, SkyPlotResponse};
 pub use smith::{SmithPlot, SmithPlotResponse};
 
-/// Native egui control. Drag to pan; double-click or focused Home resets.
+/// Native egui 2D scientific plot widget. Drag to pan; scroll wheel zooms when enabled;
+/// double-click or focused `Home` resets.
+///
+/// 原生 `egui` 二维科学绘图控件：左键拖拽平移、右键/`Shift` 框选放大、双击或 `Home` 键重置视图，
+/// 支持滚轮缩放、对数/反转/时间坐标轴、双 Y 轴、图面注解与自定义悬停提示。
 pub struct Plot {
     id_salt: IdSalt,
     height: f32,
@@ -118,6 +122,8 @@ impl Plot {
         self
     }
     /// Clamps interactive panning to `[min, max]` per axis without spring-back jitter.
+    ///
+    /// 按轴将交互式平移限制在 `[min, max]` 区间内，贴边即停且无回弹抖动。
     pub fn pan_limits(mut self, x: Option<[f64; 2]>, y: Option<[f64; 2]>) -> Self {
         self.navigation.pan_limits = [x, y];
         self
@@ -128,6 +134,8 @@ impl Plot {
     }
     /// Opt-in: surrounding ScrollArea owns the wheel by default. Ctrl/cmd-scroll
     /// remains available for egui global UI zoom, not plot zoom.
+    ///
+    /// 是否开启滚轮缩放（默认关闭以便外层 `ScrollArea` 接管滚轮；也可通过 `PlotDefaults` 全局启用）。
     pub fn allow_scroll_zoom(mut self, allow: bool) -> Self {
         self.navigation.allow_scroll_zoom = allow;
         self
@@ -241,7 +249,9 @@ impl Plot {
         self
     }
 
-    /// Configures explicit category ticks and top-down row order for [`CategoricalHeatmapData`].
+    /// Configures explicit category ticks and top-down row order for [`CategoricalHeatmapData`](crate::CategoricalHeatmapData).
+    ///
+    /// 为 [`CategoricalHeatmapData`](crate::CategoricalHeatmapData) 自动配置行列分类刻度与自顶向下行序。
     pub fn categorical_heatmap_axes(mut self, data: &crate::CategoricalHeatmapData) -> Self {
         self.axes[0] = self.axes[0].clone().explicit_ticks(data.x_ticks());
         self.axes[1] = self.axes[1]

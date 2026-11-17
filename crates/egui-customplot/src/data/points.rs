@@ -19,6 +19,9 @@ const AUTO_INDEX_MAX_BYTES: usize = 64 * 1024 * 1024;
 /// When `len >= AUTO_INDEX_MIN_POINTS` and finite runs are X-nondecreasing,
 /// [`PlotData::new`] automatically builds an immutable index within 64 MiB so
 /// default lines and raw picking run in sub-millisecond time.
+///
+/// 不可变共享二维 XY 数据源：克隆零拷贝共享样本，构建时单次扫描极值，
+/// 并在单调非降 X 序列达到 [`AUTO_INDEX_MIN_POINTS`] 时自动建立 64 MiB 有界索引以实现亚毫秒 LOD 与拾取。
 #[derive(Clone, Debug)]
 pub struct PlotData {
     points: Arc<[PlotPoint]>,

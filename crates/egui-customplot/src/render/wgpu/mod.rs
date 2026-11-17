@@ -28,6 +28,9 @@ const DEFAULT_WGPU_BUDGET_BYTES: usize = 256 * 1024 * 1024;
 const AUTO_WGPU_WAVEFORM_MIN_LEN: usize = 16_384;
 const AUTO_WGPU_SCATTER_MIN_LEN: usize = 32_768;
 
+/// Host `egui-wgpu` compute/instancing pipeline configuration and bounded VRAM budget.
+///
+/// 可选 `wgpu` GPU 加速管线配置（目标纹理格式、MSAA 采样与显存预算），复用宿主渲染上下文。
 #[derive(Clone, Copy, Debug)]
 pub struct WgpuPlotConfig {
     pub target_format: wgpu::TextureFormat,
@@ -50,6 +53,8 @@ impl WgpuPlotConfig {
 /// Registers GPU plot pipelines and bounded VRAM resources on the host's
 /// `egui_wgpu::RenderState` and `egui::Context`. Returns `false` if device
 /// limits do not support compute storage buffers.
+///
+/// 将大规模波形/散点 Compute + Instancing 管线与显存缓存注册到宿主 `RenderState`（硬件不支持存储缓冲区时安全返回 `false` 并回退 CPU 路径）。
 pub fn register_wgpu(ctx: &egui::Context, render_state: &RenderState) -> bool {
     register_wgpu_with_config(
         ctx,
@@ -59,6 +64,8 @@ pub fn register_wgpu(ctx: &egui::Context, render_state: &RenderState) -> bool {
 }
 
 /// Registers GPU plot pipelines with explicit target format, MSAA, and VRAM budget.
+///
+/// 使用自定义纹理格式、MSAA 与显存上限注册 `wgpu` 加速渲染管线。
 pub fn register_wgpu_with_config(
     ctx: &egui::Context,
     render_state: &RenderState,

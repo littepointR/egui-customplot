@@ -16,7 +16,9 @@ use crate::{
     render::{paint_color_bar, paint_plot3d},
 };
 
-/// 3D Cartesian axes widget (`plot3`, `surf`, `mesh`, `contour3`, `fimplicit3`, `trisurf`, etc.).
+/// 3D Cartesian axes widget (`plot3`, `surf`, `mesh`, `contour3`, `fimplicit3`, `volshow`, `pcshow`, etc.).
+///
+/// 三维笛卡尔绘图控件：支持轨道旋转、缩放/平移、正交/透视投影、画家排序与 `ZBuffer` 像素级深度遮挡、体渲染及点云。
 pub struct Plot3D {
     id_salt: IdSalt,
     height: f32,
@@ -40,6 +42,9 @@ pub struct Plot3D {
     pub(crate) theme: Option<Arc<PlotTheme>>,
 }
 
+/// Output geometry, hit-test result, and diagnostics returned by [`Plot3D::show`].
+///
+/// [`Plot3D::show`] 返回的布局信息、三维拾取命中结果与渲染诊断计数。
 pub struct Plot3DResponse {
     pub outer_rect: egui::Rect,
     pub plot_area: egui::Rect,

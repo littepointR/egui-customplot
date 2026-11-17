@@ -7,12 +7,18 @@ use crate::{
     PlotState, PlotStyle, PlotTheme,
 };
 
+/// Caller-owned plot states for magnitude (top) and phase (bottom) panels of [`BodePlot`].
+///
+/// 伯德图组合视图状态（分别持久化幅频子图与相频子图的交互视图）。
 #[derive(Clone, Debug, Default)]
 pub struct BodePlotState {
     pub mag: PlotState,
     pub phase: PlotState,
 }
 
+/// Output geometry and synced sub-plot responses returned by [`BodePlot::show`].
+///
+/// [`BodePlot::show`] 返回的外框区域及幅频/相频联动画布响应。
 pub struct BodePlotResponse {
     pub outer_rect: Rect,
     pub response: Response,
@@ -36,6 +42,8 @@ impl BodePlotResponse {
 }
 
 /// Paired Bode Magnitude (dB) + Unwrapped Phase (deg) widget with X-axis link & margins (`EXT-21`).
+///
+/// 对数频率轴联动伯德图控件：上下同步显示幅值(dB)与解卷绕相位(deg)，可选自动标注增益裕度与相位裕度。
 pub struct BodePlot<'a> {
     id_salt: IdSalt,
     data: &'a FrequencyResponseData,

@@ -5,8 +5,11 @@ use egui::{Context, Id, IdSalt, Pos2, Ui, Vec2, ViewportId};
 use super::selection::{ActiveGesture, SelectionCapture};
 use crate::{PlotBounds, PlotTransform};
 
-/// Application-owned view state, one instance per widget. None means auto-fit.
-/// Do not put this in the same Context's IdTypeMap: frame snapshots hold a Context handle.
+/// Application-owned view state, one instance per widget. `None` means auto-fit.
+/// Do not put this in the same Context's `IdTypeMap`: frame snapshots hold a Context handle.
+///
+/// 由应用层持久持有的二维绘图视图状态（每个控件一个实例，`bounds == None` 表示自适应全部数据；
+/// 内置 2 MiB 几何自动缓存，支持编程设置视区范围、刷选选区与图例显隐）。
 #[derive(Clone, Debug)]
 pub struct PlotState {
     pub(super) bounds: Option<PlotBounds>,

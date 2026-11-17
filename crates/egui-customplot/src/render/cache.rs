@@ -6,12 +6,15 @@ use crate::{AxisScale, Line, LineInterpolation, LineSampling, PlotTransform};
 const MAX_ENTRIES: usize = 64;
 
 /// Host-owned LRU of clipped, unstyled line coordinates. Never retains samples
-/// or PlotState. Opt in with `Plot::show_cached` / `show_series_cached`.
+/// or `PlotState`. Opt in with [`crate::Plot::show_cached`] / [`crate::Plot::show_series_cached`].
 ///
-/// The budget counts occupied entry metadata and retained Vec capacities, not
-/// allocator headers, VecDeque spare slots, temporary clones submitted to egui,
+/// The budget counts occupied entry metadata and retained `Vec` capacities, not
+/// allocator headers, `VecDeque` spare slots, temporary clones submitted to `egui`,
 /// markers, tessellation or GPU resources. At most 64 entries are retained.
-/// A hit still copies coordinates for egui and runs dash/tessellation work.
+/// A hit still copies coordinates for `egui` and runs dash/tessellation work.
+///
+/// 宿主持有的有界几何 LRU 缓存：仅缓存裁剪后的线坐标（不持有原始样本或视图状态），
+/// 适合静态超大数据集反复重绘时复用降采样几何。
 #[derive(Clone, Debug, Default)]
 pub struct PlotCache {
     entries: VecDeque<Entry>,

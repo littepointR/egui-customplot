@@ -5,7 +5,9 @@ use crate::{
     data::{PointCloud3DData, VolumeRenderMode, VolumeTransferFunction},
 };
 
-/// Direct volume raycasting layer (`volshow`, `EXT-23`) for [`Plot3D`].
+/// Direct volume raycasting layer (`volshow`, `EXT-23`) for [`Plot3D`](crate::Plot3D).
+///
+/// 三维体绘制光线投射图层（对应 `volshow`，搭配 `DepthMode::ZBuffer` 与传输函数渲染）。
 #[derive(Clone, Copy, Debug)]
 pub struct VolumeRender3D<'a> {
     pub(crate) volume: &'a ScalarVolume3D,
@@ -69,7 +71,9 @@ impl<'a> VolumeRender3D<'a> {
     }
 }
 
-/// High-density octree-LOD 3D point cloud layer (`pcshow`, `EXT-24`) for [`Plot3D`].
+/// High-density octree-LOD 3D point cloud layer (`pcshow`, `EXT-24`) for [`Plot3D`](crate::Plot3D).
+///
+/// 高密度八叉树自适应 LOD 三维点云图层（对应 `pcshow`，支持千万/十万级点云流畅缩放）。
 #[derive(Clone, Copy, Debug)]
 pub struct PointCloud3D<'a> {
     pub(crate) data: &'a PointCloud3DData,

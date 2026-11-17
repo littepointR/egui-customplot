@@ -11,6 +11,9 @@ use crate::{
     render::paint_smith,
 };
 
+/// Layout geometry, [`SmithTransform`], hover point, and diagnostics returned by [`SmithPlot::show`].
+///
+/// [`SmithPlot::show`] 返回的史密斯圆图区域、复反射系数坐标变换、悬停点与诊断信息。
 pub struct SmithPlotResponse {
     pub outer_rect: Rect,
     pub plot_area: Rect,
@@ -38,6 +41,8 @@ impl SmithPlotResponse {
 }
 
 /// Interactive RF Smith chart widget (`smithplot`, `EXT-19`).
+///
+/// 射频阻抗/导纳史密斯圆图控件：支持阻抗/导纳/混合网格、散射参数轨迹悬停读数与缩放拖拽。
 pub struct SmithPlot<'a> {
     id_salt: IdSalt,
     data: &'a SmithPlotData,

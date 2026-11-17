@@ -1,0 +1,5 @@
+[build]
+rustdocflags = [
+    "-D", "warnings",
+    "--html-in-header", "crates/egui-customplot/docs/rustdoc-i18n-header.html",
+]

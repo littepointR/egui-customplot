@@ -1,37 +1,5 @@
-//! Native egui plotting, with persistent data and explicitly owned view state.
-//!
-//! Three-tier performance design:
-//! - L1 smart defaults: `PlotData::new` auto-indexes large monotonic-X series, `Line` /
-//!   `Scatter` default to `Auto` LOD (`LineSampling::Auto`, `MarkerSampling::Auto`), `PlotState`
-//!   includes a bounded 2 MiB automatic geometry cache, and hover picking uses Y branch-and-bound pruning.
-//! - L2 full control: explicit `LineSampling`, `MarkerSampling`, `RenderBackend`, `PlotCache`,
-//!   `PlotData::new_unindexed`, log/reversed/dual-Y axes, 5-layer styling, and `PlotSnapshot` export.
-//! - L3 power-user sources & GPU: zero-copy `IndexedStream` (`StreamLine`), compact $O(1)$-sliced
-//!   `UniformWaveform` (`WaveformLine`), and optional `feature = "wgpu"` compute/instancing via host `RenderState`.
-//!
-//! ```
-//! use egui_customplot::{Line, Plot, PlotData, PlotState};
-//!
-//! let data = PlotData::new(vec![[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]]);
-//! let mut state = PlotState::default(); // retain this alongside your app model
-//! # egui::Context::default().run_ui(egui::RawInput::default(), |ui| {
-//! Plot::new("signal").show(ui, &mut state, &[Line::new(&data)]);
-//! # }).drop_without_applying_deltas();
-//! ```
-//!
-//! Preprocess outside the per-pass UI closure; opt into approximation explicitly:
-//! ```
-//! use egui_customplot::{Line, LineSampling, PlotCache, PlotData, PlotStream};
-//! let mut stream = PlotStream::new(4096, 4096 * 16)?;
-//! stream.append_once(1, &[[1.0, 2.0], [2.0, 3.0]])?;
-//! let mut data: PlotData = stream.snapshot(); // explicit O(N) publication
-//! data.build_line_index(1024 * 1024)?;
-//! let line = Line::new(&data).sampling(LineSampling::MinMax);
-//! let mut cache = PlotCache::new(8 * 1024 * 1024); // retain in the host
-//! // Plot::new("signal").show_cached(ui, state, &[line], &mut cache);
-//! # let _ = (line, &mut cache);
-//! # Ok::<(), Box<dyn std::error::Error>>(())
-//! ```
+#![doc = include_str!("../docs/overview.md")]
+#![warn(rustdoc::broken_intra_doc_links)]
 
 mod axis;
 mod data;
@@ -41,6 +9,13 @@ mod layout;
 mod model;
 mod render;
 mod widget;
+
+/// Complete user guide, architecture reference, and plot catalog (`EN` / `简体中文` switchable).
+///
+/// 完整使用指南、架构约定与全图种速查手册（点击页面右上或侧栏 `EN | 简体中文` 切换语言）。
+#[cfg(doc)]
+#[doc = include_str!("../docs/guide.md")]
+pub mod guide {}
 
 pub use axis::{
     Axis, Axis3D, AxisScale, AxisTick, Bounds3D, BoundsError, Camera3D, CivilDateTime,

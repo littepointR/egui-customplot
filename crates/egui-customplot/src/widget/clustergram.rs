@@ -8,6 +8,8 @@ use crate::{
 };
 
 /// Persistent view state across passes for [`Clustergram`].
+///
+/// [`Clustergram`] 三面板联动（顶/左系统树与中心重排热力图）的宿主持有交互状态。
 #[derive(Clone, Debug, Default)]
 pub struct ClustergramState {
     pub top: PlotState,
@@ -15,6 +17,9 @@ pub struct ClustergramState {
     pub heatmap: PlotState,
 }
 
+/// Output rects and aligned dendrogram/heatmap responses returned by [`Clustergram::show`].
+///
+/// [`Clustergram::show`] 返回的区域矩形及顶/左树状图与热力图子响应。
 pub struct ClustergramResponse {
     pub outer_rect: Rect,
     pub heatmap_rect: Rect,
@@ -40,6 +45,8 @@ impl ClustergramResponse {
 }
 
 /// Hierarchical clustergram combining row/column dendrograms, reordered heatmap, and colorbar (`EXT-15`).
+///
+/// 层次聚类热力图控件：组合行列聚类树状图、重排序标准化热力矩阵与可选色条。
 pub struct Clustergram<'a> {
     id_salt: IdSalt,
     data: &'a ClustergramData,

@@ -3,6 +3,8 @@ use egui::{Color32, Ui};
 use crate::{Axis, Bars, Line, ParetoData, Plot, PlotLayer, PlotResponse, PlotState, YAxis};
 
 /// Dual-Y convenience plot (`plotyy`, `LG-007`) pairing left and right layers cleanly.
+///
+/// 左右双纵轴快捷绘图控件：共享同一 X 轴并为左右两套图层配置独立 Y 轴刻度与标签。
 pub struct PlotYy<'a> {
     id_salt: &'a str,
     left: Vec<PlotLayer<'a>>,
@@ -98,6 +100,8 @@ impl<'a> PlotYy<'a> {
 }
 
 /// Pareto bar + cumulative percentage dual-axis chart (`pareto`, `ML-038`).
+///
+/// 帕累托分类双纵轴图控件：左侧显示降序频数柱形，右侧显示累计百分比折线。
 pub struct ParetoChart<'a> {
     id_salt: &'a str,
     data: &'a ParetoData,

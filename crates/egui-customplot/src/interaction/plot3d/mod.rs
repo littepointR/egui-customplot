@@ -31,6 +31,8 @@ struct Plot3DFrameSnapshot {
 }
 
 /// Application-owned interaction state for [`crate::Plot3D`] (`Camera3D`, manual bounds, visibility).
+///
+/// [`crate::Plot3D`] 的宿主持有三维视图交互状态：保存轨道相机、手动三维包围盒、图例显隐及静态 `ZBuffer` RLE 缓存。
 #[derive(Clone, Debug, Default)]
 pub struct Plot3DState {
     camera_override: Option<Camera3D>,

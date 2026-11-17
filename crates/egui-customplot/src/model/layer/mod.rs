@@ -19,7 +19,9 @@ mod stage8d;
 mod style;
 
 /// Ordered heterogeneous layers. This extends the plotting API without changing
-/// the existing point-series enum or Series::data() contract.
+/// the existing point-series enum or `Series::data()` contract.
+///
+/// 有序异构二维图层枚举：通过 [`crate::Plot::show_layers`] 将折线、散点、柱状、热力图、等高线、统计/控制/金融/现代图表按提交顺序叠加渲染。
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum PlotLayer<'a> {

@@ -7,6 +7,8 @@ use crate::{PlotStyle, PlotTheme, Projection3D};
 const DEFAULTS_KEY: &str = "egui_customplot_plot_defaults";
 
 /// Context-scoped default appearance & interaction overrides applied by widgets unless disabled.
+///
+/// 挂载于 `egui::Context` 上的全局默认绘图配置（主题、父级样式、滚轮/框选缩放、网格/图例/悬停/十字线与 3D 投影默认项）。
 #[derive(Clone, Debug, Default)]
 pub struct PlotDefaults {
     pub theme: Option<Arc<PlotTheme>>,
@@ -21,6 +23,8 @@ pub struct PlotDefaults {
 }
 
 /// Set or clear context-scoped [`PlotDefaults`] outside locks.
+///
+/// 在锁外设置或清除上下文作用域的全局 [`PlotDefaults`]，供画廊内全部图表统一继承。
 pub fn set_plot_defaults(ctx: &Context, defaults: Option<PlotDefaults>) {
     ctx.data_mut(|data| {
         let id = Id::NULL.with(DEFAULTS_KEY);
@@ -34,6 +38,8 @@ pub fn set_plot_defaults(ctx: &Context, defaults: Option<PlotDefaults>) {
 }
 
 /// Read the active context-scoped [`PlotDefaults`], if any.
+///
+/// 读取当前 `egui::Context` 中生效的 [`PlotDefaults`]。
 pub fn plot_defaults(ctx: &Context) -> Option<PlotDefaults> {
     ctx.data(|data| data.get_temp::<PlotDefaults>(Id::NULL.with(DEFAULTS_KEY)))
 }

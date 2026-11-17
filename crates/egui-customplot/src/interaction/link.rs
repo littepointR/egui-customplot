@@ -9,12 +9,18 @@ use crate::{AxisScale, PlotBounds, PlotState};
 /// Shared axes must use the same scale. Equal-aspect plots are rejected rather
 /// than silently weakening either constraint. A state belongs to at most one
 /// group per axis. Cross-Context/viewport linking is not supported.
+///
+/// 宿主持有的多图坐标轴联动器：在同一 `Ui` pass 内展示全部成员后调用一次 `synchronize`，
+/// 仅同步勾选轴的数据视口范围，不干扰成员各自的样本、图例显隐、轴反转与未联动轴。
 pub struct AxisLink {
     axes: [bool; 2],
     manual: [Option<[f64; 2]>; 2],
     was_reset: bool,
 }
 
+/// Validation failure returned by [`AxisLink::synchronize`] when linking constraints are violated.
+///
+/// [`AxisLink::synchronize`] 在轴缩放类型不一致、存在等比例约束或成员未在当前帧绘制时返回的错误。
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LinkError {
     NotShown { member: usize },
@@ -31,6 +37,9 @@ impl std::fmt::Display for LinkError {
 }
 impl std::error::Error for LinkError {}
 
+/// Arbitration summary returned by [`AxisLink::synchronize`] (shared ranges and conflict count).
+///
+/// [`AxisLink::synchronize`] 返回的同步汇总：最终共同范围、发生变化的成员数与首动作来源索引。
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct LinkReport {
     pub ranges: [Option<[f64; 2]>; 2],

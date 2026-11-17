@@ -1,0 +1,414 @@
+<style>
+html[data-cp-lang="en"] [data-cp-lang-block="zh"],
+html[data-cp-lang="en"] .cp-lang-zh {
+    display: none !important;
+}
+html[data-cp-lang="zh"] [data-cp-lang-block="en"],
+html[data-cp-lang="zh"] .cp-lang-en {
+    display: none !important;
+}
+html:not([data-cp-lang]) .cp-lang-zh {
+    display: none;
+}
+.cp-lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    margin-right: 0.75rem;
+    padding: 2px;
+    border-radius: 6px;
+    border: 1px solid rgba(127, 127, 127, 0.38);
+    background: var(--main-background-color, transparent);
+    font-size: 0.78rem;
+    line-height: 1.2;
+    vertical-align: middle;
+}
+.sidebar-crate .cp-lang-switcher {
+    margin: 0.45rem 0 0 0;
+}
+.cp-lang-btn {
+    appearance: none;
+    border: 0;
+    margin: 0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    opacity: 0.72;
+}
+.cp-lang-btn:hover {
+    opacity: 1;
+}
+.cp-lang-btn[aria-pressed="true"] {
+    opacity: 1;
+    font-weight: 600;
+    background: rgba(127, 127, 127, 0.24);
+}
+</style>
+<script>
+(function () {
+    var STORAGE_KEY = "egui_customplot_doc_lang";
+    function normalizeLang(v) {
+        if (!v) return null;
+        var s = String(v).trim().toLowerCase();
+        if (s === "zh" || s.indexOf("zh") === 0) return "zh";
+        if (s === "en" || s.indexOf("en") === 0) return "en";
+        return null;
+    }
+    var initial = null;
+    try {
+        initial = normalizeLang(new URLSearchParams(window.location.search).get("lang"));
+    } catch (_) {}
+    if (!initial) {
+        try {
+            initial = normalizeLang(window.localStorage.getItem(STORAGE_KEY));
+        } catch (_) {}
+    }
+    if (!initial) {
+        initial = normalizeLang(navigator.language) || "en";
+    }
+    document.documentElement.setAttribute("data-cp-lang", initial);
+    document.documentElement.lang = initial === "zh" ? "zh-CN" : "en";
+
+    var ZH_SUMMARIES = {
+        guide: "完整使用指南、架构约定与全图种速查手册（可切换 EN / 简体中文）。",
+        Plot: "原生 egui 二维科学绘图控件：平移、缩放、多轴、注解与悬停拾取。",
+        Plot3D: "三维笛卡尔绘图控件：轨道相机、正交/透视投影、ZBuffer、体渲染与点云。",
+        PolarPlot: "极坐标绘图控件：折线、散点、气泡、极直方图与罗盘矢量图。",
+        GeoPlot: "离线二维地理坐标地图控件：等经纬/墨卡托投影，绝不发起网络请求。",
+        GeoGlobePlot: "交互式 WGS84 三维地球仪控件：内置海岸线、经纬网与高程轨迹。",
+        SkyPlot: "方位角-仰角极投影星空图控件：卫星轨迹、仰角掩膜与交互图例。",
+        SmithPlot: "射频史密斯圆图控件：阻抗/导纳/混合网格与散射参数轨迹悬停读数。",
+        BodePlot: "对数频率轴联动伯德图控件：幅频(dB)与相频(deg)及增益/相位裕度标注。",
+        BodePlotState: "伯德图组合视图状态（持久化幅频与相频子图视图范围）。",
+        BodePlotResponse: "BodePlot::show 返回的外框区域与幅频/相频联动子响应。",
+        Clustergram: "层次聚类热力图控件：组合行列树状图、重排矩阵热力图与色条。",
+        ClustergramState: "Clustergram 三面板联动的宿主持有视图状态。",
+        ClustergramResponse: "Clustergram::show 返回的区域矩形及系统树/热力图子响应。",
+        ColorBar: "独立标量色条控件：与热力图共享 ColorScale，自动绘制线性/对数刻度。",
+        ColorBarResponse: "ColorBar::show 返回的屏幕区域与刻度集合。",
+        Figure: "即时模式多子图网格容器：子图保持宿主状态与样本，支持全局继承与注解。",
+        FigureCell: "Figure 回调传入的单个子图网格单元包装器。",
+        FigureResponse: "Figure::show 返回的子图输出集合与图面注解统计。",
+        StackedPlot: "共享同步 X 轴的垂直堆叠多图控件。",
+        StackedPlotResponse: "StackedPlot::show 返回的子图网格与联动报告。",
+        ScatterHistogram: "带上方/右侧边际直方图或核密度估计的分组散点图控件。",
+        ScatterHistogramState: "ScatterHistogram 三面板联动的宿主持有视图状态。",
+        PlotMatrix: "成对多变量矩阵散点图与对角线分布直方图矩阵控件。",
+        PlotYy: "左右双纵轴快捷绘图控件：共享 X 轴并独立缩放左右 Y 轴。",
+        ParetoChart: "帕累托降序频数柱形 + 累计百分比双纵轴图控件。",
+        PlotResponse: "二维控件每帧返回的布局矩形、坐标变换、拾取命中与诊断计数。",
+        Plot3DResponse: "Plot3D::show 返回的三维布局、命中目标与渲染诊断统计。",
+        PolarPlotResponse: "PolarPlot::show 返回的极坐标布局、变换与拾取命中。",
+        GeoPlotResponse: "GeoPlot::show 返回的地图布局、地理投影变换与悬停命中。",
+        GeoGlobeResponse: "GeoGlobePlot::show 返回的三维地球仪变换与轨迹/地标命中。",
+        SkyPlotResponse: "SkyPlot::show 返回的星空图区域、投影与卫星命中信息。",
+        SmithPlotResponse: "SmithPlot::show 返回的史密斯圆图反射系数变换与悬停命中。",
+        PlotState: "宿主持有的二维视图状态（bounds=None 自适应，内置 2 MiB 几何缓存）。",
+        Plot3DState: "Plot3D 的三维轨道相机、手动包围盒与 ZBuffer 缓存状态。",
+        PolarState: "PolarPlot 的宿主持有径向范围、图例显隐与刷选状态。",
+        GeoPlotState: "GeoPlot 的宿主持有经纬度视窗与图层显隐状态。",
+        GeoGlobeState: "GeoGlobePlot 的宿主持有三维地球仪视角、缩放与旋转状态。",
+        SkyPlotState: "SkyPlot 的宿主持有轨道选择与图例显隐状态。",
+        SmithPlotState: "SmithPlot 的宿主持有复平面平移缩放与图例显隐状态。",
+        AxisLink: "宿主持有的多图坐标轴联动器，在 UI pass 末尾统一仲裁范围避免抖动。",
+        LinkError: "AxisLink::synchronize 校验失败时返回的轴类型或约束冲突错误。",
+        LinkReport: "AxisLink::synchronize 返回的联动范围汇总与首动作来源报告。",
+        PlotDefaults: "挂载于 egui::Context 的全局默认绘图配置（主题、交互与 3D 投影）。",
+        set_plot_defaults: "在锁外设置或清除上下文全局绘图默认值 PlotDefaults。",
+        plot_defaults: "读取当前 egui::Context 中生效的 PlotDefaults 配置。",
+        PlotTheme: "以 Arc 共享的绘图样式与调色板主题（不修改宿主 egui::Style）。",
+        PlotStyle: "可继承覆写的坐标轴、背景、网格与序列通用视觉样式。",
+        SeriesStyle: "单个二维/三维数据层的线宽、标记、填充与颜色覆盖样式。",
+        ColorScale: "热力图与色条共享的线性/对数颜色映射与截断范围定义。",
+        ColorMap: "内置科学调色板（Viridis / Parula / Turbo / Inferno / Plasma / Coolwarm / Gray / BlueRed 等 11 种）。",
+        Axis: "单轴配置（标签、线性/对数/时间格式、轴反转、刻度显隐与自定义格式化）。",
+        YAxis: "二维绘图左/右纵轴归属枚举（Left / Right）。",
+        Axis3D: "Plot3D 单个三维坐标轴（X / Y / Z）的刻度、标签与缩放配置。",
+        Camera3D: "对齐 MATLAB view(az, el) 约定的三维轨道相机状态。",
+        Projection3D: "三维投影模式（正交 Orthographic / 透视 Perspective）。",
+        DepthMode: "Plot3D 深度消隐引擎（画家排序 SortedPainter / 逐像素 ZBuffer）。",
+        PlotLayer: "有序异构二维图层枚举：支持将折线、散点、柱状、热力图、等高线、统计/控制与现代图表叠加绘制。",
+        Layer3D: "提交给 Plot3D::show 的三维场景图层枚举。",
+        PolarLayer: "提交给 PolarPlot::show 的极坐标图层枚举。",
+        GeoLayer: "提交给 GeoPlot::show 的二维离线地图图层枚举。",
+        Line: "二维折线/阶梯线绘制层（支持 Auto/MinMax/Raw 降采样与虚线模式）。",
+        Scatter: "二维散点绘制层（支持逐点样式、多种标记形状与分支定界拾取）。",
+        Bars: "二维分组/堆叠/水平/垂直柱状图绘制层。",
+        Stems: "二维离散火柴杆脉冲序列图绘制层。",
+        ErrorBars: "支持上下/左右非对称误差须的二维误差棒绘制层。",
+        Area: "面积带与多系列堆叠/正负分离面积图绘制层。",
+        Fill: "填充闭合二维多边形区域层。",
+        Patch: "二维平面着色或 Gouraud 顶点插值面片图绘制层。",
+        PolyShape: "支持外边界与多内孔洞的二维 PolyShape 区域图绘制层。",
+        Contours: "二维标量场等值线与高对比度自适应数值标签层。",
+        FilledContours: "二维标量场分带填充等高线层。",
+        Heatmap: "均匀/非均匀标量网格热力图（NaN 自动显示为空洞）。",
+        Pcolor: "二维平面/双线性着色伪彩网格图层。",
+        CurvilinearPcolor: "曲率参数化结构网格伪彩绘制层（pcolor(X, Y, Z)）。",
+        PlotImage: "图像数据网格图层（搭配 Plot::imshow_axes）。",
+        FunctionPlot: "自适应振荡加密与极点断裂函数曲线层（fplot / ezplot）。",
+        ImplicitCurve: "二维隐式方程等值曲线层（fimplicit）。",
+        Quiver: "二维箭头矢量场图层（quiver）。",
+        Feather: "沿水平基线排列的二维矢量箭羽图（feather）。",
+        Streamlines: "二维向量场积分流线图层（streamline）。",
+        TriPlot: "二维 Delaunay 三角剖分网格与标量着色层。",
+        Voronoi: "二维 Voronoi 泰森多边形胞腔划分与射线裁剪层。",
+        AlphaShape: "二维 Alpha-shape 凹包提取区域与边界层。",
+        Spy: "稀疏矩阵非零元素分布可视化层（spy）。",
+        Waterfall2D: "二维分步瀑布增减累计柱形图层（waterfall）。",
+        BoxChart: "箱线分布统计图（中位数、四分位箱、触须与离群点）。",
+        ViolinPlot: "核密度小提琴分布图（支持单双侧核密度包络与四分位内芯）。",
+        Raincloud: "云雨组合分布图（核密度云 + 箱线 + 抖动散点雨）。",
+        SwarmChart: "防重叠蜂群类别散点图（swarmchart）。",
+        BubbleChart: "按数据大小比例映射圆面积的二维气泡散点层。",
+        BubbleCloud: "确定性圆堆叠填充分类气泡云图。",
+        WordCloud: "螺旋避让防重叠分类词云图。",
+        PieChart: "饼图与中空圆环图绘制层（pie / donut）。",
+        CategoricalHeatmap: "带行列分类表头聚合的分类热力图。",
+        ConfusionChart: "分类混淆矩阵及行列召回率/精确率汇总边栏图。",
+        EcdfPlot: "Kaplan-Meier 经验累积分布曲线与 Greenwood 置信带。",
+        ProbabilityPlot: "Probit / Weibull / 正态概率分位 QQ 图与参考拟合线。",
+        DendrogramPlot: "层次聚类树状图绘制层（dendrogram）。",
+        Biplot: "主成分分析 PCA 载荷矢量与样本得分双标图。",
+        ParallelPlot: "多维度归一化平行坐标折线图。",
+        ControlChart: "统计过程控制 SPC 控制限与异常规则判异图（I-MR / Xbar / R 等）。",
+        Candlestick: "金融 OHLC 涨跌红绿 K 线蜡烛图。",
+        OhlcBars: "金融 OHLC 垂直开高低收竹节线图。",
+        ZPlanePlot: "离散系统 Z 平面单位圆零极点分布图。",
+        NyquistPlot: "开环频响复平面奈奎斯特图（含 (-1, 0j) 临界点标注）。",
+        NicholsPlot: "开环相位-对数幅值(dB)尼科尔斯曲线图。",
+        RootLocus: "系统特征根随增益 K 变化的连续根轨迹图。",
+        CwtPlot: "解析 Morlet 连续小波时频尺度谱与影响锥 COI 边界。",
+        RadarChart: "多指标极轴多边形雷达对比图。",
+        SankeyChart: "带流量宽度与平滑贝塞尔缎带的桑基流向图。",
+        TreemapChart: "Squarified 层次面积切分矩形树图。",
+        SunburstChart: "同心圆环多层占比旭日图。",
+        GanttChart: "带完成进度条、里程碑菱形与前驱依赖箭头的甘特排期图。",
+        Surface3D: "三维网格参数曲面图（支持光照、等高投影与色条映射）。",
+        MeshSurface3D: "三维线框网格曲面（支持隐藏线消隐与颜色映射）。",
+        VolumeRender3D: "三维体绘制光线投射层（volshow，支持 Alpha/MIP/等值面模式）。",
+        PointCloud3D: "八叉树自适应 LOD 三维高密度点云层（pcshow）。",
+        Isosurface3D: "三维标量体场 Marching-Tetrahedra 等值面网格层。",
+        Isocaps3D: "三维等值面体块端面封盖着色层。",
+        VolumeSlice3D: "三维标量体正交与倾斜平面切片层。",
+        PlotData: "宿主持有不可变二维 XY 数据源（支持 64 MiB 自动索引与亚毫秒 LOD）。",
+        PlotStream: "支持显式版本快照发布的增量流式环形缓冲容器。",
+        IndexedStream: "零拷贝可滚动索引流数据结构（千万点实时曲线底层源）。",
+        UniformWaveform: "等间隔采样的紧凑一维波形块（O(1) 窗口切片查询）。",
+        GridData: "二维均匀/非均匀标量网格数据容器（NaN 留空）。",
+        ScalarField2D: "支持解析评估预算限制的二维标量场采样结果。",
+        ScalarVolume3D: "三维标量体数据场（规则网格含 O(1) 三线性快速梯度计算）。",
+        PointCloud3DData: "含 RGB/强度与八叉树空间索引的三维点云数据源。",
+        PlotCache: "宿主持有的有界 LRU 裁切线坐标几何缓存（不保留样本与视图状态）。",
+        PlotSnapshot: "脱离开销与宿主上下文的自包含矢量/栅格导出快照（需 export 特性）。",
+        CaptureLimits: "导出快照捕获阶段施加的图元、顶点、索引与字形纹理像素上限。",
+        ExportOptions: "SVG / PNG 导出缩放因子与文本矢量化配置选项。",
+        WgpuPlotConfig: "可选 wgpu 加速管线的表面格式、MSAA 与显存预算配置。",
+        register_wgpu: "将大规模散点/波形 Compute + Instancing GPU 管线注册到宿主上下文。",
+        register_wgpu_with_config: "使用自定义配置注册 wgpu GPU 加速渲染管线。",
+        set_wgpu_budget: "动态调整当前上下文下 wgpu 缓存显存上限预算。",
+        LineInterpolation: "相邻有效样本连线插值模式（Linear / StepAfter / StepBefore）。",
+        LineSampling: "二维折线绘制降采样策略（Auto / Exact / Visible / MinMax）。",
+        MarkerSampling: "散点标记降采样策略（Auto / Exact / PixelGrid）。",
+        RenderBackend: "二维序列渲染后端偏好选择（Auto / Painter / Wgpu）。",
+        AxisScale: "坐标轴数学尺度（Linear / Log10 / Probit / Weibull）。",
+        TimeAxisMode: "时间与时长刻度格式模式（UtcDateTime / Duration）。",
+        Annotation: "图面文本、基准线、高亮区域、箭头与文本框注解枚举。",
+        AnnotationCoord: "图面注解坐标系（数据坐标 Data / 归一化 Normalized）。",
+        PlotDiagnostics: "单帧访问点数、输出图元数、裁剪计数及 3D/体渲染统计诊断。",
+        AUTO_INDEX_MIN_POINTS: "PlotData::new 触发自动构建单调 X 轴索引的最小样本阈值。"
+    };
+
+    var SECTION_LABELS = {
+        "Modules": "模块",
+        "Structs": "结构体",
+        "Enums": "枚举",
+        "Constants": "常量",
+        "Functions": "函数",
+        "Type Aliases": "类型别名",
+        "Traits": "Trait",
+        "Implementations": "实现",
+        "Methods": "方法",
+        "Associated Functions": "关联函数",
+        "Fields": "字段",
+        "Variants": "变体",
+        "Auto Trait Implementations": "自动 Trait 实现",
+        "Blanket Implementations": "泛型覆盖实现",
+        "Sections": "章节目录",
+        "Crate Items": "Crate 导出项",
+        "All Items": "全部导出条目"
+    };
+
+    function swapTextLabel(el, lang) {
+        if (!el) return;
+        for (var i = 0; i < el.childNodes.length; i++) {
+            var n = el.childNodes[i];
+            if (n.nodeType === 3 && n.nodeValue && n.nodeValue.trim() !== "") {
+                if (el.dataset.cpOrigLabel === undefined) {
+                    el.dataset.cpOrigLabel = n.nodeValue;
+                }
+                if (lang === "zh") {
+                    var key = el.dataset.cpOrigLabel.trim();
+                    if (ZH_SUMMARIES[key] === undefined && SECTION_LABELS[key]) {
+                        n.nodeValue = SECTION_LABELS[key];
+                    } else if (SECTION_LABELS[key]) {
+                        n.nodeValue = SECTION_LABELS[key];
+                    }
+                } else {
+                    n.nodeValue = el.dataset.cpOrigLabel;
+                }
+                break;
+            }
+        }
+    }
+
+    function syncSectionLabels(lang) {
+        var nodes = document.querySelectorAll(
+            "h2.section-header, #rustdoc-toc > h3 > a, #all-types"
+        );
+        for (var i = 0; i < nodes.length; i++) {
+            swapTextLabel(nodes[i], lang);
+        }
+    }
+
+    function syncItemTables(lang) {
+        var dts = document.querySelectorAll("dl.item-table > dt");
+        for (var i = 0; i < dts.length; i++) {
+            var dt = dts[i];
+            var dd = dt.nextElementSibling;
+            if (!dd || dd.tagName !== "DD") continue;
+            var link = dt.querySelector("a");
+            if (!link) continue;
+            var name = (link.textContent || "").trim();
+            var zh = ZH_SUMMARIES[name];
+            if (!zh) continue;
+            if (dd.dataset.cpOrigHtml === undefined) {
+                dd.dataset.cpOrigHtml = dd.innerHTML;
+            }
+            if (lang === "zh") {
+                dd.textContent = zh;
+            } else {
+                dd.innerHTML = dd.dataset.cpOrigHtml;
+            }
+        }
+    }
+
+    function tagBilingualDocblocks() {
+        var cjkRe = /[\u4e00-\u9fff]/;
+        var docs = document.querySelectorAll(".docblock");
+        for (var d = 0; d < docs.length; d++) {
+            var doc = docs[d];
+            if (doc.querySelector(".cp-lang-en, .cp-lang-zh")) continue;
+            var children = [];
+            for (var i = 0; i < doc.children.length; i++) {
+                var ch = doc.children[i];
+                if (/^(P|UL|OL|BLOCKQUOTE)$/.test(ch.tagName)) {
+                    children.push(ch);
+                }
+            }
+            var hasZh = false;
+            var hasEn = false;
+            for (var j = 0; j < children.length; j++) {
+                if (cjkRe.test(children[j].textContent || "")) hasZh = true;
+                else hasEn = true;
+            }
+            if (hasZh && hasEn) {
+                for (var k = 0; k < children.length; k++) {
+                    var isZh = cjkRe.test(children[k].textContent || "");
+                    children[k].setAttribute("data-cp-lang-block", isZh ? "zh" : "en");
+                }
+            }
+        }
+    }
+
+    function tagSidebarToc() {
+        var tocItems = document.querySelectorAll("#rustdoc-toc ul.top-toc li");
+        for (var i = 0; i < tocItems.length; i++) {
+            var li = tocItems[i];
+            var a = li.querySelector(":scope > a[href^='#']");
+            if (!a) continue;
+            var id = "";
+            try {
+                id = decodeURIComponent(a.getAttribute("href").slice(1));
+            } catch (_) {}
+            if (!id) continue;
+            var target = document.getElementById(id);
+            if (!target) continue;
+            if (target.closest(".cp-lang-zh")) {
+                li.setAttribute("data-cp-lang-block", "zh");
+            } else if (target.closest(".cp-lang-en")) {
+                li.setAttribute("data-cp-lang-block", "en");
+            }
+        }
+    }
+
+    function buildSwitcher() {
+        var box = document.createElement("span");
+        box.className = "cp-lang-switcher";
+        box.setAttribute("role", "group");
+        box.setAttribute("aria-label", "Documentation language");
+        var defs = [
+            ["en", "EN"],
+            ["zh", "简体中文"]
+        ];
+        for (var i = 0; i < defs.length; i++) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "cp-lang-btn";
+            btn.setAttribute("data-cp-set-lang", defs[i][0]);
+            btn.textContent = defs[i][1];
+            btn.addEventListener("click", (function (code) {
+                return function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    applyLang(code, true);
+                };
+            })(defs[i][0]));
+            box.appendChild(btn);
+        }
+        return box;
+    }
+
+    function applyLang(lang, persist) {
+        var code = normalizeLang(lang) || "en";
+        document.documentElement.setAttribute("data-cp-lang", code);
+        document.documentElement.lang = code === "zh" ? "zh-CN" : "en";
+        if (persist) {
+            try {
+                window.localStorage.setItem(STORAGE_KEY, code);
+            } catch (_) {}
+        }
+        var btns = document.querySelectorAll(".cp-lang-btn");
+        for (var i = 0; i < btns.length; i++) {
+            var active = btns[i].getAttribute("data-cp-set-lang") === code;
+            btns[i].setAttribute("aria-pressed", active ? "true" : "false");
+        }
+        syncSectionLabels(code);
+        syncItemTables(code);
+    }
+
+    function mountSwitchers() {
+        var sub = document.querySelector(".main-heading .sub-heading");
+        if (sub) {
+            sub.insertBefore(buildSwitcher(), sub.firstChild);
+        } else {
+            var heading = document.querySelector(".main-heading");
+            if (heading) heading.appendChild(buildSwitcher());
+        }
+        var sidebar = document.querySelector(".sidebar-crate");
+        if (sidebar) {
+            sidebar.appendChild(buildSwitcher());
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        tagBilingualDocblocks();
+        tagSidebarToc();
+        mountSwitchers();
+        applyLang(document.documentElement.getAttribute("data-cp-lang") || "en", false);
+    });
+})();
+</script>

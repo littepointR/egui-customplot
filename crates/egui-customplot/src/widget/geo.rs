@@ -14,6 +14,8 @@ use crate::{
 
 /// 2D geographic coordinate map widget (`geoplot`, `geoscatter`, `geodensityplot`, `geobubble`).
 /// Never uses MathWorks basemap services or initiates network I/O.
+///
+/// 离线二维地理坐标地图控件：支持等经纬/墨卡托投影、本地离线底图/合成地形瓦片，不触发任何网络请求。
 pub struct GeoPlot {
     id_salt: IdSalt,
     height: f32,
@@ -36,6 +38,9 @@ pub struct GeoPlot {
     pub(crate) theme: Option<Arc<PlotTheme>>,
 }
 
+/// Layout geometry, [`GeoTransform`], hover point, and diagnostics returned by `GeoPlot::show`.
+///
+/// `GeoPlot::show` 返回的地图区域、地理坐标变换、悬停命中与诊断信息。
 pub struct GeoPlotResponse {
     pub outer_rect: egui::Rect,
     pub plot_area: egui::Rect,

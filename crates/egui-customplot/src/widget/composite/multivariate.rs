@@ -15,6 +15,8 @@ const GROUP_PALETTE: [Color32; 6] = [
 ];
 
 /// Host-owned view state for [`ScatterHistogram`].
+///
+/// [`ScatterHistogram`] 中心散点图及顶部/右侧边际直方图的宿主持有联动状态。
 #[derive(Clone, Default)]
 pub struct ScatterHistogramState {
     pub scatter: PlotState,
@@ -23,6 +25,8 @@ pub struct ScatterHistogramState {
 }
 
 /// Scatter plot with top-X and right-Y marginal histograms or KDEs (`scatterhistogram`, `ML-023`).
+///
+/// 带上方 X 轴与右侧 Y 轴边际直方图/核密度估计的分组散点图控件。
 pub struct ScatterHistogram<'a> {
     id_salt: &'a str,
     data: &'a ScatterHistogramData,
@@ -182,6 +186,8 @@ impl<'a> ScatterHistogram<'a> {
 }
 
 /// `M x M` pairwise scatter & diagonal histogram matrix (`plotmatrix`, `ML-033`).
+///
+/// 成对多变量矩阵散点图控件：对角线展示变量分布直方图，非对角格子行/列共享坐标联动。
 pub struct PlotMatrix<'a> {
     id_salt: &'a str,
     data: &'a PlotMatrixData,

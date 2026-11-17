@@ -4,7 +4,9 @@ use egui::{Color32, Stroke};
 
 use super::{PlotStyle, SeriesStyle};
 
-/// Retain in the app and pass an Arc clone to Plot::theme; no host Style mutation.
+/// Retain in the app and pass an `Arc` clone to [`crate::Plot::theme`]; no host `egui::Style` mutation.
+///
+/// 可跨面板复用的绘图调色板与样式主题（由宿主以 `Arc` 传入，绝不篡改宿主 `egui::Style`）。
 #[derive(Clone, Debug)]
 pub struct PlotTheme {
     pub style: PlotStyle,
@@ -13,6 +15,9 @@ pub struct PlotTheme {
 }
 
 impl PlotTheme {
+    /// High-contrast light scientific publication preset theme.
+    ///
+    /// 科研出版风格浅色主题（高对比度白底与深色文字/网格）。
     pub fn scientific_light() -> Self {
         Self {
             style: PlotStyle {
@@ -37,6 +42,9 @@ impl PlotTheme {
         }
     }
 
+    /// Dark telemetry / oscilloscope monitoring preset theme.
+    ///
+    /// 深色工程监控主题（低眩光深蓝灰底与高区分度亮色调色板）。
     pub fn monitoring_dark() -> Self {
         Self {
             style: PlotStyle {

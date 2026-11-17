@@ -1,14 +1,19 @@
 use crate::{Axis, AxisTick, ColorScale, layout::allocate_color_bar, render::paint_color_bar};
 use egui::{Rect, Response, Ui};
 
-/// A separate native egui widget; share the exact ColorScale with a Heatmap.
+/// A separate native egui widget; share the exact [`ColorScale`] with a [`crate::Heatmap`].
 /// No global current axes or color limits, texture, window or device is created.
+///
+/// 独立标量色条控件：与热力图/等高线共享同一 [`ColorScale`]，自动生成线性或对数刻度与渐变色柱。
 pub struct ColorBar {
     scale: ColorScale,
     label: String,
     height: f32,
 }
 
+/// Screen geometry and generated color-scale ticks returned by [`ColorBar::show`].
+///
+/// [`ColorBar::show`] 返回的色条矩形区域与刻度分布。
 pub struct ColorBarResponse {
     pub response: Response,
     pub bar_rect: Rect,

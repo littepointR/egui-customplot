@@ -5,6 +5,9 @@ use egui::{
 
 use super::{ExportError, ExportOptions, options::additive};
 
+/// Resource bounds enforced while capturing vector/raster shapes for SVG & PNG export.
+///
+/// 导出快照捕获阶段施加的图元、顶点、索引与字形纹理像素上限，防止异常大图耗尽内存。
 #[derive(Clone, Copy, Debug)]
 pub struct CaptureLimits {
     pub max_shapes: usize,
@@ -31,11 +34,13 @@ pub(super) struct Item {
     pub meshes: Vec<Mesh>,
 }
 
-/// Host-independent snapshot of one Painter layer's newly submitted shapes.
+/// Host-independent snapshot of one `Painter` layer's newly submitted shapes.
 /// Captures DISPLAYED sampling, clipping, font atlas and tessellation. Increasing
-/// export resolution cannot recover samples discarded by MinMax or relayout text.
-/// No Context, original samples or PlotState is retained. Call once per desired
+/// export resolution cannot recover samples discarded by `MinMax` or relayout text.
+/// No `Context`, original samples or `PlotState` is retained. Call once per desired
 /// layout pass; save only the final snapshot outside the multi-pass UI closure.
+///
+/// 与宿主解耦的自包含导出快照：捕获当前布局遍内新提交的绘制图元与字形图集，支持在 UI 闭包外生成确定性矢量 SVG 或 PNG。
 pub struct PlotSnapshot {
     pub(super) rect: Rect,
     pub(super) items: Vec<Item>,

@@ -7,9 +7,11 @@ use egui::{AsIdSalt, IdSalt, Response, Ui, UiBuilder, Vec2};
 use crate::{Annotation, FigureError, PlotStyle, PlotTheme, layout::FigureLayout};
 pub use cell::FigureCell;
 
-/// An immediate-mode grid container. Samples and each PlotState stay with the
-/// host; cells inherit explicit defaults without changing the host Ui style.
+/// An immediate-mode grid container. Samples and each [`crate::PlotState`] stay with the
+/// host; cells inherit explicit defaults without changing the host `egui::Ui` style.
 /// This is not a window, event loop or a persistent MATLAB handle graph.
+///
+/// 即时模式多子图网格布局容器：各子图继续由宿主持有各自状态与样本数据，可统一继承字体/主题与图面全局注解。
 pub struct Figure {
     id_salt: IdSalt,
     columns: usize,
@@ -20,6 +22,9 @@ pub struct Figure {
     annotations: Arc<[Annotation]>,
 }
 
+/// Collected per-cell outputs and annotation diagnostics returned by [`Figure::show`].
+///
+/// [`Figure::show`] 返回的子图结果集合、单元格屏幕矩形与 figure 级注解统计。
 pub struct FigureResponse<R> {
     pub response: Response,
     pub inner: Vec<R>,

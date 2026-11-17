@@ -8,6 +8,9 @@ use crate::{
     model::resolve_plot_style, render::paint_geoglobe,
 };
 
+/// Layout rect, WGS84 transform, hover hit, and diagnostics returned by [`GeoGlobePlot::show`].
+///
+/// [`GeoGlobePlot::show`] 返回的三维地球仪布局、变换矩阵、悬停命中与诊断信息。
 pub struct GeoGlobeResponse {
     pub outer_rect: Rect,
     pub response: Response,
@@ -33,6 +36,8 @@ impl GeoGlobeResponse {
 }
 
 /// Interactive 3D WGS84 Globe widget (`geoglobe` / `geoplot3`, `EXT-25`).
+///
+/// 交互式 WGS84 三维地球仪控件：内置离线海岸线、经纬网格与高程挤出轨迹，支持背面消隐、旋转拖拽与滚轮缩放。
 pub struct GeoGlobePlot<'a> {
     id_salt: IdSalt,
     data: &'a GeoGlobeData,

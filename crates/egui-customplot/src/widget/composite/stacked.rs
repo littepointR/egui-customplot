@@ -5,12 +5,17 @@ use crate::{
     PlotState,
 };
 
+/// Stacked sub-plot figures and X-axis link arbitration summary returned by `StackedPlot::show`.
+///
+/// `StackedPlot::show` 返回的多行子图结果与水平轴联动报告。
 pub struct StackedPlotResponse {
     pub figure: FigureResponse<PlotResponse>,
     pub link_report: Option<LinkReport>,
 }
 
 /// Vertically stacked plots sharing a synchronized X axis (`stackedplot`, `ML-006`).
+///
+/// 共享同步 X 轴的垂直堆叠多图控件（同一 X 视窗联动平移与缩放）。
 pub struct StackedPlot<'a> {
     id_salt: &'a str,
     panels: Vec<(&'a str, Vec<PlotLayer<'a>>)>,
