@@ -7,6 +7,13 @@ use crate::{
     i18n::{Language, lang, tr},
 };
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum XAxisFormat {
+    Numeric,
+    DateTime,
+    Duration,
+}
+
 pub(super) struct Options {
     pub appearance: Appearance,
     pub performance: crate::performance::Options,
@@ -25,6 +32,7 @@ pub(super) struct Options {
     pub observations: bool,
     pub log_axes: [bool; 2],
     pub reversed: [bool; 2],
+    pub x_format: XAxisFormat,
     pub lock_y: bool,
     pub width: f32,
     pub radius: f32,
@@ -52,6 +60,7 @@ impl Default for Options {
             observations: true,
             log_axes: [false; 2],
             reversed: [false; 2],
+            x_format: XAxisFormat::Numeric,
             lock_y: false,
             width: 1.5,
             radius: 3.5,
@@ -70,7 +79,7 @@ pub(super) struct Changes {
 impl Options {
     pub fn plot(&self, id: &'static str, height: f32, l: Language) -> Plot {
         let axis = |index: usize, label: &str| {
-            Axis::new()
+            let mut ax = Axis::new()
                 .scale(if self.log_axes[index] {
                     AxisScale::Log10
                 } else {
@@ -78,12 +87,22 @@ impl Options {
                 })
                 .reversed(self.reversed[index])
                 .minor_grid(true)
-                .label(label)
+                .label(label);
+            if index == 0 && !self.log_axes[0] {
+                ax = match self.x_format {
+                    XAxisFormat::Numeric => ax,
+                    XAxisFormat::DateTime => ax.datetime(),
+                    XAxisFormat::Duration => ax.duration(),
+                };
+            }
+            ax
         };
         let plot = Plot::new(id)
             .height(height)
             .show_grid(self.grid)
             .allow_scroll_zoom(true)
+            .allow_box_zoom(true)
+            .allow_brush(true)
             .drag_axes([true, !self.lock_y])
             .zoom_axes([true, !self.lock_y])
             .title(match self.scene {
@@ -116,9 +135,12 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     let l = lang(ui.ctx());
     let old_data = (options.scene, options.count, options.gaps);
     let old_axes = (options.log_axes, options.reversed);
-    ui.heading(tr(l, "Plot controls", "绘图控制面板", "プロット設定"));
-    egui::widgets::global_theme_preference_buttons(ui);
-    options.appearance.show(ui);
+    ui.strong(tr(
+        l,
+        "2D Signal & Power Law",
+        "2D 信号与幂律场景",
+        "2D 信号・べき乗則",
+    ));
     let reindex = options.performance.show(ui);
     ui.separator();
     ui.selectable_value(
@@ -267,13 +289,27 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
             tr(l, "Reverse Y", "反向 Y", "反転 Y"),
         );
     });
+    let x_fmt_label = |fmt: XAxisFormat| match fmt {
+        XAxisFormat::Numeric => tr(l, "X: Numeric", "X 轴：数值", "X 軸：数値"),
+        XAxisFormat::DateTime => tr(l, "X: DateTime (UTC)", "X 轴：日期时间", "X 軸：日時"),
+        XAxisFormat::Duration => tr(l, "X: Duration", "X 轴：时长", "X 軸：経過時間"),
+    };
+    egui::ComboBox::from_id_salt("x-format")
+        .selected_text(x_fmt_label(options.x_format))
+        .show_ui(ui, |ui| {
+            for fmt in [
+                XAxisFormat::Numeric,
+                XAxisFormat::DateTime,
+                XAxisFormat::Duration,
+            ] {
+                ui.selectable_value(&mut options.x_format, fmt, x_fmt_label(fmt));
+            }
+        });
     ui.checkbox(
         &mut options.lock_y,
         tr(l, "Lock Y navigation", "锁定 Y 轴导航", "Y 軸操作を固定"),
     );
-    if options.appearance.override_signal {
-        ui.color_edit_button_srgba(&mut options.color);
-    }
+    options.appearance.show_scene_extras(ui, &mut options.color);
     ui.add(egui::Slider::new(&mut options.width, 0.0..=5.0).text(tr(
         l,
         "Line width",
@@ -294,19 +330,21 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
         MarkerShape::TriangleDown => tr(l, "TriangleDown", "下三角 (TriangleDown)", "下三角"),
         MarkerShape::Plus => tr(l, "Plus", "十字 (Plus)", "十字 (Plus)"),
         MarkerShape::Cross => tr(l, "Cross", "叉号 (Cross)", "バツ (Cross)"),
+        MarkerShape::Asterisk => tr(l, "Asterisk", "星号 (Asterisk)", "アスタリスク"),
+        MarkerShape::Pentagram => tr(l, "Pentagram", "五角星 (Pentagram)", "五芒星"),
+        MarkerShape::Hexagram => tr(l, "Hexagram", "六角星 (Hexagram)", "六芒星"),
+        MarkerShape::CircleHollow => tr(l, "CircleHollow", "空心圆", "白抜き円"),
+        MarkerShape::SquareHollow => tr(l, "SquareHollow", "空心方", "白抜き四角"),
+        MarkerShape::DiamondHollow => tr(l, "DiamondHollow", "空心菱形", "白抜きひし形"),
+        MarkerShape::TriangleUpHollow => tr(l, "TriangleUpHollow", "空心上三角", "白抜き上三角"),
+        MarkerShape::TriangleDownHollow => {
+            tr(l, "TriangleDownHollow", "空心下三角", "白抜き下三角")
+        }
     };
     egui::ComboBox::from_id_salt("shape")
         .selected_text(shape_label(options.shape))
         .show_ui(ui, |ui| {
-            for shape in [
-                MarkerShape::Circle,
-                MarkerShape::Square,
-                MarkerShape::Diamond,
-                MarkerShape::TriangleUp,
-                MarkerShape::TriangleDown,
-                MarkerShape::Plus,
-                MarkerShape::Cross,
-            ] {
+            for shape in MarkerShape::ALL {
                 ui.selectable_value(&mut options.shape, shape, shape_label(shape));
             }
         });
@@ -321,9 +359,9 @@ pub(super) fn show(ui: &mut egui::Ui, options: &mut Options) -> Changes {
     ui.separator();
     ui.small(tr(
         l,
-        "Drag: pan\nWheel: zoom\nDouble-click / focused Home: fit\nLegend: toggle visibility",
-        "拖拽：平移\n滚轮：缩放\n双击 / 聚焦 Home：适配\n点击图例：切换显隐",
-        "ドラッグ：移動\nホイール：拡大縮小\nダブルクリック / Home：フィット\n凡例クリック：表示切替",
+        "Drag: pan\nWheel: zoom\nRight/Shift-drag: box zoom\nAlt-drag: brush (Esc clears)\nDouble-click / focused Home: fit\nLegend: toggle visibility",
+        "拖拽：平移\n滚轮：缩放\n右键 / Shift+拖拽：框选放大\nAlt+拖拽：数据刷选（Esc 清除）\n双击 / 聚焦 Home：适配\n点击图例：切换显隐",
+        "ドラッグ：移動\nホイール：拡大縮小\n右/Shiftドラッグ：矩形ズーム\nAltドラッグ：データ選択 (Esc解除)\nダブルクリック / Home：フィット\n凡例クリック：表示切替",
     ));
     ui.small(tr(
         l,

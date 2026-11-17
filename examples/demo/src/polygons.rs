@@ -11,7 +11,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct PolygonDemo {
-    pub enabled: bool,
     pub pos_neg_split: bool,
     pub gouraud_patch: bool,
     pub show_borders: bool,
@@ -101,7 +100,6 @@ impl Default for PolygonDemo {
         let face_slices: Vec<&[usize]> = faces.iter().map(|f| f.as_slice()).collect();
         let patch = PatchData::new(verts, &face_slices).expect("valid quad faces");
         Self {
-            enabled: false,
             pos_neg_split: false,
             gouraud_patch: true,
             show_borders: true,
@@ -123,6 +121,10 @@ impl Default for PolygonDemo {
 }
 
 impl PolygonDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     #[cfg(test)]
     pub fn sample_identities(&self) -> [usize; 3] {
         [
@@ -134,43 +136,63 @@ impl PolygonDemo {
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "2D areas, polygons & patches",
+            "二维面积、多边形与面片",
+            "2D 領域・多角形・パッチ",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.pos_neg_split,
             tr(
                 l,
-                "2D areas, polygons & patches",
-                "二维面积、多边形与面片",
-                "2D 領域・多角形・パッチ",
+                "PosNegSplit area stacking",
+                "正负分离面积堆叠",
+                "正負分離エリア積上げ",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(
-                &mut self.pos_neg_split,
-                tr(l, "PosNegSplit area stacking", "正负分离面积堆叠", "正負分離エリア積上げ"),
-            );
-            ui.checkbox(
-                &mut self.gouraud_patch,
-                tr(l, "Gouraud vertex-colored patch", "Gouraud 顶点插值着色面片", "グーロー補間パッチ"),
-            );
-            ui.checkbox(&mut self.show_borders, tr(l, "Show shape borders", "显示轮廓边框", "境界線を表示"));
-            if ui.button(tr(l, "Fit polygon panels", "适配多边形面板", "多角形ビューフィット")).clicked() {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
+        ui.checkbox(
+            &mut self.gouraud_patch,
+            tr(
                 l,
-                "Ear-clipped polygons/holes & Gouraud patches; SVG uses raster fallback for Gouraud meshes.",
-                "支持带孔多边形耳切三角化与 Gouraud 面片（SVG 中平滑渐变网走栅格回退）。",
-                "穴あき多角形・グーローパッチ対応（SVG 出力はラスターフォールバック）。",
-            ));
-        });
+                "Gouraud vertex-colored patch",
+                "Gouraud 顶点插值着色面片",
+                "グーロー補間パッチ",
+            ),
+        );
+        ui.checkbox(
+            &mut self.show_borders,
+            tr(l, "Show shape borders", "显示轮廓边框", "境界線を表示"),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Fit polygon panels",
+                "适配多边形面板",
+                "多角形ビューフィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "Ear-clipped polygons/holes & Gouraud patches; SVG uses raster fallback for Gouraud meshes.",
+            "支持带孔多边形耳切三角化与 Gouraud 面片（SVG 中平滑渐变网走栅格回退）。",
+            "穴あき多角形・グーローパッチ対応（SVG 出力はラスターフォールバック）。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
         let l = lang(ui.ctx());
         let height = ((ui.available_height() - 120.0) * 0.5).max(80.0);
+        let contrast = if ui.visuals().dark_mode {
+            Color32::from_gray(235)
+        } else {
+            Color32::from_gray(50)
+        };
         let border = if self.show_borders {
-            Stroke::new(1.2, Color32::WHITE)
+            Stroke::new(1.2, contrast)
         } else {
             Stroke::NONE
         };
@@ -243,7 +265,7 @@ impl PolygonDemo {
                                     "零基线 (primitive)",
                                     "ゼロ基準線",
                                 ))
-                                .color(Color32::WHITE)
+                                .color(contrast)
                                 .into(),
                         ],
                     )

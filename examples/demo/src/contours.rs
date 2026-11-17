@@ -9,7 +9,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct ContourDemo {
-    pub enabled: bool,
     pub show_pcolor: bool,
     pub interp_shading: bool,
     pub show_labels: bool,
@@ -62,7 +61,6 @@ impl Default for ContourDemo {
         .expect("matching RGBA length");
 
         Self {
-            enabled: false,
             show_pcolor: false,
             interp_shading: false,
             show_labels: true,
@@ -77,6 +75,10 @@ impl Default for ContourDemo {
 }
 
 impl ContourDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     #[cfg(test)]
     pub fn sample_identities(&self) -> [usize; 2] {
         [
@@ -87,46 +89,66 @@ impl ContourDemo {
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Contours, pcolor & images",
+            "等高线、伪彩与图像",
+            "等高線・疑似カラー・画像",
+        ));
+        egui::ComboBox::from_id_salt("contour-color-map")
+            .selected_text(format!("{:?}", self.colors))
+            .show_ui(ui, |ui| {
+                for map in ColorMap::ALL {
+                    ui.selectable_value(&mut self.colors, map, format!("{map:?}"));
+                }
+            });
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.show_pcolor,
             tr(
                 l,
-                "Contours, pcolor & images",
-                "等高线、伪彩与图像",
-                "等高線・疑似カラー・画像",
+                "Pcolor instead of contourf",
+                "显示 Pcolor 替换填充等高线",
+                "contourf の代わりに Pcolor",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            egui::ComboBox::from_id_salt("contour-color-map")
-                .selected_text(format!("{:?}", self.colors))
-                .show_ui(ui, |ui| {
-                    for map in [ColorMap::Viridis, ColorMap::Gray, ColorMap::BlueRed] {
-                        ui.selectable_value(&mut self.colors, map, format!("{map:?}"));
-                    }
-                });
-            ui.checkbox(
-                &mut self.show_pcolor,
-                tr(l, "Pcolor instead of contourf", "显示 Pcolor 替换填充等高线", "contourf の代わりに Pcolor"),
-            );
-            ui.add_enabled(
-                self.show_pcolor,
-                egui::Checkbox::new(
-                    &mut self.interp_shading,
-                    tr(l, "Interpolated pcolor shading", "Pcolor 平滑插值着色", "Pcolor 補間シェーディング"),
+        ui.add_enabled(
+            self.show_pcolor,
+            egui::Checkbox::new(
+                &mut self.interp_shading,
+                tr(
+                    l,
+                    "Interpolated pcolor shading",
+                    "Pcolor 平滑插值着色",
+                    "Pcolor 補間シェーディング",
                 ),
-            );
-            ui.checkbox(&mut self.show_labels, tr(l, "Contour level labels", "显示等高线层级标签", "等高線ラベル表示"));
-            if ui.button(tr(l, "Fit contour/image panels", "适配等高线/图像面板", "等高線・画像フィット")).clicked() {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
+            ),
+        );
+        ui.checkbox(
+            &mut self.show_labels,
+            tr(
                 l,
-                "Marching Squares contours extracted once on host; imshow_axes reverses Y with 1:1 aspect.",
-                "Marching Squares 等高线在宿主一次提取；imshow_axes 自动反转 Y 轴并锁定 1:1 比例。",
-                "等高線はホストで一度抽出；imshow_axes は Y 反転・等倍アスペクトを自動設定します。",
-            ));
-        });
+                "Contour level labels",
+                "显示等高线层级标签",
+                "等高線ラベル表示",
+            ),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Fit contour/image panels",
+                "适配等高线/图像面板",
+                "等高線・画像フィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "Marching Squares contours extracted once on host; imshow_axes reverses Y with 1:1 aspect.",
+            "Marching Squares 等高线在宿主一次提取；imshow_axes 自动反转 Y 轴并锁定 1:1 比例。",
+            "等高線はホストで一度抽出；imshow_axes は Y 反転・等倍アスペクトを自動設定します。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {

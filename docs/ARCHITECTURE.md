@@ -40,8 +40,13 @@ crates/egui-customplot/
       composite.rs            # StackedPlot / ScatterHistogram / PlotMatrix 复合切片与作用域聚合
       polar/                  # PolarCurve / PolarHistogram / Rose / PolarBubble / Compass / 自适应 fpolarplot 数据
       graph/                  # GraphData / Circle / Force / Sugiyama Layered / TreeData / Liu EliminationTree 数据
-      plot3d/                 # Stage 9A～9C: 线/散点/柱/茎/矢量/多边形、曲面网格、ScalarVolume3D / VolumeSliceData / Isosurface3D / Isocaps3D / TetraMesh3D / VectorField3D / Stream*3D / ConePlot3D
+      plot3d/                 # Stage 9A～9C、13、16: 线/散点/柱/茎/矢量/多边形、曲面网格、ScalarVolume3D / VolumeSliceData / Isosurface3D / Isocaps3D / TetraMesh3D / Patch3DData / AlphaShape3DData / Graph3DData / PointCloud3DData / VolumeTransferFunction / Stream*3D / ConePlot3D
       geo/                    # Stage 10: GeoPathData / GeoScatterData / GeoDensityData / GeoBubbleData / OFFLINE_LAND_RINGS / GeoAttribution / GeoTileCache (零网络 I/O)
+      geoglobe.rs             # Stage 16: WGS84 GeoGlobeData / GlobeTrack3D / GlobeMarker3D
+      confusion.rs / sky.rs / curvilinear.rs # Stage 13: ConfusionMatrixData / SkyPlotData / CurvilinearField2D
+      probplot.rs / ecdf.rs / clustering.rs / clustergram.rs / biplot.rs / spc.rs / financial.rs # Stage 14: 概率分位、KM ECDF、层次聚类/Clustergram、PCA Biplot、SPC 控制图与 OHLC/Waterfall
+      smith.rs / zplane.rs / control/ / dsp/ # Stage 15: Smith 圆图、Aberth-Ehrlich 零极点、传递函数频响/根轨迹与 Radix-2+Bluestein FFT/STFT/Welch/Morlet CWT
+      modern/                 # Stage 16: RadarData / SankeyData / TreemapData / SunburstData / GanttData（分拆于 radial_flow.rs / hier_gantt.rs / gantt.rs）
     model/
       line.rs                 # 折线的借用描述（默认 LineSampling::Auto / RenderBackend::Auto）与 Line::primitive
       line_pattern.rs         # 线型语义与参数合法性
@@ -52,6 +57,7 @@ crates/egui-customplot/
       marker.rs               # 标记形状与尺寸
       series.rs               # 混合序列、稳定 ID、默认色
       style.rs                # 可选值覆盖、解析后的绘制 / 拾取共用样式
+      defaults.rs             # Context 级 PlotDefaults 全局视图与外观默认覆盖（含 set_plot_defaults / plot_defaults）
       theme.rs                # 科学浅色 / 监控深色，可共享 palette
       annotation.rs           # 不参与自动范围的基础注解与 Data/Normalized EX-027 图元描述
       layer/                  # 兼容既有 Series 的有序异构 PlotLayer 与统一样式解析（含 stage8c / stage8d）
@@ -68,11 +74,14 @@ crates/egui-customplot/
       bubble_swarm.rs / distribution.rs # Bubble / Swarm / Bivariate 与 Box / Violin / Raincloud 图层模型
       pie_clouds.rs / multivariate.rs   # Pie / Donut、WordCloud / BubbleCloud 与 ParallelCoords 图层模型
       polar.rs / polar_region.rs / graph.rs # Polar* 图层、PolarRegionAnnotation 与 GraphPlot / GraphHighlight
-      plot3d/                 # Stage 9A～9C: scene_opts / Layer3D / surfaces / mesh_tri / volume_flow (VolumeSlice/Iso*/TetraMesh/Stream*/ConePlot) / summarize_plot3d
+      plot3d/                 # Stage 9A～9C、13、16: scene_opts / Layer3D / surfaces / mesh_tri / volume_flow / stage13 / stage16 (VolumeRender3D, PointCloud3D) / summarize_plot3d
       geo.rs                  # Stage 10: GeoLine / GeoScatter / GeoDensity / GeoBubbles / GeoLayer / summarize_geo
+      color_scale.rs / confusion.rs / curvilinear.rs / stage14_stats.rs / stage14_spc_fin.rs / stage15.rs / modern.rs # Stage 12～16 扩展色谱（11 种）、混淆矩阵、曲线场、概率/ECDF/聚类/双标图/SPC/金融、DSP/控制/RF 与现代图表图层模型
     axis/
       geo/                    # Stage 10: GeoPoint / GeoBounds(S^1最小弧/跨±180°) / GeoProjection(WebMercator/Equirectangular) / GeoTransform / antimeridian 分割 / 经纬刻度
-      scale.rs                # Linear / Log10 数值域
+      geoglobe.rs             # Stage 16: GeoGlobeTransform WGS84 球面正射投影、地平线背面剔除与轨角拖拽
+      sky.rs / smith.rs       # Stage 13/15: SkyTransform 天球反向仰角投影与 SmithTransform 共形莫比乌斯变换
+      scale.rs / probability.rs / time.rs # Linear / Log10 / Probit / Weibull（Acklam 逆正态）与 datetime/duration 时间刻度/历法
       bounds.rs               # f64 范围验证、适配与基本运算
       transform.rs            # 正反坐标映射、变换空间导航运算
       polar.rs                # PolarTransform 极坐标零点 / 方向与三种负半径映射
@@ -81,39 +90,40 @@ crates/egui-customplot/
       grid.rs / rect.rs       # 单元可见查询、定位、f64 矩形 / 轴向线段裁剪
       segment.rs              # 共用归一化线段裁剪、向量投影及图网络曲线/自环几何
       polygon.rs              # [0,1]^2 Sutherland-Hodgman 三角裁剪与点环判定
-      plot3d/                 # Stage 9A/9B: 三维坐标裁剪/投影、ClipVertex3D Gouraud 裁剪与平面立方体求交
+      plot3d/                 # Stage 9A/9B/16: 三维坐标裁剪/投影、ClipVertex3D Gouraud 裁剪、Kay-Kajiya 射线包围盒与平面立方体求交
       y_axis.rs / linked.rs   # 左右归属、共享范围与变换组装
     layout/
       plot.rs / polar.rs / plot3d.rs # 宿主空间分配、极坐标正圆 / 三维 Plot3D 排布、标题 / 轴标签留白
       legend.rs               # egui 图例排布和控件组装
       figure.rs / color_bar.rs / bubble_legend.rs # 有界 cell 网格、色条与气泡尺寸图例空间分配
     interaction/
-      state.rs                # 显式视图、隐藏状态、帧快照、一次性切换与 2 MiB 内置 auto_cache
-      navigation.rs           # 输入仲裁、锁轴、同帧多遍导航重算
-      picking.rs / point_aux.rs / point_fast.rs / point_stage8b.rs / point_stage8c.rs / graph.rs # 原始点（含流与均匀波形树剪枝拾取）、Stage 8A～8D 及图节点/边拾取
+      state.rs                # 显式视图、隐藏状态、帧快照、一次性切换、2 MiB 内置 auto_cache 与刷选边界
+      navigation.rs           # 输入仲裁、锁轴、框选缩放/数据刷选、同帧多遍导航重算
+      picking.rs / point_aux.rs / point_fast.rs / point_stage8b.rs / point_stage8c.rs / point_stage14.rs / point_stage15.rs / graph.rs # 原始点（含流与均匀波形树剪枝拾取）、Stage 8A～16 及图节点/边拾取
       polar.rs / polar_hover.rs # 极坐标多遍旋转/径向缩放、图例开关与点/扇区拾取
+      sky.rs / smith.rs / geoglobe.rs # Stage 13/15/16: 天球、Smith 圆图与 WGS84 地球仪多遍交互及要素拾取
       tooltip.rs              # HoverInfo、纯文本格式化与 egui 提示
       link.rs / secondary.rs  # 显式跨图同步、右轴同一导航动作
       cell.rs / bar.rs        # 原始单元 / 柱拾取
       quiver.rs               # 原始向量（Quiver / Feather）两锚点拾取、记录提示，复用点层距离仲裁
-      region/                 # 面积 / 多边形 / 面片 / 矩形 / 等高线 / 伪彩 / 图像 / Alpha / Stage 8C / GraphEdge 区域命中
+      region/                 # 面积 / 多边形 / 面片 / 矩形 / 等高线 / 伪彩 / 图像 / Alpha / Stage 8C、13、14、16（Sankey/Treemap/Sunburst/Gantt）与 GraphEdge 区域命中
       hover.rs                # 填充层遮挡（含 Area / GraphEdge 共层优先级）及原始点最近距离仲裁
-      plot3d/                 # Stage 9A～9C: Plot3DState 导航、Legend、三维点/柱/填充面/扇区/曲面及体切片/四面体/流粒子实时拾取 (volume_hover)
+      plot3d/                 # Stage 9A～9C、13、16: Plot3DState 导航、Legend、三维点/柱/填充面/扇区/曲面、体切片/四面体/流粒子实时拾取 (volume_hover) 及体渲染/八叉树点云拾取 (stage13_hover)
       geo/                    # Stage 10: GeoPlotState ±180° 平移与锚点缩放、图层/气泡类别 Legend、原始点/气泡/核密度拾取
     render/
       line.rs                 # 选点后的阶梯展开、f64 线段裁剪与路径准备
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
       cache.rs                # 宿主持有的有界 pre-style 折线几何 LRU
       fast_series.rs          # StreamLine / WaveformLine CPU 几何准备与可选 wgpu 调度
-      markers.rs              # 标记批量 mesh 与物理像素羽化
+      markers.rs              # 标记批量 mesh 与物理像素羽化（含 15 种实心/空心符号）
       markers_lod.rs          # MarkerSampling::Auto/PixelGrid 像素网格去重、X 索引裁剪与 8 边形圆形快路径
       markers_grid_tree.rs    # 单调 X 散点/标记的线段树层级单格坍缩与 64 位占用掩码满格剪枝
-      wgpu/                   # 可选 feature=wgpu：复用宿主 RenderState 的 WGSL 计算规约与实例化渲染（含散点深缩过绘制节流与极端缩放防溢出，无硬件/导出时回退 Painter）
+      wgpu/                   # 可选 feature=wgpu：复用宿主 RenderState 的 WGSL 计算规约与实例化渲染（含散点深缩过绘制节流、15 种 SDF 标记与极端缩放防溢出，无硬件/导出时回退 Painter）
       pattern.rs              # 屏幕空间虚线 phase 与工作量安全阀
       mesh.rs                 # 16,384 三角分批 MeshBatch 与边框描边提交
       axes.rs                 # 网格、刻度文字、标题、边框绘制
       series.rs               # 按序提交数据图元、统计几何成本
-      overlay.rs              # 十字线和拾取高亮（含多边形/区域高亮）
+      overlay.rs              # 十字线、拾取高亮（含多边形/区域/刷选框与点高亮）
       annotation/             # 轴内文字/参考线/区域及 Figure Normalized EX-027 七类注解提交
       heatmap.rs / color_bar.rs # 精确 cell 分块 mesh、共享色条
       bars.rs / error_bars.rs # 保序柱及独立误差 stem / cap
@@ -122,10 +132,11 @@ crates/egui-customplot/
       area.rs / polygon.rs / patch.rs / shapes.rs # 面积、多边形/孔洞、面片与椭圆绘制
       contour.rs / pcolor.rs / image.rs # 等值线/填充等高线、伪彩色节点与像素网格绘制
       triangulation.rs / flow.rs / spy.rs / animation.rs # 三角网/Voronoi/AlphaShape、流线/羽状、CSR Spy 与动画绘制
-      bubble_bivariate.rs / distribution.rs / pie_clouds.rs # 气泡群、双变量分箱、统计分布与饼图/词云绘制
-      multivariate.rs / stage8c.rs / polar/ / graph.rs # ParallelCoords、Stage 8C、极坐标系与图网络箭头标签绘制
+      bubble_bivariate.rs / distribution.rs / pie_clouds.rs # 气泡群、双变量分箱、统计分布（含横纵向）与饼图/词云绘制
+      multivariate.rs / confusion.rs / curvilinear.rs / stage14_stats.rs / stage14_spc_fin.rs / stage15.rs / modern/ / stage8c.rs / polar/ / graph.rs # ParallelCoords、ConfusionChart、Curvilinear、Stage 14～16 图层、极坐标与图网络绘制
+      sky.rs / smith.rs / geoglobe.rs # Stage 13/15/16: 天球极坐标网格、Smith 共形网、WGS84 球面地平线裁剪绘制
       right_axis.rs           # 右 Y 刻度与标签
-      plot3d/                 # Stage 9A～9C: 三背墙坐标框、SortedPainter 与 360px Gouraud ZBuffer、曲面/网格/体切片/等值面/端盖/四面体/流带流管圆锥场景收集
+      plot3d/                 # Stage 9A～9C、13、16: 三背墙坐标框、SortedPainter 与 360px Gouraud ZBuffer（zbuffer_cache.rs 帧间 span 缓存）、曲面/网格/体切片/等值面/端盖/四面体/流带流管圆锥及 volshow 光线投射（volshow_raycast.rs + 分辨率自适应合成）+ pcshow 八叉树点云绘制
       geo/                    # Stage 10: 周期经度拷贝离线海岸线三角化、HostTiles 顶点染色 Mesh 与离线回退、KDE 与经纬网格绘制
       export/                 # feature=export 的显示几何快照与 PNG / 混合 SVG
         capture.rs            # Painter 范围、宿主 tessellation / atlas 快照
@@ -133,12 +144,11 @@ crates/egui-customplot/
         vector.rs / svg.rs    # 原生矢量与内嵌字形 / AA PNG patch、裁剪层序
         options.rs / writer.rs # 分辨率 / DPI / 局部预算和有界编码输出
     widget/
-      mod.rs                  # Plot 公开配置 builder（含 imshow_axes / spy_axes / graph_axes）
-      polar.rs                # 独立极坐标 PolarPlot 控件与 PolarPlotResponse::into_plot_response
-      plot3d.rs               # 独立三维 Plot3D 控件、Plot3D::color_bar 与 Plot3DResponse::into_plot_response
+      mod.rs                  # Plot 公开配置 builder（含 imshow_axes / spy_axes / graph_axes / confusion_axes / probplot_axes / waterfall_axes / zplane_axes / gantt_axes）
+      polar.rs / plot3d.rs / sky.rs / clustergram.rs / smith.rs / bode.rs / geoglobe.rs # 独立坐标系与专项控件及 into_plot_response
       show.rs                 # 每遍生命周期组装，不包含几何 / 输入算法
       response.rs             # 宿主可读取的本遍返回值
-      figure/                 # Figure（含图窗级 annotations / polar_plot / plot3d）与 cell 原生 Ui 接入，样本仍归宿主
+      figure/                 # Figure（含图窗级 annotations / polar_plot / plot3d / sky_plot / clustergram / smith_plot / bode_plot / geo_globe）与 cell 原生 Ui 接入，样本仍归宿主
       composite/              # StackedPlot、Pareto / PlotYY 与 ScatterHistogram / PlotMatrix 复合组件
       color_bar.rs / hover.rs # 色条与悬停的阶段组装
   tests/
@@ -190,6 +200,12 @@ crates/egui-customplot/
     geo_density_bubble_basemap.rs  # Stage 10 geodensityplot 核权重与半径语义、geobubble 面积/分类图例与拾取、署名校验/有界瓦片缓存与离线回退
     export_stage10.rs             # Stage 10 Pacific/HostTiles 双子图混合 SVG(roxmltree/resvg)/PNG 宿主释放导出
     stage11_readiness_audit.rs    # Stage 11 133 项/CAP/EGUI/PERF 全量一致性审计与 ScrollArea 四坐标系同图嵌入/导出回归
+    stage12_foundation.rs / export_stage12.rs # Stage 12 datetime/duration、11 色谱、空心标记、框选/刷选与横向分布导出回归
+    stage13_base_completion.rs / export_stage13.rs # Stage 13 confusionchart / skyplot / curvilinear / Patch3D / AlphaShape3D / Graph3D / 自适应细分回归
+    stage14_stats_bio_finance.rs / export_stage14.rs # Stage 14 probplot / ecdf / dendrogram / clustergram / biplot / SPC / OHLC / Waterfall 回归
+    stage15_rf_control_dsp.rs / export_stage15.rs # Stage 15 Smith / ZPlane / Bode-Nyquist-Nichols-Rlocus / FFT-STFT-Welch-CWT 回归
+    stage16_expansion_audit.rs / export_stage16.rs # Stage 16 volshow / pcshow / geoglobe / 现代图型与 EXT-01..26 全审计回归
+    ux_regressions.rs         # UX/交互回归：复合联动图水平平移无回弹、pan_limits 边界平滑限位、Plot3D 轨道后透视切换、等高线标签明暗对比、ZBuffer 缓存与 PlotDefaults 传递
   benches/
     frame_baseline.rs         # 只测 CPU 构建和 tessellation
     data_performance.rs       # 三档数据、索引 / LOD / 缓存 / 拾取及流式 CPU
@@ -206,13 +222,16 @@ crates/egui-customplot/
     stage9c_performance.rs    # Stage 9C 64^3 切片与轮廓切片 / 48^3 ZBuffer 等值面端盖 / 2k 四面体 / 流粒子/流带流管/千锥 CPU
     stage10_performance.rs    # Stage 10 50k 跨日期变更线航线 / 20k 散点 / 10k 64x48 密度 / 2k 气泡 / HostTiles 缓存与太平洋四层组合 CPU
     dynamic_10m_performance.rs # Stage 11+ 动态千万点 IndexedStream / UniformWaveform / PlotData::new / 百万 Scatter Auto LOD CPU 基准
+    stage16_performance.rs    # Stage 16 64^3 DirectAlpha volshow / 200k octree pcshow / geoglobe / 5 类现代图 CPU 基准
     ../tests/high_perf_sources.rs # L1 自动索引/Auto LOD/分支定界拾取、L3 流/波形与无头/导出回退集成回归
   examples/export_snapshot.rs # 独立 headless 宿主的 PNG / SVG 文件案例
 examples/demo/src/
   main.rs                     # eframe 启动（默认 wgpu 渲染器 + register_wgpu，语言检测 --lang/--zh/--en/--ja 与 --glow / --bench-window-10m）
   fonts.rs                    # 按 Context 幂等加载系统 CJK 回退字体（不额外引入打包字体资产或外部依赖）
-  i18n.rs                     # 多语言（简体中文 / English / 日本語）上下文同步、顶部切换栏与统一文案辅助
-  app.rs                      # 应用生命周期、语言切换和 19 项 gallery 选择
+  i18n.rs                     # 多语言（简体中文 / English / 日本語）上下文同步、矢量外观切换栏与统一文案辅助
+  gallery.rs                  # ActiveGallery 27 项分类画廊互斥切换器（支持 6 类下拉分组与前后矢量箭头，含 Custom* 客制化部件专题）
+  global_controls.rs          # 独立可折叠右侧绘图控制面板（GlobalPlotControls + ExportPanel，驱动 Context 级 PlotDefaults）
+  app.rs                      # 应用生命周期、语言/主题切换、右侧全局控制栏与 27 项 ActiveGallery 画廊路由
   dynamic10m.rs               # --dynamic-10m 千万点实时 120Hz+ 交互/GPU/CPU 展示与真窗口 swapchain 基准驱动
   charts.rs                   # 折线描述、Figure / 联动 / 双轴组装
   scalar.rs                   # 数值网格与显式共享色条
@@ -231,6 +250,8 @@ examples/demo/src/
   surfaces3d.rs               # Stage 9B surf/surfc/surfl/surfnorm/mesh*/waterfall/contour3/ribbon/fsurf/fimplicit3/sphere/cylinder/ellipsoid/trisurf gallery
   volumes3d.rs                # Stage 9C slice/contourslice/isosurface/isocaps/tetramesh/streamline/streamslice/streamparticles/streamribbon/streamtube/coneplot gallery
   geo.rs                      # Stage 10 geoplot/geoscatter/geodensityplot/geobubble 与投影/离线海岸线/合成 HostTiles gallery
+  stage13.rs / stage14.rs / stage15.rs / stage16.rs # Stage 13～16 扩展专题展厅（--stage13 / --stage14 / --stage15 / --stage16）
+  custom_axes.rs / custom_annotations.rs / custom_animation.rs / custom_styling.rs # 客制化部件专题展厅（--custom-axes / --custom-annotations / --custom-animation / --custom-styling：自定义刻度/时间/双轴与 pan_limits、点击固定 DataTip 游标/区间标注/刷选统计、动画时间轴倍速追踪、五层样式继承与色条布局）
   export.rs                   # 导出控件、跨遍候选替换、下一帧防覆盖写盘
   controls.rs                 # 可调参数和控制面板
   data.rs                     # 固定、可复现的示例数据

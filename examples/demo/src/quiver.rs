@@ -8,7 +8,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct QuiverDemo {
-    pub enabled: bool,
     pub heads: bool,
     pub dashed: bool,
     pub reversed: bool,
@@ -30,7 +29,6 @@ impl Default for QuiverDemo {
         }
         arrows.push(QuiverArrow::new([f64::NAN, 1.0], [1.0; 2]));
         Self {
-            enabled: false,
             heads: true,
             dashed: false,
             reversed: false,
@@ -49,6 +47,10 @@ impl Default for QuiverDemo {
 }
 
 impl QuiverDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     #[cfg(test)]
     pub fn sample_identities(&self) -> [usize; 2] {
         [
@@ -59,34 +61,54 @@ impl QuiverDemo {
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Explicit 2D vector field / quiver",
+            "显式二维矢量场 (Quiver)",
+            "2D ベクトル場 / quiver",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.heads,
+            tr(l, "True-endpoint arrowheads", "真实端点箭头", "実終点矢印"),
+        );
+        ui.checkbox(
+            &mut self.dashed,
             tr(
                 l,
-                "Explicit 2D vector field / quiver",
-                "显式二维矢量场 (Quiver)",
-                "2D ベクトル場 / quiver",
+                "Dashed shafts / solid heads",
+                "虚线杆 / 实心箭头",
+                "破線シャフト",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.heads, tr(l, "True-endpoint arrowheads", "真实端点箭头", "実終点矢印"));
-            ui.checkbox(&mut self.dashed, tr(l, "Dashed shafts / solid heads", "虚线杆 / 实心箭头", "破線シャフト"));
-            ui.checkbox(&mut self.reversed, tr(l, "Reverse X", "反向 X 轴", "X 軸反転"));
-            ui.add(
-                egui::Slider::new(&mut self.head_length, 2.0..=24.0)
-                    .text(tr(l, "Head logical points", "箭头长度 (pt)", "矢印長 (pt)")),
-            );
-            if ui.button(tr(l, "Fit vector panels", "适配矢量面板", "ベクトル図をフィット")).clicked() {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
+        ui.checkbox(
+            &mut self.reversed,
+            tr(l, "Reverse X", "反向 X 轴", "X 軸反転"),
+        );
+        ui.add(
+            egui::Slider::new(&mut self.head_length, 2.0..=24.0).text(tr(
                 l,
-                "Origin + displacement, no implicit autoscale. Hover original origins/tips, not clipped intersections or shafts. Zero vectors are not drawn. Exact scan; no vector LOD/index/cache.",
-                "起点+位移表示（无隐式缩放），悬停拾取原始起点或终点。",
-                "始点＋変位表示（自動スケーリングなし）。始点・終点をホバー対象とします。",
-            ));
-        });
+                "Head logical points",
+                "箭头长度 (pt)",
+                "矢印長 (pt)",
+            )),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Fit vector panels",
+                "适配矢量面板",
+                "ベクトル図をフィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "Origin + displacement, no implicit autoscale. Hover original origins/tips, not clipped intersections or shafts. Zero vectors are not drawn. Exact scan; no vector LOD/index/cache.",
+            "起点+位移表示（无隐式缩放），悬停拾取原始起点或终点。",
+            "始点＋変位表示（自動スケーリングなし）。始点・終点をホバー対象とします。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {

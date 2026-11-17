@@ -4,7 +4,7 @@ use super::*;
 fn geo_gallery_renders_across_layout_retries_and_toggles_modes() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--geo"));
-    assert!(demo.geo.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Geo);
 
     let mut passes = 0;
     ctx.run_ui(input(0.0), |ui| {

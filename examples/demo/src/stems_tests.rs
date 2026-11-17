@@ -4,7 +4,7 @@ use super::*;
 fn stems_gallery_keeps_raw_samples_and_final_geometry_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--stems"));
-    assert!(demo.stems.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Stems);
     for horizontal in [false, true] {
         for markers in [false, true] {
             for dashed in [false, true] {

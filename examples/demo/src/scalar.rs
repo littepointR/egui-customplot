@@ -8,7 +8,6 @@ use crate::i18n::{lang, tr};
 
 /// Independent scalar-cell case; samples and navigation are owned by the host.
 pub(super) struct ScalarDemo {
-    pub enabled: bool,
     pub colors: ColorMap,
     pub log_colors: bool,
     pub log_axes: bool,
@@ -34,7 +33,6 @@ impl Default for ScalarDemo {
             })
             .collect::<Vec<_>>();
         Self {
-            enabled: false,
             colors: ColorMap::Viridis,
             log_colors: false,
             log_axes: false,
@@ -53,33 +51,59 @@ impl Default for ScalarDemo {
 }
 
 impl ScalarDemo {
+    pub fn reset_views(&mut self) {
+        self.state.reset();
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Heatmap + shared color bar",
+            "热力图 + 共享色条",
+            "ヒートマップ＋カラーバー",
+        ));
+        egui::ComboBox::from_id_salt("color-map")
+            .selected_text(format!("{:?}", self.colors))
+            .show_ui(ui, |ui| {
+                for map in ColorMap::ALL {
+                    ui.selectable_value(&mut self.colors, map, format!("{map:?}"));
+                }
+            });
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.log_colors,
+            tr(l, "Log color limits", "对数颜色映射", "対数カラースケール"),
+        );
+        if ui
+            .checkbox(
+                &mut self.log_axes,
+                tr(l, "Log X / Y", "对数 X / Y 轴", "対数 X / Y 軸"),
+            )
+            .changed()
+        {
+            self.state.reset();
+        }
+        ui.checkbox(
+            &mut self.reversed_y,
             tr(
                 l,
-                "Heatmap + shared color bar",
-                "热力图 + 共享色条",
-                "ヒートマップ＋カラーバー",
+                "Image-style row direction",
+                "图像行方向（Y 反转）",
+                "画像行方向（Y 反転）",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            egui::ComboBox::from_id_salt("color-map").selected_text(format!("{:?}", self.colors)).show_ui(ui, |ui| {
-                for map in [ColorMap::Viridis, ColorMap::Gray, ColorMap::BlueRed] { ui.selectable_value(&mut self.colors, map, format!("{map:?}")); }
-            });
-            ui.checkbox(&mut self.log_colors, tr(l, "Log color limits", "对数颜色映射", "対数カラースケール"));
-            if ui.checkbox(&mut self.log_axes, tr(l, "Log X / Y", "对数 X / Y 轴", "対数 X / Y 軸")).changed() { self.state.reset(); }
-            ui.checkbox(&mut self.reversed_y, tr(l, "Image-style row direction", "图像行方向（Y 反转）", "画像行方向（Y 反転）"));
-            if ui.button(tr(l, "Fit heatmap", "适配热力图", "ヒートマップに合わせる")).clicked() { self.state.reset(); }
-            ui.small(tr(
-                l,
-                "NaN cells are holes. Hover reports row, column and raw value. No interpolation or automatic cell LOD.",
-                "NaN 网格显示为空洞；悬停报告行列与原始值。",
-                "NaN セルは空洞表示。ホバーで行・列・生値を取得。",
-            ));
-        });
+        if ui
+            .button(tr(l, "Fit heatmap", "适配热力图", "ヒートマップに合わせる"))
+            .clicked()
+        {
+            self.state.reset();
+        }
+        ui.small(tr(
+            l,
+            "NaN cells are holes. Hover reports row, column and raw value. No interpolation or automatic cell LOD.",
+            "NaN 网格显示为空洞；悬停报告行列与原始值。",
+            "NaN セルは空洞表示。ホバーで行・列・生値を取得。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> PlotResponse {

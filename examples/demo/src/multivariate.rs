@@ -20,7 +20,6 @@ pub(super) enum MultivariateView {
 }
 
 pub(super) struct MultivariateDemo {
-    pub enabled: bool,
     pub view: MultivariateView,
     pub hex_bins: bool,
     bubble_data: BubbleData,
@@ -180,7 +179,6 @@ impl Default for MultivariateDemo {
         .expect("plotmatrix");
 
         Self {
-            enabled: false,
             view: MultivariateView::Overview,
             hex_bins: true,
             bubble_data,
@@ -204,52 +202,53 @@ impl Default for MultivariateDemo {
 }
 
 impl MultivariateDemo {
+    pub fn reset_views(&mut self) {
+        self.overview_states.iter_mut().for_each(PlotState::reset);
+        self.stacked_states.iter_mut().for_each(PlotState::reset);
+        self.scatter_hist_state = ScatterHistogramState::default();
+        self.matrix_states.iter_mut().for_each(PlotState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
-        ui.checkbox(
-            &mut self.enabled,
-            tr(
-                l,
-                "Multivariate & composite",
-                "多变量与复合子图",
-                "多変量・複合プロット",
-            ),
+        ui.strong(tr(
+            l,
+            "Multivariate & composite",
+            "多变量与复合子图",
+            "多変量・複合プロット",
+        ));
+        ui.selectable_value(
+            &mut self.view,
+            MultivariateView::Overview,
+            tr(l, "Overview", "总览面板", "概要"),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.selectable_value(
-                &mut self.view,
-                MultivariateView::Overview,
-                tr(l, "Overview", "总览面板", "概要"),
+        ui.selectable_value(&mut self.view, MultivariateView::Stacked, "stackedplot");
+        ui.selectable_value(
+            &mut self.view,
+            MultivariateView::ScatterHistogram,
+            "scatterhistogram",
+        );
+        ui.selectable_value(&mut self.view, MultivariateView::PlotMatrix, "plotmatrix");
+        if self.view == MultivariateView::Overview {
+            ui.checkbox(
+                &mut self.hex_bins,
+                tr(l, "Hex binscatter", "六边形分箱散点", "六角ビニング"),
             );
-            ui.selectable_value(&mut self.view, MultivariateView::Stacked, "stackedplot");
-            ui.selectable_value(
-                &mut self.view,
-                MultivariateView::ScatterHistogram,
-                "scatterhistogram",
-            );
-            ui.selectable_value(&mut self.view, MultivariateView::PlotMatrix, "plotmatrix");
-            if self.view == MultivariateView::Overview {
-                ui.checkbox(
-                    &mut self.hex_bins,
-                    tr(l, "Hex binscatter", "六边形分箱散点", "六角ビニング"),
-                );
-            }
-            if ui
-                .button(tr(
-                    l,
-                    "Fit multivariate",
-                    "适配多变量视图",
-                    "多変量フィット",
-                ))
-                .clicked()
-            {
-                self.overview_states.iter_mut().for_each(PlotState::reset);
-                self.stacked_states.iter_mut().for_each(PlotState::reset);
-                self.scatter_hist_state = ScatterHistogramState::default();
-                self.matrix_states.iter_mut().for_each(PlotState::reset);
-            }
-        });
+        }
+        if ui
+            .button(tr(
+                l,
+                "Fit multivariate",
+                "适配多变量视图",
+                "多変量フィット",
+            ))
+            .clicked()
+        {
+            self.overview_states.iter_mut().for_each(PlotState::reset);
+            self.stacked_states.iter_mut().for_each(PlotState::reset);
+            self.scatter_hist_state = ScatterHistogramState::default();
+            self.matrix_states.iter_mut().for_each(PlotState::reset);
+        }
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
@@ -285,6 +284,7 @@ impl MultivariateDemo {
                     ],
                 )
                 .row_height(row_h)
+                .allow_scroll_zoom(true)
                 .x_label(tr(l, "Time (s)", "时间 (s)", "時間 (s)"))
                 .title(tr(
                     l,
@@ -301,6 +301,7 @@ impl MultivariateDemo {
                 let cell_h = ((ui.available_height() - 120.0) * 0.48).max(120.0);
                 ScatterHistogram::new("mv-scatterhist", &self.scatter_hist)
                     .cell_height(cell_h)
+                    .allow_scroll_zoom(true)
                     .labels(
                         tr(l, "X Value", "X 数值", "X 値"),
                         tr(l, "Y Value", "Y 数值", "Y 値"),
@@ -319,6 +320,7 @@ impl MultivariateDemo {
                 let cell_h = ((ui.available_height() - 120.0) / 3.0).max(96.0);
                 PlotMatrix::new("mv-plotmatrix", &self.plot_matrix)
                     .cell_height(cell_h)
+                    .allow_scroll_zoom(true)
                     .show(ui, &mut self.matrix_states)
                     .expect("plotmatrix")
                     .inner
@@ -350,6 +352,7 @@ impl MultivariateDemo {
                 0 => cell.show_layers(
                     Plot::new("mv-bubble")
                         .height(row_h)
+                        .allow_scroll_zoom(true)
                         .bubble_legend(bubble_legend.clone())
                         .title("bubblechart + bubblelegend"),
                     &mut self.overview_states[0],
@@ -358,7 +361,10 @@ impl MultivariateDemo {
                     )],
                 ),
                 1 => cell.show_layers(
-                    Plot::new("mv-hist2").height(row_h).title("histogram2"),
+                    Plot::new("mv-hist2")
+                        .height(row_h)
+                        .allow_scroll_zoom(true)
+                        .title("histogram2"),
                     &mut self.overview_states[1],
                     &[PlotLayer::from(Histogram2::new(&self.hist2, c_biv))],
                 ),
@@ -371,6 +377,7 @@ impl MultivariateDemo {
                     cell.show_layers(
                         Plot::new("mv-binscatter")
                             .height(row_h)
+                            .allow_scroll_zoom(true)
                             .title(if self.hex_bins {
                                 "binscatter (Hex)"
                             } else {
@@ -384,6 +391,7 @@ impl MultivariateDemo {
                     Plot::new("mv-cathm")
                         .categorical_heatmap_axes(&self.cat_heatmap)
                         .height(row_h)
+                        .allow_scroll_zoom(true)
                         .title("heatmap(tbl)"),
                     &mut self.overview_states[3],
                     &[PlotLayer::from(
@@ -399,6 +407,7 @@ impl MultivariateDemo {
             all.push(
                 Plot::new("mv-parallel")
                     .height(row_h)
+                    .allow_scroll_zoom(true)
                     .x_axis(Axis::new().explicit_ticks(self.parallel.x_ticks()))
                     .title("parallelplot (ZScore)")
                     .show_layers(
@@ -412,6 +421,7 @@ impl MultivariateDemo {
             all.push(
                 ParetoChart::new("mv-pareto", &self.pareto)
                     .height(row_h)
+                    .allow_scroll_zoom(true)
                     .title("pareto")
                     .show(&mut cols[1], &mut self.overview_states[5]),
             );
@@ -428,6 +438,7 @@ impl MultivariateDemo {
                         .width(2.0),
                 )
                 .height(row_h)
+                .allow_scroll_zoom(true)
                 .title("plotyy")
                 .show_legend(true)
                 .show(&mut cols[2], &mut self.overview_states[6]),

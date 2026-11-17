@@ -1,7 +1,7 @@
 use super::*;
 use crate::i18n::{Language, is_lang_arg, tr};
 
-const GALLERIES: [Option<&str>; 19] = [
+const GALLERIES: [Option<&str>; 27] = [
     None,
     Some("--scalar"),
     Some("--statistical"),
@@ -20,7 +20,15 @@ const GALLERIES: [Option<&str>; 19] = [
     Some("--surfaces3d"),
     Some("--volumes3d"),
     Some("--geo"),
+    Some("--stage13"),
+    Some("--stage14"),
+    Some("--stage15"),
+    Some("--stage16"),
     Some("--dynamic-10m"),
+    Some("--custom-axes"),
+    Some("--custom-annotations"),
+    Some("--custom-animation"),
+    Some("--custom-styling"),
 ];
 
 #[test]

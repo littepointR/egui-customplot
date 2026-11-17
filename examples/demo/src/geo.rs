@@ -10,7 +10,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct GeoDemo {
-    pub enabled: bool,
     pub equirectangular: bool,
     pub dark_basemap: bool,
     pub use_host_tiles: bool,
@@ -108,11 +107,10 @@ impl Default for GeoDemo {
             .expect("insert");
 
         Self {
-            enabled: false,
             equirectangular: false,
             dark_basemap: false,
             use_host_tiles: false,
-            scroll_zoom: false,
+            scroll_zoom: true,
             transpac_route,
             stations,
             density,
@@ -124,21 +122,20 @@ impl Default for GeoDemo {
 }
 
 impl GeoDemo {
+    pub fn reset_views(&mut self) {
+        for st in &mut self.states {
+            st.reset();
+        }
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
-        ui.checkbox(
-            &mut self.enabled,
-            tr(
-                l,
-                "Geographic Plots Gallery (--geo)",
-                "地理绘图专题 (--geo)",
-                "地理プロット (--geo)",
-            ),
-        );
-        if !self.enabled {
-            return;
-        }
+        ui.strong(tr(
+            l,
+            "Geographic Plots Gallery",
+            "地理绘图专题",
+            "地理プロット",
+        ));
         ui.checkbox(
             &mut self.equirectangular,
             tr(

@@ -4,7 +4,7 @@ use super::*;
 fn plot3d_gallery_renders_across_layout_retries_and_toggles_modes() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--plot3d"));
-    assert!(demo.plot3d.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Plot3D);
 
     let mut passes = 0;
     ctx.run_ui(input(0.0), |ui| {

@@ -3,10 +3,10 @@ use std::f32::consts::FRAC_PI_2;
 
 use eframe::egui::{self, Color32};
 use egui_customplot::{
-    Axis, BarData, Bars, BoxChart, BoxChartData, BubbleCloud, BubbleCloudData, Figure,
-    HistogramNormalization, LegacyHistData, PieChart, PieData, Plot, PlotLayer, PlotResponse,
-    PlotState, Raincloud, RaincloudData, SwarmChart, SwarmData, ViolinData, ViolinHalf,
-    ViolinOptions, ViolinPlot, ViolinScale, WordCloud, WordCloudData,
+    Axis, BarData, BarOrientation, Bars, BoxChart, BoxChartData, BubbleCloud, BubbleCloudData,
+    Figure, HistogramNormalization, LegacyHistData, PieChart, PieData, Plot, PlotLayer,
+    PlotResponse, PlotState, Raincloud, RaincloudData, SwarmChart, SwarmData, ViolinData,
+    ViolinHalf, ViolinOptions, ViolinPlot, ViolinScale, WordCloud, WordCloudData,
 };
 
 use crate::i18n::{lang, tr};
@@ -19,9 +19,9 @@ const PALETTE: [Color32; 4] = [
 ];
 
 pub(super) struct DistributionsDemo {
-    pub enabled: bool,
     pub stacked_mode: bool,
     pub half_violin: bool,
+    pub horizontal_dist: bool,
     pub donut_mode: bool,
     grouped_bars: Vec<BarData>,
     stacked_bars: Vec<BarData>,
@@ -133,9 +133,9 @@ impl Default for DistributionsDemo {
                 .expect("bubblecloud");
 
         Self {
-            enabled: false,
             stacked_mode: false,
             half_violin: false,
+            horizontal_dist: false,
             donut_mode: true,
             grouped_bars,
             stacked_bars,
@@ -154,43 +154,57 @@ impl Default for DistributionsDemo {
 }
 
 impl DistributionsDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Distributions & clouds",
+            "统计分布与云图 (Box/Violin/Pie/Cloud)",
+            "分布・円・クラウド",
+        ));
         ui.checkbox(
-            &mut self.enabled,
-            tr(
-                l,
-                "Distributions & clouds",
-                "统计分布与云图 (Box/Violin/Pie/Cloud)",
-                "分布・円・クラウド",
-            ),
+            &mut self.stacked_mode,
+            tr(l, "Stacked bars", "堆叠柱状图", "積み上げ棒グラフ"),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(
-                &mut self.stacked_mode,
-                tr(l, "Stacked bars", "堆叠柱状图", "積み上げ棒グラフ"),
-            );
-            ui.checkbox(
-                &mut self.half_violin,
-                tr(l, "Half-violin", "半小提琴图", "ハーフバイオリン"),
-            );
-            ui.checkbox(
-                &mut self.donut_mode,
-                tr(l, "Donut ring", "环形饼图", "ドーナツグラフ"),
-            );
-            if ui
-                .button(tr(
+        ui.checkbox(
+            &mut self.half_violin,
+            tr(l, "Half-violin", "半小提琴图", "ハーフバイオリン"),
+        );
+        if ui
+            .checkbox(
+                &mut self.horizontal_dist,
+                tr(
                     l,
-                    "Fit distribution panels",
-                    "适配分布图面板",
-                    "分布ビューをフィット",
-                ))
-                .clicked()
-            {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-        });
+                    "Horizontal box/violin/raincloud",
+                    "横向箱线 / 小提琴 / 雨云图",
+                    "水平 Box/Violin/Raincloud",
+                ),
+            )
+            .changed()
+        {
+            self.states[2].reset();
+            self.states[3].reset();
+            self.states[4].reset();
+        }
+        ui.checkbox(
+            &mut self.donut_mode,
+            tr(l, "Donut ring", "环形饼图", "ドーナツグラフ"),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Fit distribution panels",
+                "适配分布图面板",
+                "分布ビューをフィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
@@ -230,6 +244,7 @@ impl DistributionsDemo {
                     cell.show_layers(
                         Plot::new("bars-grouped-stacked")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .x_axis(Axis::new().categories(["Q1", "Q2", "Q3", "Q4"]))
                             .legend(true)
                             .title(title),
@@ -240,6 +255,7 @@ impl DistributionsDemo {
                 1 => cell.show_layers(
                     Plot::new("legacy-hist")
                         .height(height)
+                        .allow_scroll_zoom(true)
                         .title("Legacy hist(12 bins)"),
                     &mut self.states[1],
                     &[Bars::new(&self.legacy_hist)
@@ -247,56 +263,100 @@ impl DistributionsDemo {
                         .color(PALETTE[0])
                         .into()],
                 ),
-                2 => cell.show_layers(
-                    Plot::new("box-swarm")
+                2 => {
+                    let orient = if self.horizontal_dist {
+                        BarOrientation::Horizontal
+                    } else {
+                        BarOrientation::Vertical
+                    };
+                    let mut p = Plot::new("box-swarm")
                         .height(height)
-                        .x_axis(Axis::new().categories(["Alpha", "Beta", "Gamma"]))
-                        .legend(true)
-                        .title("boxchart + swarmchart"),
-                    &mut self.states[2],
-                    &[
+                        .allow_scroll_zoom(true)
+                        .legend(true);
+                    let mut layers: Vec<PlotLayer<'_>> = vec![
                         BoxChart::new(&self.box_data)
                             .name("boxchart")
                             .color(PALETTE[0])
                             .notched(true)
                             .show_mean(true)
+                            .orientation(orient)
                             .into(),
-                        SwarmChart::new(&self.swarm_data)
-                            .name("swarm")
-                            .color(PALETTE[1])
-                            .radius(2.8)
-                            .into(),
-                    ],
-                ),
+                    ];
+                    if !self.horizontal_dist {
+                        p = p
+                            .x_axis(Axis::new().categories(["Alpha", "Beta", "Gamma"]))
+                            .title("boxchart + swarmchart");
+                        layers.push(
+                            SwarmChart::new(&self.swarm_data)
+                                .name("swarm")
+                                .color(PALETTE[1])
+                                .radius(2.8)
+                                .into(),
+                        );
+                    } else {
+                        p = p
+                            .y_axis(Axis::new().categories(["Alpha", "Beta", "Gamma"]))
+                            .title("boxchart (horizontal)");
+                    }
+                    cell.show_layers(p, &mut self.states[2], &layers)
+                }
                 3 => {
                     let vdata = if self.half_violin {
                         &self.violin_half
                     } else {
                         &self.violin_full
                     };
+                    let orient = if self.horizontal_dist {
+                        BarOrientation::Horizontal
+                    } else {
+                        BarOrientation::Vertical
+                    };
+                    let cat_ax = Axis::new().categories(["Alpha", "Beta", "Gamma"]);
+                    let mut p = Plot::new("violin")
+                        .height(height)
+                        .allow_scroll_zoom(true)
+                        .title("violinplot (KDE)");
+                    p = if self.horizontal_dist {
+                        p.y_axis(cat_ax)
+                    } else {
+                        p.x_axis(cat_ax)
+                    };
                     cell.show_layers(
-                        Plot::new("violin")
-                            .height(height)
-                            .x_axis(Axis::new().categories(["Alpha", "Beta", "Gamma"]))
-                            .title("violinplot (KDE)"),
+                        p,
                         &mut self.states[3],
                         &[ViolinPlot::new(vdata)
                             .name("violin")
                             .color(PALETTE[3])
+                            .orientation(orient)
                             .into()],
                     )
                 }
-                4 => cell.show_layers(
-                    Plot::new("raincloud")
+                4 => {
+                    let orient = if self.horizontal_dist {
+                        BarOrientation::Horizontal
+                    } else {
+                        BarOrientation::Vertical
+                    };
+                    let cat_ax = Axis::new().categories(["Alpha", "Beta", "Gamma"]);
+                    let mut p = Plot::new("raincloud")
                         .height(height)
-                        .x_axis(Axis::new().categories(["Alpha", "Beta", "Gamma"]))
-                        .title("raincloudplot"),
-                    &mut self.states[4],
-                    &[Raincloud::new(&self.raincloud)
-                        .name("raincloud")
-                        .color(PALETTE[2])
-                        .into()],
-                ),
+                        .allow_scroll_zoom(true)
+                        .title("raincloudplot");
+                    p = if self.horizontal_dist {
+                        p.y_axis(cat_ax)
+                    } else {
+                        p.x_axis(cat_ax)
+                    };
+                    cell.show_layers(
+                        p,
+                        &mut self.states[4],
+                        &[Raincloud::new(&self.raincloud)
+                            .name("raincloud")
+                            .color(PALETTE[2])
+                            .orientation(orient)
+                            .into()],
+                    )
+                }
                 5 => {
                     let layer = if self.donut_mode {
                         PieChart::donut(&self.pie_data)
@@ -308,6 +368,7 @@ impl DistributionsDemo {
                             .canvas_axes()
                             .data_aspect(1.0)
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title(if self.donut_mode {
                                 "donutchart"
                             } else {
@@ -321,6 +382,7 @@ impl DistributionsDemo {
                     Plot::new("word-cloud")
                         .canvas_axes()
                         .height(height)
+                        .allow_scroll_zoom(true)
                         .title("wordcloud"),
                     &mut self.states[6],
                     &[WordCloud::new(&self.word_cloud).base_font_px(16.0).into()],
@@ -330,6 +392,7 @@ impl DistributionsDemo {
                         .canvas_axes()
                         .data_aspect(1.0)
                         .height(height)
+                        .allow_scroll_zoom(true)
                         .title("bubblecloud"),
                     &mut self.states[7],
                     &[BubbleCloud::new(&self.bubble_cloud).into()],

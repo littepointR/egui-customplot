@@ -15,11 +15,11 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct Volumes3DDemo {
-    pub enabled: bool,
     pub zbuffer: bool,
     pub boundary_only: bool,
     pub animate_particles: bool,
     pub arbitrary_slice: bool,
+    clock: crate::stream::FrameClock,
     slices_ortho: VolumeSliceData,
     slices_all: VolumeSliceData,
     cslice: Contour3DData,
@@ -125,11 +125,11 @@ impl Default for Volumes3DDemo {
         let cones = ConePlot3DData::from_field(&vf, &cone_pts, 0.22, 8).expect("cones");
 
         Self {
-            enabled: false,
             zbuffer: true,
             boundary_only: true,
             animate_particles: false,
             arbitrary_slice: true,
+            clock: crate::stream::FrameClock::default(),
             slices_ortho,
             slices_all,
             cslice,
@@ -195,37 +195,83 @@ fn build_cube_tetramesh() -> TetraMesh3DData {
 }
 
 impl Volumes3DDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(Plot3DState::reset);
+    }
+
+    #[cfg(test)]
+    pub fn particle_phase(&self) -> f64 {
+        self.playback.phase()
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "3D volumes, isosurfaces & flow",
+            "三维体切片、等值面与体流场",
+            "3D ボリューム・等値面・流れ",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.zbuffer,
             tr(
                 l,
-                "3D volumes, isosurfaces & flow",
-                "三维体切片、等值面与体流场 (--volumes3d)",
-                "3D ボリューム・等値面・流れ",
+                "Software Z-buffer (cell 2 & 5)",
+                "软件 Z-Buffer（子图 2/5）",
+                "Z バッファ（2・5）",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.zbuffer, tr(l, "Software Z-buffer (cell 2 & 5)", "软件 Z-Buffer（子图 2/5）", "Z バッファ（2・5）"));
-            ui.checkbox(&mut self.arbitrary_slice, tr(l, "Tilted arbitrary slice (cell 0)", "倾斜任意体切片（子图 0）", "任意傾斜スライス（セル 0）"));
-            ui.checkbox(&mut self.boundary_only, tr(l, "Boundary-only tetramesh (cell 3)", "四面体仅绘外表面（子图 3）", "外表面のみ表示（セル 3）"));
-            ui.checkbox(&mut self.animate_particles, tr(l, "Animate streamparticles (cell 4)", "流场粒子动画（子图 4）", "流れ粒子アニメ（セル 4）"));
-            if ui.button(tr(l, "Reset volume views", "重置体视图", "ボリューム初期化")).clicked() {
-                self.states.iter_mut().for_each(Plot3DState::reset);
-            }
-            ui.small(
-                "slice, contourslice, isosurface, isocaps, tetramesh, streamline/streamslice 3D, streamparticles, streamribbon, streamtube, coneplot.",
-            );
-        });
+        ui.checkbox(
+            &mut self.arbitrary_slice,
+            tr(
+                l,
+                "Tilted arbitrary slice (cell 0)",
+                "倾斜任意体切片（子图 0）",
+                "任意傾斜スライス（セル 0）",
+            ),
+        );
+        ui.checkbox(
+            &mut self.boundary_only,
+            tr(
+                l,
+                "Boundary-only tetramesh (cell 3)",
+                "四面体仅绘外表面（子图 3）",
+                "外表面のみ表示（セル 3）",
+            ),
+        );
+        ui.checkbox(
+            &mut self.animate_particles,
+            tr(
+                l,
+                "Animate streamparticles (cell 4)",
+                "流场粒子动画（子图 4）",
+                "流れ粒子アニメ（セル 4）",
+            ),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Reset volume views",
+                "重置体视图",
+                "ボリューム初期化",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(Plot3DState::reset);
+        }
+        ui.small(
+            "slice, contourslice, isosurface, isocaps, tetramesh, streamline/streamslice 3D, streamparticles, streamribbon, streamtube, coneplot.",
+        );
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
+        let dt = self.clock.tick(ui.ctx(), self.animate_particles);
         if self.animate_particles {
             self.playback.set_playing(true);
-            self.playback
-                .advance_once(ui.ctx().cumulative_frame_nr(), 0.016);
+            if dt > 0.0 {
+                self.playback
+                    .advance_once(ui.ctx().cumulative_frame_nr(), dt);
+            }
             self.playback
                 .sync_repaint(ui.ctx(), Duration::from_millis(16));
         }
@@ -253,6 +299,7 @@ impl Volumes3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9c-slice")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .color_bar(v_scale, "V")
                             .title("slice (orthogonal + arbitrary)"),
                         s0,
@@ -267,6 +314,7 @@ impl Volumes3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9c-contourslice")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title("contourslice"),
                         s1,
                         &[Layer3D::from(
@@ -280,6 +328,7 @@ impl Volumes3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9c-iso-caps")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .depth_mode(zbuf)
                             .title("isosurface & isocaps"),
                         s2,
@@ -301,6 +350,7 @@ impl Volumes3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9c-tetramesh")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title("tetramesh (Kuhn 6-tet cube)"),
                         s3,
                         &[Layer3D::from(
@@ -314,6 +364,7 @@ impl Volumes3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9c-stream-particles")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title("streamline / streamparticles / streamslice"),
                         s4,
                         &[
@@ -335,6 +386,7 @@ impl Volumes3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9c-ribbon-tube-cone")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .depth_mode(zbuf)
                             .title("streamribbon / streamtube / coneplot"),
                         s5,

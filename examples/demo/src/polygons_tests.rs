@@ -4,7 +4,7 @@ use super::*;
 fn polygon_gallery_preserves_host_samples_and_renders_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--polygons"));
-    assert!(demo.polygons.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Polygons);
     let ids = demo.polygons.sample_identities();
     for (pos_neg, gouraud) in [(false, true), (true, false)] {
         demo.polygons.pos_neg_split = pos_neg;

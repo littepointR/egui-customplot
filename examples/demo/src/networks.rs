@@ -8,7 +8,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct NetworksDemo {
-    pub enabled: bool,
     pub highlight_path: bool,
     force_graph: GraphData,
     layered_digraph: GraphData,
@@ -101,7 +100,6 @@ impl Default for NetworksDemo {
         let etree_plot = etree.to_tree_data().to_graph();
 
         Self {
-            enabled: false,
             highlight_path: true,
             force_graph,
             layered_digraph,
@@ -114,46 +112,44 @@ impl Default for NetworksDemo {
 }
 
 impl NetworksDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Networks, graphs & trees",
+            "网络图与消去树",
+            "ネットワーク・グラフ・木",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.highlight_path,
             tr(
                 l,
-                "Networks, graphs & trees",
-                "网络图与消去树",
-                "ネットワーク・グラフ・木",
+                "Highlight active subgraph",
+                "高亮当前子图路径",
+                "部分グラフを強調表示",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(
-                &mut self.highlight_path,
-                tr(
-                    l,
-                    "Highlight active subgraph",
-                    "高亮当前子图路径",
-                    "部分グラフを強調表示",
-                ),
-            );
-            if ui
-                .button(tr(
-                    l,
-                    "Reset network views",
-                    "重置网络图视图",
-                    "グラフビュー初期化",
-                ))
-                .clicked()
-            {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
+        if ui
+            .button(tr(
                 l,
-                "plot(graph), plot(digraph) Layered DAG, gplot(Spy), treeplot & etreeplot.",
-                "支持力导向无向图、分层 DAG、gplot 网格、treeplot 与消去树。",
-                "無向 Force・階層 DAG・gplot・treeplot・消去木に対応。",
-            ));
-        });
+                "Reset network views",
+                "重置网络图视图",
+                "グラフビュー初期化",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "plot(graph), plot(digraph) Layered DAG, gplot(Spy), treeplot & etreeplot.",
+            "支持力导向无向图、分层 DAG、gplot 网格、treeplot 与消去树。",
+            "無向 Force・階層 DAG・gplot・treeplot・消去木に対応。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
@@ -186,23 +182,31 @@ impl NetworksDemo {
                         layer = layer.highlight(hl);
                     }
                     cell.show_layers(
-                        Plot::new("net-force").height(height).graph_axes().title(tr(
-                            l,
-                            "plot(graph) Force + Multi-edges + Self-loop",
-                            "无向力导向图 + 平行多边 + 自环",
-                            "無向グラフ（多重辺＋自己ループ）",
-                        )),
+                        Plot::new("net-force")
+                            .height(height)
+                            .allow_scroll_zoom(true)
+                            .graph_axes()
+                            .title(tr(
+                                l,
+                                "plot(graph) Force + Multi-edges + Self-loop",
+                                "无向力导向图 + 平行多边 + 自环",
+                                "無向グラフ（多重辺＋自己ループ）",
+                            )),
                         s0,
                         &[PlotLayer::from(layer)],
                     )
                 }
                 1 => cell.show_layers(
-                    Plot::new("net-dag").height(height).graph_axes().title(tr(
-                        l,
-                        "plot(digraph) Layered DAG + Bidir Curves",
-                        "有向分层 DAG + 双向曲边",
-                        "有向階層 DAG＋双方向曲線",
-                    )),
+                    Plot::new("net-dag")
+                        .height(height)
+                        .allow_scroll_zoom(true)
+                        .graph_axes()
+                        .title(tr(
+                            l,
+                            "plot(digraph) Layered DAG + Bidir Curves",
+                            "有向分层 DAG + 双向曲边",
+                            "有向階層 DAG＋双方向曲線",
+                        )),
                     s1,
                     &[PlotLayer::from(
                         GraphPlot::new(&self.layered_digraph)
@@ -213,12 +217,16 @@ impl NetworksDemo {
                     )],
                 ),
                 2 => cell.show_layers(
-                    Plot::new("net-gplot").height(height).graph_axes().title(tr(
-                        l,
-                        "gplot(A, Coordinates) Finite-Element Mesh",
-                        "gplot(A, XY) 空间有限元网格",
-                        "gplot 空間メッシュ",
-                    )),
+                    Plot::new("net-gplot")
+                        .height(height)
+                        .allow_scroll_zoom(true)
+                        .graph_axes()
+                        .title(tr(
+                            l,
+                            "gplot(A, Coordinates) Finite-Element Mesh",
+                            "gplot(A, XY) 空间有限元网格",
+                            "gplot 空間メッシュ",
+                        )),
                     s2,
                     &[PlotLayer::from(
                         GraphPlot::new(&self.gplot_mesh)
@@ -230,6 +238,7 @@ impl NetworksDemo {
                 _ => cell.show_layers(
                     Plot::new("net-tree")
                         .height(height)
+                        .allow_scroll_zoom(true)
                         .graph_axes()
                         .legend(true)
                         .title("treeplot & etreeplot(Spy)"),

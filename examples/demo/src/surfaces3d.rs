@@ -11,7 +11,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct Surfaces3DDemo {
-    pub enabled: bool,
     pub shading: SurfaceShading,
     pub zbuffer: bool,
     pub hidden_line: bool,
@@ -98,7 +97,6 @@ impl Default for Surfaces3DDemo {
         let trimesh = TriMesh3DData::from_delaunay_xy(&dome_pts).expect("trimesh");
 
         Self {
-            enabled: false,
             shading: SurfaceShading::Interp,
             zbuffer: true,
             hidden_line: true,
@@ -121,40 +119,94 @@ impl Default for Surfaces3DDemo {
 }
 
 impl Surfaces3DDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(Plot3DState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
-        ui.checkbox(
-            &mut self.enabled,
-            tr(
-                l,
-                "3D surfaces, meshes & implicit",
-                "三维曲面、网格与隐式面 (--surfaces3d)",
-                "3D 曲面・メッシュ・陰関数",
-            ),
-        );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.horizontal(|ui| {
-                ui.selectable_value(
-                    &mut self.shading,
-                    SurfaceShading::Faceted,
-                    tr(l, "Faceted", "网格面", "ファセット"),
-                );
-                ui.selectable_value(&mut self.shading, SurfaceShading::Flat, tr(l, "Flat", "平面色", "フラット"));
-                ui.selectable_value(&mut self.shading, SurfaceShading::Interp, tr(l, "Interp", "平滑插值", "補間"));
-            });
-            ui.checkbox(&mut self.zbuffer, tr(l, "Software Z-buffer (cell 4 & 5)", "软件 Z-Buffer（子图 4/5）", "Z バッファ（4・5）"));
-            ui.checkbox(&mut self.hidden_line, tr(l, "Hidden-line mesh occlusion", "线框隐藏线遮挡剔除", "陰線消去"));
-            ui.checkbox(&mut self.floor_contours, tr(l, "Floor contours (surfc / meshc)", "底面等高投影 (surfc/meshc)", "底面等高線 (surfc/meshc)"));
-            ui.checkbox(&mut self.show_normals, tr(l, "Surface normals (surfnorm)", "曲面法向矢量 (surfnorm)", "法線表示 (surfnorm)"));
-            ui.checkbox(&mut self.colormap_lighting, tr(l, "Colormap lighting (surfl)", "光照明暗着色 (surfl)", "照明効果 (surfl)"));
-            if ui.button(tr(l, "Reset surface views", "重置曲面视角", "曲面ビュー初期化")).clicked() {
-                self.states.iter_mut().for_each(Plot3DState::reset);
-            }
-            ui.small(
-                "surf, surfc, surfl, surfnorm, mesh, meshc, meshz, waterfall, contour3, ribbon, fsurf, fmesh, fimplicit3, sphere, cylinder, ellipsoid, trisurf.",
+        ui.strong(tr(
+            l,
+            "3D surfaces, meshes & implicit",
+            "三维曲面、网格与隐式面",
+            "3D 曲面・メッシュ・陰関数",
+        ));
+        ui.horizontal(|ui| {
+            ui.selectable_value(
+                &mut self.shading,
+                SurfaceShading::Faceted,
+                tr(l, "Faceted", "网格面", "ファセット"),
+            );
+            ui.selectable_value(
+                &mut self.shading,
+                SurfaceShading::Flat,
+                tr(l, "Flat", "平面色", "フラット"),
+            );
+            ui.selectable_value(
+                &mut self.shading,
+                SurfaceShading::Interp,
+                tr(l, "Interp", "平滑插值", "補間"),
             );
         });
+        ui.checkbox(
+            &mut self.zbuffer,
+            tr(
+                l,
+                "Software Z-buffer (cell 4 & 5)",
+                "软件 Z-Buffer（子图 4/5）",
+                "Z バッファ（4・5）",
+            ),
+        );
+        ui.checkbox(
+            &mut self.hidden_line,
+            tr(
+                l,
+                "Hidden-line mesh occlusion",
+                "线框隐藏线遮挡剔除",
+                "陰線消去",
+            ),
+        );
+        ui.checkbox(
+            &mut self.floor_contours,
+            tr(
+                l,
+                "Floor contours (surfc / meshc)",
+                "底面等高投影 (surfc/meshc)",
+                "底面等高線 (surfc/meshc)",
+            ),
+        );
+        ui.checkbox(
+            &mut self.show_normals,
+            tr(
+                l,
+                "Surface normals (surfnorm)",
+                "曲面法向矢量 (surfnorm)",
+                "法線表示 (surfnorm)",
+            ),
+        );
+        ui.checkbox(
+            &mut self.colormap_lighting,
+            tr(
+                l,
+                "Colormap lighting (surfl)",
+                "光照明暗着色 (surfl)",
+                "照明効果 (surfl)",
+            ),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Reset surface views",
+                "重置曲面视角",
+                "曲面ビュー初期化",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(Plot3DState::reset);
+        }
+        ui.small(
+            "surf, surfc, surfl, surfnorm, mesh, meshc, meshz, waterfall, contour3, ribbon, fsurf, fmesh, fimplicit3, sphere, cylinder, ellipsoid, trisurf.",
+        );
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
@@ -177,6 +229,7 @@ impl Surfaces3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9b-surf")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .color_bar(z_scale, "Z")
                             .title("surf / surfc / surfl / surfnorm"),
                         s0,
@@ -195,6 +248,7 @@ impl Surfaces3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9b-mesh")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title("mesh / meshc / meshz / waterfall"),
                         s1,
                         &[
@@ -218,6 +272,7 @@ impl Surfaces3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9b-contour-ribbon")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title("contour3 & ribbon"),
                         s2,
                         &[
@@ -238,6 +293,7 @@ impl Surfaces3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9b-fsurf-fmesh")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .title("fsurf (torus) & fmesh (saddle)"),
                         s3,
                         &[
@@ -259,6 +315,7 @@ impl Surfaces3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9b-fimplicit3")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .depth_mode(zbuffer_mode)
                             .title("fimplicit3 (cos x + cos y + cos z = 0)"),
                         s4,
@@ -271,6 +328,7 @@ impl Surfaces3DDemo {
                     .show_plot3d(
                         Plot3D::new("s9b-analytic")
                             .height(height)
+                            .allow_scroll_zoom(true)
                             .depth_mode(zbuffer_mode)
                             .title("sphere / cylinder / ellipsoid / trisurf"),
                         s5,

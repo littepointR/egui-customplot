@@ -11,7 +11,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct GeometryDemo {
-    pub enabled: bool,
     pub show_voronoi: bool,
     pub alpha_radius: f32,
     built_alpha: f32,
@@ -95,7 +94,6 @@ impl Default for GeometryDemo {
         let spy = SpyData::from_coords(size, size, &entries).expect("valid sparse pattern");
 
         Self {
-            enabled: false,
             show_voronoi: true,
             alpha_radius,
             built_alpha: alpha_radius,
@@ -113,61 +111,59 @@ impl Default for GeometryDemo {
 }
 
 impl GeometryDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Meshes, flow & spy",
+            "三角网、流场与稀疏矩阵 (Spy)",
+            "メッシュ・流線・スパイ",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.show_voronoi,
             tr(
                 l,
-                "Meshes, flow & spy",
-                "三角网、流场与稀疏矩阵 (Spy)",
-                "メッシュ・流線・スパイ",
+                "Overlay Voronoi bisectors",
+                "叠加 Voronoi 垂直平分线",
+                "ボロノイ図を重ね表示",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(
-                &mut self.show_voronoi,
-                tr(
-                    l,
-                    "Overlay Voronoi bisectors",
-                    "叠加 Voronoi 垂直平分线",
-                    "ボロノイ図を重ね表示",
-                ),
-            );
-            ui.add(
-                egui::Slider::new(&mut self.alpha_radius, 0.45..=4.0).text(tr(
-                    l,
-                    "alpha radius",
-                    "alpha 半径",
-                    "alpha 半径",
-                )),
-            );
-            if (self.alpha_radius - self.built_alpha).abs() > 1e-4
-                && let Ok(rebuilt) =
-                    AlphaShapeData::from_sites(&self.alpha_ring, f64::from(self.alpha_radius))
-            {
-                self.alpha_shape = rebuilt;
-                self.built_alpha = self.alpha_radius;
-            }
-            if ui
-                .button(tr(
-                    l,
-                    "Fit geometry panels",
-                    "适配几何面板",
-                    "幾何パネルをフィット",
-                ))
-                .clicked()
-            {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
+        ui.add(
+            egui::Slider::new(&mut self.alpha_radius, 0.45..=4.0).text(tr(
                 l,
-                "Delaunay/Voronoi, alphaShape holes, RK4 streamslice, feather baseline & CSR spy.",
-                "Delaunay/Voronoi、带孔 alphaShape、RK4 流线切片、羽状矢量与 CSR 稀疏模式。",
-                "ドロネー/ボロノイ・穴あき alphaShape・RK4 流線・フェザー・CSR スパイ。",
-            ));
-        });
+                "alpha radius",
+                "alpha 半径",
+                "alpha 半径",
+            )),
+        );
+        if (self.alpha_radius - self.built_alpha).abs() > 1e-4
+            && let Ok(rebuilt) =
+                AlphaShapeData::from_sites(&self.alpha_ring, f64::from(self.alpha_radius))
+        {
+            self.alpha_shape = rebuilt;
+            self.built_alpha = self.alpha_radius;
+        }
+        if ui
+            .button(tr(
+                l,
+                "Fit geometry panels",
+                "适配几何面板",
+                "幾何パネルをフィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "Delaunay/Voronoi, alphaShape holes, RK4 streamslice, feather baseline & CSR spy.",
+            "Delaunay/Voronoi、带孔 alphaShape、RK4 流线切片、羽状矢量与 CSR 稀疏模式。",
+            "ドロネー/ボロノイ・穴あき alphaShape・RK4 流線・フェザー・CSR スパイ。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {

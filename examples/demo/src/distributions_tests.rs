@@ -4,7 +4,7 @@ use super::*;
 fn distributions_gallery_renders_all_eight_panels_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--distributions"));
-    assert!(demo.distributions.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Distributions);
 
     let mut passes = 0;
     ctx.run_ui(input(0.0), |ui| {

@@ -4,7 +4,7 @@ use super::*;
 fn geometry_flow_and_spy_gallery_renders_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--geometry"));
-    assert!(demo.geometry.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Geometry);
 
     let mut passes = 0;
     ctx.run_ui(input(0.0), |ui| {

@@ -4,7 +4,7 @@ use super::*;
 fn networks_graphs_and_trees_gallery_renders_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--networks"));
-    assert!(demo.networks.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Networks);
 
     let mut passes = 0;
     ctx.run_ui(input(0.0), |ui| {

@@ -5,6 +5,40 @@ use egui_customplot::{PlotData, PlotStream};
 
 use crate::data::Scene;
 
+/// Measures real elapsed UI time at most once per `cumulative_frame_nr`,
+/// keeping multi-pass `egui` layouts and animation playback frame-rate independent.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct FrameClock {
+    last_frame_nr: Option<u64>,
+    last_time: Option<f64>,
+    cached_dt: f64,
+}
+
+impl FrameClock {
+    pub fn tick(&mut self, ctx: &egui::Context, active: bool) -> f64 {
+        if !active {
+            self.reset();
+            return 0.0;
+        }
+        let frame_nr = ctx.cumulative_frame_nr();
+        if self.last_frame_nr == Some(frame_nr) {
+            return self.cached_dt;
+        }
+        let now = ctx.input(|i| i.time);
+        let dt = self
+            .last_time
+            .map_or(0.0, |prev| (now - prev).clamp(0.0, 0.1));
+        self.last_time = Some(now);
+        self.last_frame_nr = Some(frame_nr);
+        self.cached_dt = dt;
+        dt
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::default();
+    }
+}
+
 pub(super) struct LiveSignal {
     ring: PlotStream,
     pub data: PlotData,

@@ -4,7 +4,7 @@ use super::*;
 fn vector_gallery_reuses_original_payloads_across_style_and_layout_passes() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--quiver"));
-    assert!(demo.quiver.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Quiver);
     let identities = demo.quiver.sample_identities();
     for heads in [false, true] {
         for dashed in [false, true] {

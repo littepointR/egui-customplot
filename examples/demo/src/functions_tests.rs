@@ -4,7 +4,7 @@ use super::*;
 fn functions_and_animation_gallery_renders_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--functions"));
-    assert!(demo.functions.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Functions);
 
     for frame in 0..2 {
         let mut passes = 0;

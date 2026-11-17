@@ -14,7 +14,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct FunctionsDemo {
-    pub enabled: bool,
     pub show_poles: bool,
     pub animate_live: bool,
     chirp: FunctionCurveData,
@@ -27,7 +26,10 @@ pub(super) struct FunctionsDemo {
     phase: f64,
     comet_data: egui_customplot::PlotData,
     comet: CometPlayback,
-    last_time: Option<f64>,
+    clock: crate::stream::FrameClock,
+    step_accum: f64,
+    last_step_frame: Option<u64>,
+    next_batch_id: u64,
     states: [PlotState; 4],
 }
 
@@ -85,7 +87,6 @@ impl Default for FunctionsDemo {
         states[0].set_bounds(PlotBounds::new([-3.2, -2.5], [3.2, 2.5]).expect("valid bounds"));
 
         Self {
-            enabled: false,
             show_poles: true,
             animate_live: true,
             chirp,
@@ -98,78 +99,120 @@ impl Default for FunctionsDemo {
             phase: 64.0 * 0.08,
             comet_data,
             comet,
-            last_time: None,
+            clock: crate::stream::FrameClock::default(),
+            step_accum: 0.0,
+            last_step_frame: None,
+            next_batch_id: 10,
             states,
         }
     }
 }
 
 impl FunctionsDemo {
+    pub fn reset_views(&mut self) {
+        self.comet.reset();
+        self.comet.set_playing(self.animate_live);
+        self.clock.reset();
+        self.step_accum = 0.0;
+        self.states.iter_mut().for_each(PlotState::reset);
+        self.states[0].set_bounds(PlotBounds::new([-3.2, -2.5], [3.2, 2.5]).expect("valid bounds"));
+    }
+
+    #[cfg(test)]
+    pub fn comet_progress(&self) -> f64 {
+        self.comet.progress_points()
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Functions, animation & EX-027",
+            "自适应函数、动态动画与 EX-027 注解",
+            "関数・アニメーション・EX-027 注釈",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.show_poles,
             tr(
                 l,
-                "Functions, animation & EX-027",
-                "自适应函数、动态动画与 EX-027 注解",
-                "関数・アニメーション・EX-027 注釈",
+                "Show split tan(x) poles",
+                "显示 tan(x) 极点断枝",
+                "tan(x) 特異点分割",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(&mut self.show_poles, tr(l, "Show split tan(x) poles", "显示 tan(x) 极点断枝", "tan(x) 特異点分割"));
-            if ui
-                .checkbox(&mut self.animate_live, tr(l, "Live animation / comet", "实时运行 / 彗星追踪动画", "ライブアニメーション"))
-                .changed()
-            {
-                self.anim.set_paused(!self.animate_live);
-                self.comet.set_playing(self.animate_live);
+        if ui
+            .checkbox(
+                &mut self.animate_live,
+                tr(
+                    l,
+                    "Live animation / comet",
+                    "实时运行 / 彗星追踪动画",
+                    "ライブアニメーション",
+                ),
+            )
+            .changed()
+        {
+            self.anim.set_paused(!self.animate_live);
+            self.comet.set_playing(self.animate_live);
+            if !self.animate_live {
+                self.clock.reset();
             }
-            if ui.button(tr(l, "Reset animation & views", "重置动画与视图", "アニメ・表示を初期化")).clicked() {
-                self.comet.reset();
-                self.comet.set_playing(self.animate_live);
-                self.states.iter_mut().for_each(PlotState::reset);
-                self.states[0].set_bounds(
-                    PlotBounds::new([-3.2, -2.5], [3.2, 2.5]).expect("valid bounds"),
-                );
-            }
-            ui.small(tr(
+        }
+        if ui
+            .button(tr(
                 l,
-                "Adaptive bisection / quadtree sampling on host; multi-pass safe comet & animatedline.",
-                "自适应二分 / 四叉树采样；多遍安全的动态彗星与动画线。",
-                "適応二分・四分木サンプリング；マルチパス安全な動的ライン。",
-            ));
-        });
+                "Reset animation & views",
+                "重置动画与视图",
+                "アニメ・表示を初期化",
+            ))
+            .clicked()
+        {
+            self.comet.reset();
+            self.comet.set_playing(self.animate_live);
+            self.clock.reset();
+            self.step_accum = 0.0;
+            self.states.iter_mut().for_each(PlotState::reset);
+            self.states[0]
+                .set_bounds(PlotBounds::new([-3.2, -2.5], [3.2, 2.5]).expect("valid bounds"));
+        }
+        ui.small(tr(
+            l,
+            "Adaptive bisection / quadtree sampling on host; multi-pass safe comet & animatedline.",
+            "自适应二分 / 四叉树采样；多遍安全的动态彗星与动画线。",
+            "適応二分・四分木サンプリング；マルチパス安全な動的ライン。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
         let l = lang(ui.ctx());
-        let now = ui.input(|i| i.time);
-        let dt = self
-            .last_time
-            .map_or(0.0, |prev| (now - prev).clamp(0.0, 0.1));
-        self.last_time = Some(now);
-
         let frame_id = ui.ctx().cumulative_frame_nr();
-        if self.animate_live && dt > 0.0 {
-            let step = (self.phase + 0.08).min(24.0);
-            let next_pt = [step, (step * 2.0).sin() * (-0.08 * step).exp()];
-            if let Ok(rep) = self.anim.add_points_once(frame_id + 10, &[next_pt])
-                && rep.applied
-            {
-                self.phase = if step >= 24.0 {
-                    let _ = self.anim.clear();
-                    0.0
-                } else {
-                    step
-                };
+        let dt = self.clock.tick(ui.ctx(), self.animate_live);
+        if self.animate_live {
+            if dt > 0.0 && self.last_step_frame != Some(frame_id) {
+                self.last_step_frame = Some(frame_id);
+                self.step_accum += dt;
+                while self.step_accum >= 1.0 / 30.0 {
+                    self.step_accum -= 1.0 / 30.0;
+                    let step = (self.phase + 0.08).min(24.0);
+                    let next_pt = [step, (step * 2.0).sin() * (-0.08 * step).exp()];
+                    self.next_batch_id += 1;
+                    if let Ok(rep) = self.anim.add_points_once(self.next_batch_id, &[next_pt])
+                        && rep.applied
+                    {
+                        self.phase = if step >= 24.0 {
+                            let _ = self.anim.clear();
+                            0.0
+                        } else {
+                            step
+                        };
+                    }
+                }
+                let _ = self.comet.advance_once(frame_id, dt, self.comet_data.len());
             }
-            let _ = self.comet.advance_once(frame_id, dt, self.comet_data.len());
             let _ = self.anim.sync_repaint(ui.ctx(), &mut self.anim_rev);
             let _ =
                 self.comet
-                    .sync_repaint(ui.ctx(), self.comet_data.len(), Duration::from_millis(33));
+                    .sync_repaint(ui.ctx(), self.comet_data.len(), Duration::from_millis(16));
         }
 
         let height = ((ui.available_height() - 120.0) * 0.5).max(80.0);

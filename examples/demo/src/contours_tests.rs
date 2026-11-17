@@ -4,7 +4,7 @@ use super::*;
 fn contour_and_image_gallery_survives_layout_retries_in_contourf_and_pcolor_modes() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--contours"));
-    assert!(demo.contours.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Contours);
     let ids = demo.contours.sample_identities();
 
     for (show_pcolor, interp) in [(false, false), (true, true)] {

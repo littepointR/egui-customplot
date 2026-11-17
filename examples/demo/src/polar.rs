@@ -13,7 +13,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct PolarDemo {
-    pub enabled: bool,
     pub clockwise_top: bool,
     pub neg_reflect: bool,
     curve_cardioid: PolarCurveData,
@@ -95,7 +94,6 @@ impl Default for PolarDemo {
         let neg_curve = PolarCurveData::from_theta_r(&n_th, &n_r).expect("neg polar");
 
         Self {
-            enabled: false,
             clockwise_top: false,
             neg_reflect: true,
             curve_cardioid,
@@ -114,42 +112,53 @@ impl Default for PolarDemo {
 }
 
 impl PolarDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PolarState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Polar plots & histograms",
+            "极坐标绘图与直方图",
+            "極座標プロット",
+        ));
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.clockwise_top,
             tr(
                 l,
-                "Polar plots & histograms",
-                "极坐标绘图与直方图",
-                "極座標プロット",
+                "Zero=Top, Clockwise",
+                "零点朝上 / 顺时针",
+                "上基準・時計回り",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            ui.checkbox(
-                &mut self.clockwise_top,
-                tr(l, "Zero=Top, Clockwise", "零点朝上 / 顺时针", "上基準・時計回り"),
-            );
-            ui.checkbox(
-                &mut self.neg_reflect,
-                tr(
-                    l,
-                    "Reflect negative r through origin",
-                    "负半径过原点对称映射",
-                    "負半径を原点対称反転",
-                ),
-            );
-            if ui.button(tr(l, "Reset polar views", "重置极坐标视图", "極座標ビュー初期化")).clicked() {
-                self.states.iter_mut().for_each(PolarState::reset);
-            }
-            ui.small(tr(
+        ui.checkbox(
+            &mut self.neg_reflect,
+            tr(
                 l,
-                "polarplot, fpolarplot, ezpolar, polarscatter, polarbubblechart, polarhistogram, rose, compass & regions.",
-                "包含 polarplot/fpolarplot/ezpolar、极坐标散点气泡直方图、风玫瑰与罗盘图。",
-                "polarplot・散布図・バブル・極座標ヒストグラム・rose・compass 対応。",
-            ));
-        });
+                "Reflect negative r through origin",
+                "负半径过原点对称映射",
+                "負半径を原点対称反転",
+            ),
+        );
+        if ui
+            .button(tr(
+                l,
+                "Reset polar views",
+                "重置极坐标视图",
+                "極座標ビュー初期化",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PolarState::reset);
+        }
+        ui.small(tr(
+            l,
+            "polarplot, fpolarplot, ezpolar, polarscatter, polarbubblechart, polarhistogram, rose, compass & regions.",
+            "包含 polarplot/fpolarplot/ezpolar、极坐标散点气泡直方图、风玫瑰与罗盘图。",
+            "polarplot・散布図・バブル・極座標ヒストグラム・rose・compass 対応。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {

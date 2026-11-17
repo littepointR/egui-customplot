@@ -5,7 +5,7 @@ use crate::multivariate::MultivariateView;
 fn multivariate_gallery_renders_overview_and_composite_modes_cleanly() {
     let ctx = egui::Context::default();
     let mut demo = Demo::with_gallery(Some("--multivariate"));
-    assert!(demo.multivariate.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Multivariate);
 
     let mut passes = 0;
     ctx.run_ui(input(0.0), |ui| {

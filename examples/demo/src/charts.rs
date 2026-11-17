@@ -162,6 +162,27 @@ impl Charts {
         {
             ui.colored_label(egui::Color32::YELLOW, error.to_string());
         }
+        if let Some(brushed) = self.main.brushed_bounds() {
+            let active = if options.performance.streaming {
+                &performance.live.data
+            } else {
+                &data.signal
+            };
+            let picked = active.brushed_indices(brushed).len();
+            ui.horizontal(|ui| {
+                ui.small(match l {
+                    Language::English => format!("Brushed signal points: {picked}"),
+                    Language::ZhCn => format!("刷选命中信号点数：{picked}"),
+                    Language::Japanese => format!("選択中の信号点数：{picked}"),
+                });
+                if ui
+                    .small_button(tr(l, "Clear brush", "清除刷选", "選択解除"))
+                    .clicked()
+                {
+                    self.main.clear_brush();
+                }
+            });
+        }
         responses
     }
 }

@@ -3,10 +3,10 @@ use super::*;
 #[test]
 fn dynamic10m_gallery_is_lazy_by_default_and_updates_once_per_frame() {
     let mut demo = Demo::default();
-    assert!(!demo.dynamic10m.enabled);
+    assert_eq!(demo.gallery, crate::gallery::ActiveGallery::Default2D);
     assert_eq!(demo.dynamic10m.batch_size, 32_768);
 
-    demo.dynamic10m.enabled = true;
+    demo.select_gallery(crate::gallery::ActiveGallery::Dynamic10m);
     demo.dynamic10m.set_capacity_for_test(4_096);
     let ctx = egui::Context::default();
     ctx.options_mut(|o| o.max_passes = std::num::NonZeroUsize::new(4).unwrap());

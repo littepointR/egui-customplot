@@ -8,7 +8,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct StemDemo {
-    pub enabled: bool,
     pub horizontal: bool,
     pub markers: bool,
     pub baseline_visible: bool,
@@ -23,7 +22,6 @@ pub(super) struct StemDemo {
 impl Default for StemDemo {
     fn default() -> Self {
         Self {
-            enabled: false,
             horizontal: false,
             markers: true,
             baseline_visible: true,
@@ -53,6 +51,10 @@ impl Default for StemDemo {
 }
 
 impl StemDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     #[cfg(test)]
     pub fn data_versions(&self) -> [u64; 3] {
         [
@@ -64,51 +66,71 @@ impl StemDemo {
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Discrete stems / baseline / markers",
+            "离散火柴杆 / 基线 / 端点标记",
+            "離散ステム図 / 基準線",
+        ));
+        if ui
+            .checkbox(
+                &mut self.horizontal,
+                tr(
+                    l,
+                    "Horizontal top-panel rods (raw XY unchanged)",
+                    "顶部面板水平杆（原始 XY 不变）",
+                    "上段パネル横向き（元 XY 不変）",
+                ),
+            )
+            .changed()
+        {
+            self.states[0].reset();
+        }
         ui.checkbox(
-            &mut self.enabled,
+            &mut self.markers,
             tr(
                 l,
-                "Discrete stems / baseline / markers",
-                "离散火柴杆 / 基线 / 端点标记",
-                "離散ステム図 / 基準線",
+                "Raw endpoint markers",
+                "原始端点标记",
+                "端点マーカー表示",
             ),
         );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            if ui
-                .checkbox(
-                    &mut self.horizontal,
-                    tr(
-                        l,
-                        "Horizontal top-panel rods (raw XY unchanged)",
-                        "顶部面板水平杆（原始 XY 不变）",
-                        "上段パネル横向き（元 XY 不変）",
-                    ),
-                )
-                .changed()
-            {
-                self.states[0].reset();
-            }
-            ui.checkbox(&mut self.markers, tr(l, "Raw endpoint markers", "原始端点标记", "端点マーカー表示"));
-            ui.checkbox(&mut self.baseline_visible, tr(l, "Show baseline", "显示基线", "ベースライン表示"));
-            ui.checkbox(
-                &mut self.dashed,
-                tr(l, "Dashed rods (baseline stays solid)", "虚线杆（基线保持实线）", "破線ステム"),
-            );
-            ui.add(
-                egui::Slider::new(&mut self.baseline, -2.0..=2.0)
-                    .text(tr(l, "Top baseline", "上方基线", "上段基準線")),
-            );
-            if ui.button(tr(l, "Fit stem panels", "适配火柴杆面板", "ステム図をフィット")).clicked() {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
+        ui.checkbox(
+            &mut self.baseline_visible,
+            tr(l, "Show baseline", "显示基线", "ベースライン表示"),
+        );
+        ui.checkbox(
+            &mut self.dashed,
+            tr(
                 l,
-                "Independent rods; NaN omits only its record. Hover raw endpoints, not rods or baseline. Rendering and markers scan all points; no stem LOD/cache.",
-                "独立离散杆；NaN 仅忽略单条记录，悬停拾取原始端点。",
-                "独立ロッド；NaN のみ除外し、ホバーは生端点を対象とします。",
-            ));
-        });
+                "Dashed rods (baseline stays solid)",
+                "虚线杆（基线保持实线）",
+                "破線ステム",
+            ),
+        );
+        ui.add(egui::Slider::new(&mut self.baseline, -2.0..=2.0).text(tr(
+            l,
+            "Top baseline",
+            "上方基线",
+            "上段基準線",
+        )));
+        if ui
+            .button(tr(
+                l,
+                "Fit stem panels",
+                "适配火柴杆面板",
+                "ステム図をフィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "Independent rods; NaN omits only its record. Hover raw endpoints, not rods or baseline. Rendering and markers scan all points; no stem LOD/cache.",
+            "独立离散杆；NaN 仅忽略单条记录，悬停拾取原始端点。",
+            "独立ロッド；NaN のみ除外し、ホバーは生端点を対象とします。",
+        ));
     }
 
     pub fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {

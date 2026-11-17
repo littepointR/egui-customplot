@@ -106,7 +106,7 @@ fn figure_linked_dual_y_demo_and_scalar_gallery_survive_layout_retries() {
         })
         .drop_without_applying_deltas();
     }
-    demo.scalar.enabled = true;
+    demo.select_gallery(crate::gallery::ActiveGallery::Scalar);
     for map in [
         egui_customplot::ColorMap::Gray,
         egui_customplot::ColorMap::Viridis,
@@ -135,7 +135,7 @@ fn figure_linked_dual_y_demo_and_scalar_gallery_survive_layout_retries() {
 fn statistical_gallery_keeps_preprocessing_and_geometry_across_layout_retries() {
     let ctx = egui::Context::default();
     let mut demo = Demo::default();
-    demo.statistical.enabled = true;
+    demo.select_gallery(crate::gallery::ActiveGallery::Statistical);
     for horizontal in [false, true] {
         demo.statistical.horizontal = horizontal;
         let mut passes = 0;
@@ -219,7 +219,15 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
         Some("--surfaces3d"),
         Some("--volumes3d"),
         Some("--geo"),
+        Some("--stage13"),
+        Some("--stage14"),
+        Some("--stage15"),
+        Some("--stage16"),
         Some("--dynamic-10m"),
+        Some("--custom-axes"),
+        Some("--custom-annotations"),
+        Some("--custom-animation"),
+        Some("--custom-styling"),
     ] {
         let ctx = egui::Context::default();
         let mut demo = Demo::with_gallery(gallery);
@@ -259,6 +267,8 @@ fn every_gallery_exports_self_contained_svg_and_keeps_geometry_after_host_drop()
 
 #[path = "stems_tests.rs"]
 mod stems_tests;
+#[path = "ux_tests.rs"]
+mod ux_tests;
 
 #[path = "quiver_tests.rs"]
 mod quiver_tests;
@@ -301,6 +311,18 @@ mod volumes3d_tests;
 
 #[path = "geo_tests.rs"]
 mod geo_tests;
+
+#[path = "stage13_tests.rs"]
+mod stage13_tests;
+
+#[path = "stage14_tests.rs"]
+mod stage14_tests;
+
+#[path = "stage15_tests.rs"]
+mod stage15_tests;
+
+#[path = "stage16_tests.rs"]
+mod stage16_tests;
 
 #[path = "dynamic10m_tests.rs"]
 mod dynamic10m_tests;

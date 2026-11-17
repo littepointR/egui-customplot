@@ -52,7 +52,6 @@ struct WindowBench {
 }
 
 pub(super) struct Dynamic10mDemo {
-    pub enabled: bool,
     pub running: bool,
     pub mode: DynamicMode,
     pub backend: RenderBackend,
@@ -80,7 +79,6 @@ pub(super) struct Dynamic10mDemo {
 impl Default for Dynamic10mDemo {
     fn default() -> Self {
         Self {
-            enabled: false,
             running: true,
             mode: DynamicMode::SweepingWaveform,
             backend: RenderBackend::Auto,
@@ -108,6 +106,10 @@ impl Default for Dynamic10mDemo {
 }
 
 impl Dynamic10mDemo {
+    pub fn reset_view(&mut self) {
+        self.state.reset();
+    }
+
     #[cfg(test)]
     pub fn set_capacity_for_test(&mut self, points: usize) {
         self.target_points = points.max(128);
@@ -129,7 +131,6 @@ impl Dynamic10mDemo {
             "Refusing to overwrite window benchmark output: {}",
             csv_path.display()
         );
-        self.enabled = true;
         self.running = true;
         self.mode = DynamicMode::SweepingWaveform;
         self.backend = RenderBackend::Auto;
@@ -149,23 +150,12 @@ impl Dynamic10mDemo {
 
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        let was_enabled = self.enabled;
-        ui.checkbox(
-            &mut self.enabled,
-            tr(
-                l,
-                "Dynamic 10M @ 120Hz+ gallery",
-                "动态 1,000 万点 @ 120Hz+ 性能展示",
-                "動的 1,000 万点 @ 120Hz+ ギャラリー",
-            ),
-        );
-        if self.enabled != was_enabled {
-            self.state.reset();
-        }
-        if !self.enabled {
-            return;
-        }
-        ui.separator();
+        ui.strong(tr(
+            l,
+            "Dynamic 10M @ 120Hz+ gallery",
+            "动态 1,000 万点 @ 120Hz+ 性能展示",
+            "動的 1,000 万点 @ 120Hz+ ギャラリー",
+        ));
         ui.horizontal(|ui| {
             let label = if self.running {
                 tr(l, "Pause", "暂停", "一時停止")
@@ -287,6 +277,7 @@ impl Dynamic10mDemo {
                 let wave = self.wave.as_ref().expect("wave initialized");
                 Plot::new("dynamic_10m_wave")
                     .height(ui.available_height().max(320.0))
+                    .allow_scroll_zoom(true)
                     .title(tr(
                         l,
                         "Dynamic 10,000,000-Point Live UniformWaveform",
@@ -312,6 +303,7 @@ impl Dynamic10mDemo {
                 let stream = self.stream.as_ref().expect("stream initialized");
                 Plot::new("dynamic_10m_stream")
                     .height(ui.available_height().max(320.0))
+                    .allow_scroll_zoom(true)
                     .title(tr(
                         l,
                         "Dynamic 10,000,000-Point Live IndexedStream Ring",
@@ -338,7 +330,7 @@ impl Dynamic10mDemo {
             self.last_wgpu_fallback = resp.diagnostics.wgpu_fallback_series;
             self.advance_bench(ui.ctx(), now, &resp.diagnostics);
         }
-        if self.enabled && self.running {
+        if self.running {
             match self.pacing {
                 Pacing::Uncapped => ui.ctx().request_repaint(),
                 Pacing::Hz240 => ui.ctx().request_repaint_after(Duration::from_micros(4_166)),

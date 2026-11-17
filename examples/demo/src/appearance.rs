@@ -10,8 +10,8 @@ use crate::{
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) enum ThemeChoice {
-    Host,
     #[default]
+    Host,
     Scientific,
     Monitoring,
 }
@@ -30,11 +30,11 @@ pub(super) struct Appearance {
 impl Default for Appearance {
     fn default() -> Self {
         Self {
-            theme: ThemeChoice::Scientific,
+            theme: ThemeChoice::Host,
             override_signal: false,
             annotations: true,
             custom_tooltip: true,
-            inherit: true,
+            inherit: false,
             parent_width: 2.5,
             override_background: false,
             background: egui::Color32::from_rgb(235, 240, 245),
@@ -83,6 +83,28 @@ impl Default for Presentation {
 }
 
 impl Appearance {
+    pub fn resolved_theme(&self, presentation: &Presentation) -> Option<Arc<PlotTheme>> {
+        match self.theme {
+            ThemeChoice::Host => None,
+            ThemeChoice::Scientific => Some(presentation.light.clone()),
+            ThemeChoice::Monitoring => Some(presentation.dark.clone()),
+        }
+    }
+
+    pub fn inherited_plot_style(&self) -> PlotStyle {
+        let mut style = PlotStyle::default();
+        if self.inherit {
+            style.series = SeriesStyle {
+                line_width: Some(self.parent_width),
+                ..Default::default()
+            };
+        }
+        if self.override_background {
+            style.background = Some(self.background);
+        }
+        style
+    }
+
     pub fn configure(
         &self,
         mut plot: Plot,
@@ -90,11 +112,9 @@ impl Appearance {
         scene: Scene,
         l: Language,
     ) -> Plot {
-        plot = match self.theme {
-            ThemeChoice::Host => plot,
-            ThemeChoice::Scientific => plot.theme(presentation.light.clone()),
-            ThemeChoice::Monitoring => plot.theme(presentation.dark.clone()),
-        };
+        if let Some(theme) = self.resolved_theme(presentation) {
+            plot = plot.theme(theme);
+        }
         if self.inherit {
             plot = plot.inherited_style(PlotStyle {
                 series: SeriesStyle {
@@ -138,20 +158,21 @@ impl Appearance {
         let l = lang(ui.ctx());
         egui::CollapsingHeader::new(tr(
             l,
-            "Theme / inherited properties",
-            "主题 / 继承样式属性",
-            "テーマ / 継承スタイル",
+            "Theme & inherited style",
+            "主题与继承样式",
+            "テーマと継承スタイル",
         ))
         .id_salt("appearance_collapsing")
+        .default_open(true)
         .show(ui, |ui| {
             for (value, label) in [
                 (
                     ThemeChoice::Host,
                     tr(
                         l,
-                        "Host egui style",
-                        "宿主 egui 样式",
-                        "ホスト egui スタイル",
+                        "Inherit host egui style",
+                        "继承宿主 egui 样式（默认）",
+                        "ホスト egui スタイルを継承",
                     ),
                 ),
                 (
@@ -169,9 +190,9 @@ impl Appearance {
                 &mut self.inherit,
                 tr(
                     l,
-                    "Parent style defaults",
-                    "启用父级默认样式",
-                    "親スタイル既定値",
+                    "Parent line-width default",
+                    "启用父级默认线宽",
+                    "親線幅の既定値",
                 ),
             );
             ui.add_enabled(
@@ -183,51 +204,52 @@ impl Appearance {
                     "親線幅",
                 )),
             );
-            ui.small(tr(
-                l,
-                "Reference inherits; Signal has a local width override.",
-                "参考线继承父级线宽；信号线可局部覆盖线宽。",
-                "基準線は継承し、信号線はローカル線幅で上書きします。",
-            ));
             ui.checkbox(
                 &mut self.override_background,
                 tr(
                     l,
-                    "Local background override",
-                    "局部背景色覆盖",
+                    "Canvas background override",
+                    "画布背景色覆盖",
                     "背景色オーバーライド",
                 ),
             );
             if self.override_background {
                 ui.color_edit_button_srgba(&mut self.background);
             }
-            ui.checkbox(
-                &mut self.override_signal,
-                tr(
-                    l,
-                    "Override Signal palette color",
-                    "覆盖信号线调色盘",
-                    "信号色をカスタム指定",
-                ),
-            );
-            ui.checkbox(
-                &mut self.annotations,
-                tr(
-                    l,
-                    "Text / reference lines / regions",
-                    "文本 / 参考线 / 区域注解",
-                    "注釈 / 基準線 / 領域",
-                ),
-            );
-            ui.checkbox(
-                &mut self.custom_tooltip,
-                tr(
-                    l,
-                    "Custom data tooltip with units",
-                    "带单位自定义悬停提示",
-                    "単位付きカスタムツールチップ",
-                ),
-            );
         });
+    }
+
+    pub fn show_scene_extras(&mut self, ui: &mut egui::Ui, signal_color: &mut egui::Color32) {
+        let l = lang(ui.ctx());
+        ui.checkbox(
+            &mut self.override_signal,
+            tr(
+                l,
+                "Override Signal palette color",
+                "覆盖信号线调色盘",
+                "信号色をカスタム指定",
+            ),
+        );
+        if self.override_signal {
+            ui.color_edit_button_srgba(signal_color);
+        }
+        ui.checkbox(
+            &mut self.annotations,
+            tr(
+                l,
+                "Text / reference lines / regions",
+                "文本 / 参考线 / 区域注解",
+                "注釈 / 基準線 / 領域",
+            ),
+        );
+        ui.checkbox(
+            &mut self.custom_tooltip,
+            tr(
+                l,
+                "Custom data tooltip with units",
+                "带单位自定义悬停提示",
+                "単位付きカスタムツールチップ",
+            ),
+        );
     }
 }

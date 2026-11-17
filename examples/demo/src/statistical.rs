@@ -8,7 +8,6 @@ use egui_customplot::{
 use crate::i18n::{lang, tr};
 
 pub(super) struct StatisticalDemo {
-    pub enabled: bool,
     pub horizontal: bool,
     pub normalization: HistogramNormalization,
     pub cap_width: f32,
@@ -55,7 +54,6 @@ impl Default for StatisticalDemo {
             )
         });
         Self {
-            enabled: false,
             horizontal: false,
             normalization,
             cap_width: 10.0,
@@ -70,47 +68,63 @@ impl Default for StatisticalDemo {
 }
 
 impl StatisticalDemo {
+    pub fn reset_views(&mut self) {
+        self.states.iter_mut().for_each(PlotState::reset);
+    }
+
     pub fn controls(&mut self, ui: &mut egui::Ui) {
         let l = lang(ui.ctx());
-        ui.separator();
-        ui.checkbox(
-            &mut self.enabled,
-            tr(
+        ui.strong(tr(
+            l,
+            "Bars / errors / explicit-bin histogram",
+            "柱状图 / 误差棒 / 显式分箱直方图",
+            "棒 / 誤差棒 / ヒストグラム",
+        ));
+        if ui
+            .checkbox(
+                &mut self.horizontal,
+                tr(l, "Horizontal bars", "水平柱状图", "横向き棒グラフ"),
+            )
+            .changed()
+        {
+            self.states[1].reset();
+        }
+        ui.add(egui::Slider::new(&mut self.cap_width, 0.0..=24.0).text(tr(
+            l,
+            "Error cap (points)",
+            "误差帽宽度 (pt)",
+            "キャップ幅 (pt)",
+        )));
+        egui::ComboBox::from_id_salt("histogram-normalization")
+            .selected_text(format!("{:?}", self.normalization))
+            .show_ui(ui, |ui| {
+                for norm in [
+                    HistogramNormalization::Count,
+                    HistogramNormalization::Probability,
+                    HistogramNormalization::Density,
+                    HistogramNormalization::CumulativeCount,
+                    HistogramNormalization::CumulativeProbability,
+                ] {
+                    ui.selectable_value(&mut self.normalization, norm, format!("{norm:?}"));
+                }
+            });
+        if ui
+            .button(tr(
                 l,
-                "Bars / errors / explicit-bin histogram",
-                "柱状图 / 误差棒 / 显式分箱直方图",
-                "棒 / 誤差棒 / ヒストグラム",
-            ),
-        );
-        ui.add_enabled_ui(self.enabled, |ui| {
-            if ui
-                .checkbox(&mut self.horizontal, tr(l, "Horizontal bars", "水平柱状图", "横向き棒グラフ"))
-                .changed()
-            {
-                self.states[1].reset();
-            }
-            ui.add(
-                egui::Slider::new(&mut self.cap_width, 0.0..=24.0)
-                    .text(tr(l, "Error cap (points)", "误差帽宽度 (pt)", "キャップ幅 (pt)")),
-            );
-            egui::ComboBox::from_id_salt("histogram-normalization").selected_text(format!("{:?}", self.normalization))
-                .show_ui(ui, |ui| {
-                    for norm in [HistogramNormalization::Count, HistogramNormalization::Probability,
-                        HistogramNormalization::Density, HistogramNormalization::CumulativeCount,
-                        HistogramNormalization::CumulativeProbability] {
-                        ui.selectable_value(&mut self.normalization, norm, format!("{norm:?}"));
-                    }
-                });
-            if ui.button(tr(l, "Fit statistical panels", "适配统计子图", "統計ビューをフィット")).clicked() {
-                self.states.iter_mut().for_each(PlotState::reset);
-            }
-            ui.small(tr(
-                l,
-                "4000 fixed observations; explicit 0.25 bins. Normalization uses in-range finite samples. Whiskers are asymmetric offsets, not inferred confidence intervals.",
-                "4000 个固定样本、0.25 显式分箱；误差帽为非对称显式偏移量。",
-                "4000 固定標本・0.25 ビン・非対称誤差オフセット。",
-            ));
-        });
+                "Fit statistical panels",
+                "适配统计子图",
+                "統計ビューをフィット",
+            ))
+            .clicked()
+        {
+            self.states.iter_mut().for_each(PlotState::reset);
+        }
+        ui.small(tr(
+            l,
+            "4000 fixed observations; explicit 0.25 bins. Normalization uses in-range finite samples. Whiskers are asymmetric offsets, not inferred confidence intervals.",
+            "4000 个固定样本、0.25 显式分箱；误差帽为非对称显式偏移量。",
+            "4000 固定標本・0.25 ビン・非対称誤差オフセット。",
+        ));
         if self.built_normalization != self.normalization {
             self.histogram_bars = self.histogram.to_bars(self.normalization).unwrap();
             self.built_normalization = self.normalization;
