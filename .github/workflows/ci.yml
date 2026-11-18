@@ -23,5 +23,7 @@ jobs:
       - run: cargo test --workspace --locked
       - run: cargo test --workspace --all-features --locked
       - run: cargo check -p egui-customplot --no-default-features --locked
+      - run: cargo doc -p egui-customplot --no-deps --no-default-features --locked
+      - run: cargo doc --workspace --no-deps --all-features --locked
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
       - run: cargo build -p customplot-demo --release --locked

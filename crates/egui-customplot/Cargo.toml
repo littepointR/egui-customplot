@@ -6,7 +6,10 @@ rust-version.workspace = true
 license.workspace = true
 publish.workspace = true
 repository.workspace = true
-description = "An embeddable scientific plotting prototype for egui"
+readme = "../../README.md"
+keywords = ["egui", "plot", "plotting", "visualization", "scientific"]
+categories = ["gui", "visualization", "science"]
+description = "An embeddable, high-performance scientific and engineering plotting library for egui"
 
 [features]
 default = []

@@ -1,147 +1,181 @@
+English | [简体中文](README.zh-CN.md)
+
 # egui-customplot
 
-以 MATLAB 的科学与工程绘图体验为参考，基于 Rust / egui 构建高性能、可定制的绘图库。
+A native, embeddable scientific and engineering plotting library for [`egui`](https://github.com/emilk/egui), inspired by MATLAB's breadth of plot types while embracing Rust ownership, host-owned immutable data, explicit view state, and deterministic multi-pass UI behavior.
 
-**当前状态：阶段 4～7 基础切片、阶段 8 全二维切片（Stage 8A～8D）、阶段 9 全三维能力（Stage 9A～9C）、阶段 10 地理绘图及阶段 11 全量核销审计均已实现并持续验证（133/133 清单条目均处于“开发中”、0 未实现、0 静默删减），同时显式保留跨平台实机 / 硬件 GPU / 独立印刷排版等开放交付边界，workspace 包保持 `publish = false`，因此不宣称“已交付”。**
+> **Project Status (`0.1.0-dev`, pre-crates.io)**
+>
+> - **Implemented & tested**: Stages 1–16 — 133/133 items in the [MATLAB Plot Checklist](docs/MATLAB_PLOT_CHECKLIST.md) (`82 ML + 35 EX + 16 LG`) plus 26 extended engineering/modern capabilities (`EXT-01..26`) in [EXPANSION_PLAN](docs/EXPANSION_PLAN.md), the three-tier 10M-point `L1/L2/L3` performance engine, optional `feature = "wgpu"` hardware compute/instanced acceleration, optional `feature = "export"` PNG/hybrid-SVG snapshots, bilingual (`EN | 简体中文`) `rustdoc`, and a 27-gallery tri-lingual (`EN / 简体中文 / 日本語`) interactive demo.
+> - **Open boundaries (honest release status)**: Physical Linux/macOS/WebAssembly display verification, hardware GPU acceleration for 3D surfaces/volume raycasting/large distributions, standalone print-layout vector typography, and full long-duration app-wide resource regression remain open boundaries. As a result, all 133 checklist items remain marked **"开发中" (in progress, 0 delivered)** and workspace crates remain `publish = false` until crates.io release criteria are finalized.
+> - **Safety & isolation**: `#![forbid(unsafe_code)]` workspace-wide (`[workspace.lints.rust] unsafe_code = "forbid"`), zero window/event-loop/device hijacking, zero implicit background threads or network requests in the core crate (including offline maps/globe).
 
-已实现折线 / 标记 / 散点混合叠加、线性 / 对数 / 反向轴、等比例、标题标签、主次刻度、格式器、可点击图例、原始点提示、两套主题和显式样式继承、基础注解与诊断。库默认只依赖 egui；可选 `export` feature 增加 PNG 编码器，eframe 仅用于 demo；不追求 MATLAB 语法兼容。
+---
 
-另有宿主持有的索引 / 可选 MinMax / 折线缓存 / 环形数据、Figure 网格、显式轴联动、双 Y 轴、有序数值网格 / 柱 / 误差棒和共享色条，以及显式直方图分箱预处理。各能力边界见阶段文档。
+## Key Capabilities
 
-## 运行
+- **Core Architecture**
+  - **Host-owned data (`Arc`)**: Immutable/versioned containers (`PlotData`, `GridData`, `ContourData`, `Surface3DData`, `ScalarVolume3D`, `PointCloud3DData`, etc.) stay with the host application; `PlotState` / `Plot3DState` never retain sample buffers or GPU textures.
+  - **egui multi-pass idempotency**: Safe under `egui::Context::request_discard` retries — navigation, box-zoom/brushing, `AxisLink` synchronization, `PlotStream` / `FrameClock` updates, and deferred demo exports apply once per frame.
+  - **Seven-domain modular layout**: Strictly organized across `axis`, `data`, `interaction`, `layout`, `model`, `render`, `widget` (+ `diagnostics`), enforced by `tests/architecture.rs` (`<= 400` lines per library source file).
+- **Three-Tier Performance (`L1` / `L2` / `L3`)**
+  - **L1 Zero-config smart defaults**: `PlotData::new` auto-builds a monotonic-X index (`>= 8,192` samples, 64 MiB cap); `LineSampling::Auto` & `MarkerSampling::Auto` preserve peaks and switch to exact rendering when zoomed in; `PlotState` embeds a bounded 2 MiB auto cache; raw-point picking uses 2D screen-AABB branch-and-bound pruning.
+  - **L2 Explicit customization**: `LineSampling::{Auto, Exact, Visible, MinMax}`, `MarkerSampling::{Auto, Exact, PixelGrid}`, `RenderBackend::{Auto, Painter, Wgpu}`, 5-layer style inheritance (`defaults -> Theme -> inherited/Figure -> Plot -> Series`), `PlotDefaults`, `PlotCache`, `Plot::pan_limits`, dual Y, linear/log10/probit/weibull/datetime/duration/categorical axes, and self-contained PNG/SVG snapshots (`feature = "export"`).
+  - **L3 10M-point live streaming & GPU**: Zero-copy `IndexedStream` (`StreamLine`), `O(1)`-sliced `UniformWaveform` (`WaveformLine`), and optional `feature = "wgpu"` (`register_wgpu`) WGSL compute + instanced rendering reusing the host `egui_wgpu::RenderState`, with automatic CPU `Painter` fallback when unavailable or exporting.
+- **Coordinate Systems & Chart Breadth**
+  - **2D Cartesian & Geometry**: Line / stairs / stems / scatter / error bars / bars (grouped, stacked, horizontal) / area / fill / patch (Flat & Gouraud) / polyshape (holes) / rectangles / heatmap / pcolor / curvilinear grid / contours & filled contours / `imshow` / adaptive `fplot` & `fimplicit` / quiver / feather / streamlines / Delaunay `triplot` / Voronoi / `alphaShape` / CSR `spy` / `animatedline` & `comet` / `EX-027` annotations.
+  - **Statistics, Bio, SPC, Finance & Composites**: `histogram` / `histogram2` / `binscatter` / `boxchart` / `violinplot` / `raincloud` / `swarmchart` / `bubblechart` / `pie` & `donut` / `wordcloud` & `bubblecloud` / `categoricalHeatmap` / `confusionchart` / `parallelplot` / `biplot` / `ecdf` (Kaplan-Meier + Greenwood) / `probplot` (`Probit`, `Weibull`, `qqplot`) / `dendrogram` / `clustergram` / `controlchart` (SPC + Nelson rules) / `candlestick` & `ohlc` / `waterfall` / `Figure` (up to 256 cells), `StackedPlot`, `ScatterHistogram`, `PlotMatrix`, `PlotYy`, `ParetoChart`.
+  - **Polar, Sky, RF, Control & DSP**: `PolarPlot` (`polarplot`, `polarscatter`, `polarbubblechart`, `polarhistogram`, `rose`, `compass`, `thetaregion`/`radiusregion`/`polarregion`), `SkyPlot`, `SmithPlot` (conformal Z/Y/YZ grids), `ZPlanePlot`, `BodePlot`, `NyquistPlot`, `NicholsPlot`, `RootLocus`, and pure-Rust Radix-2 + Bluestein FFT / Welch / STFT / Morlet CWT (`CwtPlot`).
+  - **3D & Volumetric**: `Plot3D` with `Orthographic` / `Perspective`, `SortedPainter` / bounded `ZBuffer` (with idle-frame RLE span caching), `plot3`, `fplot3`, `comet3`, `scatter3`, `bubblechart3`, `swarmchart3`, `bar3`/`bar3h`, `stem3`, `quiver3`, `fill3`, `constantplane`, `pie3`, `surf`/`surfc`/`surfl`/`surfnorm`, `mesh`/`meshc`/`meshz`/`waterfall`, `contour3`, `ribbon`, `fsurf`/`fmesh`/`fimplicit3`, `sphere`/`cylinder`/`ellipsoid`/`trisurf`, `Patch3D`, `AlphaShape3D`, `Graph3D`, `slice`, `contourslice`, `isosurface`, `isocaps`, `tetramesh`, 3D stream plots/cones, CPU `VolumeRender3D` (`volshow`) raycasting, and octree-LOD `PointCloud3D` (`pcshow`).
+  - **Geographic & Modern Diagrams**: Offline 2D `GeoPlot` (`geoplot`, `geoscatter`, `geodensityplot`, `geobubble`, dateline splitting, `GeoTileCache` + `GeoOfflinePolicy`), 3D WGS84 `GeoGlobePlot`, plus `RadarChart`, `SankeyChart`, `TreemapChart`, `SunburstChart`, and `GanttChart`.
 
-需要 Rust **1.95+**；本轮实测 Rust 1.100.0 / Windows x64 / egui 0.37.0。
+---
 
-```sh
-cargo run -p customplot-demo --release --locked
-cargo run -p customplot-demo --release --locked -- --scalar
-cargo run -p customplot-demo --release --locked -- --statistical
-cargo run -p customplot-demo --release --locked -- --stairs
-cargo run -p customplot-demo --release --locked -- --stems
-cargo run -p customplot-demo --release --locked -- --quiver
-cargo run -p customplot-demo --release --locked -- --polygons
-cargo run -p customplot-demo --release --locked -- --contours
-cargo run -p customplot-demo --release --locked -- --functions
-cargo run -p customplot-demo --release --locked -- --geometry
-cargo run -p customplot-demo --release --locked -- --distributions
-cargo run -p customplot-demo --release --locked -- --multivariate
-cargo run -p customplot-demo --release --locked -- --polar
-cargo run -p customplot-demo --release --locked -- --networks
-cargo run -p customplot-demo --release --locked -- --plot3d
-cargo run -p customplot-demo --release --locked -- --surfaces3d
-cargo run -p customplot-demo --release --locked -- --volumes3d
-cargo run -p customplot-demo --release --locked -- --geo
+## Requirements & Cargo Features
+
+- **Rust**: `1.95+` (Edition `2024`; tested on Rust `1.100.0` / Windows x64 / `egui 0.37.0`)
+- **Cargo features (`crates/egui-customplot/Cargo.toml`)**:
+  - `default = []`: Core CPU + `egui::Painter` plotting (depends only on `egui`).
+  - `export`: Enables `PlotSnapshot`, `ExportOptions`, and `CaptureLimits` for PNG & hybrid-vector SVG output (`png` dependency).
+  - `wgpu`: Enables `register_wgpu`, `register_wgpu_with_config`, `set_wgpu_budget`, and `WgpuPlotConfig` (`egui-wgpu`, `wgpu`, `bytemuck`).
+
+---
+
+## Quick Start
+
+Because `publish = false` is currently set while release readiness boundaries remain open, depend on the workspace crate via Git or local path:
+
+```toml
+[dependencies]
+egui = "0.37.0"
+egui-customplot = { git = "https://github.com/littepointR/egui-customplot" }
+# Optional features:
+# egui-customplot = { git = "https://github.com/littepointR/egui-customplot", features = ["export", "wgpu"] }
 ```
 
-- 拖动：平移；悬停 + 滚轮：缩放；双击或聚焦后按 Home：自动适配范围。
-- Demo 提供信号 / 正值幂律场景，可切换 1 千～1000 万点、NaN 断段、散点、7 种标记、实线 / 虚线、对数 / 反向 / 等比例轴、Figure 双视图、可选 X 联动和右 Y 轴。
-- `--scalar` 展示数值网格 / 共享色条 / 折线叠加，`--statistical` 展示显式分箱与正负柱 / 非对称 XY 误差棒；两者也可在控制面板打开。
-- `--stairs` 展示固定非等距阶梯信号；`Line::interpolation(LineInterpolation::StepAfter)` 保持后跳变，`StepBefore` 先跳变后保持，默认 Linear。原始点用于 markers / hover；MinMax 可能改变阶跃时刻和保持时长。
-- `--stems` 展示独立正负杆 / 基线 / 原始端点与右 log Y 面板；`Stems` 可复用 `PlotData`，通过 `show_layers` 提交。方向不交换原始 XY，log 值轴需正基线；没有杆 LOD / 缓存，密集 markers / 全区杆成本很高。
-- `--quiver` 展示旋转矢量场与右 log Y 面板；`QuiverData` 保存原点 + 显式位移，无隐式自动缩放。箭头只放在真实端点；原点 / 端点拾取返回原始记录，极端数值可能明示拒绝；无向量 LOD / 索引 / 缓存。
-- `--polygons` 展示堆积 `AreaBandData`（`Cumulative` / `PosNegSplit`）、`Line::primitive`、凹多边形 `Fill`、带孔 `PolyShape`、Uniform/Face/Gouraud `Patch` 与圆角/椭圆 `Rectangles`；Gouraud 面片导出 SVG 时使用内嵌 PNG 栅格回退。
-- `--contours` 展示 `ScalarField2D` 抽取的 `Contours` / `FilledContours`（含 `from_function` / `ezcontour*` 显式求值预算）、`Pcolor`（`Flat` / `Interp`）与 `Plot::imshow_axes()` + `PlotImage`；高密度等值带为纯三角裁剪提交，无后台 GPU 加速。
-- `--functions` 展示 `FunctionPlot` / `ImplicitCurve`（`fplot` / `fimplicit` / `ezplot` 自适应采样、奇点保护与求值预算）、`AnimatedLine` / `Comet` 时变轨迹及 EX-027 图窗归一化 / 数据双坐标系 `Annotation`。
-- `--geometry` 展示 `TriPlot`（Delaunay）、`Voronoi`（视区 ray 裁剪）、`AlphaShape`（可调 α 孔洞与外部边）、`Streamlines`（RK4 `streamslice`）、`Feather` 基线矢量与 `Plot::spy_axes()` CSR 稀疏模式图。
-- `--distributions` 展示分组 / 堆积 `BarData::{grouped, stacked}`、`LegacyHistData`（`hist`）、`BoxChart` + `SwarmChart`、`ViolinPlot`（含半小提琴）、`Raincloud`、`PieChart`（饼/环）、`WordCloud` 与 `BubbleCloud`。
-- `--multivariate` 展示带 `BubbleLegend` 的 `BubbleChart`、`Histogram2`、`BinScatter`（矩形/六边形）、`CategoricalHeatmap`、`ParallelPlot`、`ParetoChart`、`PlotYy`，并可切换 `StackedPlot`、`ScatterHistogram` 与 `PlotMatrix`。
-- `--polar` 展示 `PolarPlot`（`polarplot` / `fpolarplot` / `ezpolar` / `polar`）、`PolarScatter`、`PolarBubble` + `BubbleLegend`、`PolarHistogram`、`RoseData`、`CompassPlot`（含复数/直角适配）、跨零 `thetaregion` / `radiusregion` / `polarregion` 与零点方向 / 负半径反射模式。
-- `--networks` 展示无向 `GraphLayout::Force` 多边/自环/高亮、有向 `GraphLayout::Layered` DAG 与双向曲线箭头、`GraphData::from_spy` `gplot` 空间网格及 `TreeData` / `EliminationTree`（Liu 1990 `O(nnz)`）。
-- `--plot3d` 展示 `Plot3D` 三维核心（正交 / 透视、左键轨道旋转 / 右键平移 / Home 复位与 `SortedPainter` / 有界 360px 软件 `ZBuffer` 切换）与 `plot3`、`fplot3`、`ezplot3`、`comet3`、`scatter3`、`bubblechart3`、`swarmchart3`、`bar3`/`bar3h`、`stem3`、`quiver3`、`fill3`、`constantplane`、`pie3`；三维着色 / Z-buffer 网格在混合 SVG 中内嵌 PNG 栅格（无 `<text`）。
-- `--surfaces3d` 展示 Stage 9B 三维曲面与网格套件：`surf` / `surfc` / `surfl` / `surfnorm`（`Faceted` / `Flat` / `Interp` Gouraud 插值与共享 `ColorBar`）、`mesh` / `meshc` / `meshz` / `waterfall`（可选隐藏线遮挡）、`contour3`、`ribbon`、`fsurf` / `fmesh` / `ez*`、`fimplicit3`（6 四面体 Marching Tetrahedra + 极点守卫）及 `sphere` / `cylinder` / `ellipsoid` / `trisurf`（`ZBuffer` 切换）。
-- `--volumes3d` 展示 Stage 9C 三维体数据与流可视化套件：`slice`（正交 + 倾斜凸六边切片与共享 `ColorBar`）、`contourslice`、`isosurface` + `isocaps`（次级体积场着色与外边界端盖 `ZBuffer`）、`tetramesh`（共享内面剔除开关）、3D `streamline` / `streamslice` / `streamparticles` 与 `streamribbon` / `streamtube` / `coneplot`。
-- `--geo` 展示 Stage 10 地理可视化套件：`geoplot`（太平洋跨 `±180°` 日期变更线航线）、`geoscatter`（逐点大小/色值与 `ColorBar`）、`geodensityplot`（球面核密度与可切换的合成 `HostTiles` 字节预算缓存 + 离线回退）、`geobubble`（分类气泡与 `BubbleLegend`），支持 `WebMercator` / `Equirectangular` 与浅/深离线矢量底图切换；严禁声称或接入 MathWorks 在线底图服务。
-- Export 面板保存 PNG / 混合 SVG，默认 `target/exports/plot`、拒绝覆盖；只保留当前显示采样。文字内嵌为字形像素，不是完整矢量字体 / 自动 Exact 重绘，见 [阶段 7](docs/STAGE_7.md)。
-- 属性面板可切科学浅色 / 监控深色 / 宿主主题，调整父默认和局部覆盖、注解及带单位的提示；主题不污染宿主样式。
-- 性能面板可显式构建单调 X 索引、切换 Exact / Visible / 近似 MinMax、启用宿主折线缓存和有界 Live 环形数据；库默认仍为 Exact。
-- **大数据选项是压力场景，不是帧率承诺。** 索引 / 缓存 / 环形缓冲仅限制各自明示的资源；标记仍全量扫描，没有专用 GPU 后端。Demo 数据重建 / 索引构建是显式同步操作。
-- 不要求宿主使用 eframe，也不创建第二个窗口系统、事件循环或 GPU device。
+### Minimal 2D Plot
 
-## 嵌入 egui
-
-跨帧保留数据与每张图独立的 `PlotState`，不要每帧重新构造数据：
+Keep sample data and `PlotState` in your application model across frames (do not rebuild `PlotData` every frame):
 
 ```rust
 use egui_customplot::{Line, Plot, PlotData, PlotState};
 
-// 初始化时：
+// App initialization:
 let data = PlotData::new(vec![[0.0, 0.0], [1.0, 1.0], [2.0, 0.0]]);
 let mut state = PlotState::default();
 
-// 在宿主的 UI 闭包中（ui: &mut egui::Ui）：
-// Plot::new("signal")
-//     .height(320.0)
-//     .allow_scroll_zoom(true)
-//     .show(ui, &mut state, &[Line::new(&data)]);
+// Inside your egui UI closure (`ui: &mut egui::Ui`):
+Plot::new("signal")
+    .height(320.0)
+    .allow_scroll_zoom(true) // off by default so parent ScrollArea is not hijacked
+    .allow_box_zoom(true)
+    .show(ui, &mut state, &[Line::new(&data).name("Signal")]);
 ```
 
-库的滚轮缩放**默认关闭**，避免抢走父 ScrollArea 的滚动；demo 显式开启。`show` 返回 egui `Response`、坐标变换和本遍诊断；UI 多遍调用不是一次性事件通知。`PlotState` 保存本地手动视图，实际联动 / 双轴显示范围读取返回的 `transform` / `right_transform`。
-
-异构图元使用 `PlotLayer` 与 `show_layers`，不改变旧的 `Line` / `Series::data()` 契约。样本预处理放在 UI 更新节奏之外：
+### Heterogeneous Layers (`PlotLayer`)
 
 ```rust
-use egui_customplot::{Bar, BarData, Bars, ErrorBar, ErrorBarData, ErrorBars};
+use egui_customplot::{Bar, BarData, Bars, ErrorBar, ErrorBarData, ErrorBars, Plot, PlotState};
+
 let bars = BarData::new(vec![Bar::new(1.0, 2.0), Bar::new(2.0, -1.0)]);
 let errors = ErrorBarData::new(vec![ErrorBar::new([1.0, 2.0]).y_error([0.2, 0.4])]);
-// Plot::new("measurements").show_layers(ui, &mut state, &[
-//     Bars::new(&bars).into(), ErrorBars::new(&errors).into(),
-// ]);
+let mut state = PlotState::default();
+
+Plot::new("measurements").show_layers(
+    ui,
+    &mut state,
+    &[Bars::new(&bars).into(), ErrorBars::new(&errors).into()],
+);
 ```
 
-## 检查与基准
+See the [API & User Guide](crates/egui-customplot/docs/guide.md) or build the interactive rustdoc (`EN | 简体中文` toggle in the header/sidebar):
+
+```sh
+cargo doc --workspace --no-deps --all-features --open
+```
+
+---
+
+## Interactive Demo (`customplot-demo`)
+
+The demo showcases **27 mutually exclusive galleries**, global `PlotDefaults` controls, OS light/dark theme sync, PNG/SVG export, and runtime switching across **English / 简体中文 / 日本語** (interactive launch defaults to Simplified Chinese or `$CUSTOMPLOT_LANG` / `$LANG`):
+
+```sh
+cargo run -p customplot-demo --release --locked
+cargo run -p customplot-demo --release --locked -- --en --dynamic-10m
+cargo run -p customplot-demo --release --locked -- --glow --plot3d
+```
+
+Available CLI options:
+
+- **Language & renderer**: `--en`, `--zh` / `--zh-cn`, `--ja`, `--lang=<code>`, `--glow` (use `eframe::Renderer::Glow` instead of default `Wgpu`), `--uncapped`, `--bench-window-10m=<path.csv>`
+- **2D core & fields**: (default 2D signal/power-law), `--scalar`, `--statistical`, `--stairs`, `--stems`, `--quiver`, `--polygons`, `--contours`, `--functions`, `--geometry`
+- **Stats, polar & networks**: `--distributions`, `--multivariate`, `--polar`, `--networks`
+- **3D, volumes & geo**: `--plot3d`, `--surfaces3d`, `--volumes3d`, `--geo`
+- **Extensions & 10M**: `--stage13`, `--stage14`, `--stage15`, `--stage16`, `--dynamic-10m`
+- **Customization showcases**: `--custom-axes`, `--custom-annotations`, `--custom-animation`, `--custom-styling`
+
+Controls in the plot area: drag to pan, scroll wheel to zoom, right-drag or `Shift`+drag for box zoom, `Alt`+drag to brush points (`Esc` clears brush), double-click or focused `Home` to reset view; in 3D plots, left-drag orbits and right-drag pans.
+
+---
+
+## Verification & Benchmarks
 
 ```sh
 cargo fmt --all -- --check
 cargo test --workspace --locked
-cargo clippy --workspace --all-targets --locked -- -D warnings
-cargo bench -p egui-customplot --bench frame_baseline --locked
-cargo bench -p egui-customplot --bench data_performance --locked
-cargo bench -p egui-customplot --bench heatmap_performance --locked
-cargo bench -p egui-customplot --bench stems_performance --locked
-cargo bench -p egui-customplot --bench quiver_performance --locked
-cargo bench -p egui-customplot --bench polygon_contour_performance --locked
-cargo bench -p egui-customplot --bench stage8b_performance --locked
-cargo bench -p egui-customplot --bench stage8c_performance --locked
-cargo bench -p egui-customplot --bench stage8d_performance --locked
-cargo bench -p egui-customplot --bench stage9a_performance --locked
-cargo bench -p egui-customplot --bench stage9b_performance --locked
-cargo bench -p egui-customplot --bench stage9c_performance --locked
-cargo bench -p egui-customplot --bench stage10_performance --locked
+cargo test --workspace --all-features --locked
+cargo check -p egui-customplot --no-default-features --locked
+cargo doc -p egui-customplot --no-deps --no-default-features --locked
+cargo doc --workspace --no-deps --all-features --locked
+cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+cargo build -p customplot-demo --release --locked
 cargo run -p egui-customplot --example export_snapshot --features export --release --locked -- target/exports/example
 ```
 
-基准默认每场景采样 30 秒。`frame_baseline` 保留空白 egui、空图、10 万点静态 / 平移；`data_performance` 增加 10 万 / 100 万 / 1000 万点索引 / LOD / 缓存 / 拾取及流式记录。**只测 CPU UI 构建和 tessellation，不测窗口呈现或 GPU**。快速试跑可设置环境变量 `CUSTOMPLOT_BENCH_SECONDS=2`，不得与正式 30 秒记录混用。
+Recorded Windows measurements (historical CSVs are never overwritten; CPU + tessellation benches do **not** represent GPU or swapchain FPS unless explicitly noted):
 
-`data_performance` 可用 `CUSTOMPLOT_BENCH_INTERPOLATION=linear|after|before` 选择连接方式；采样和测量边界不变，stream 行仍不绘图。
+- **Headless 10M CPU + tessellation** (`1920x1080`, [2026-11-16-dynamic-10m-cpu.csv](docs/benchmarks/2026-11-16-dynamic-10m-cpu.csv)):
+  - `uniform_waveform_10m_live_32k`: `total_p95 = 2.1877 ms` (`p50 = 1.9166 ms`)
+  - `indexed_stream_10m_live_32k`: `total_p95 = 6.6787 ms` (`p50 = 6.0130 ms`)
+  - `plotdata_auto_10m_pan_hover`: `total_p95 = 1.3365 ms` (`pick_p95 = 0.1149 ms`)
+  - `scatter_auto_1m_pan`: `total_p95 = 4.8535 ms`
+- **Deep zoom-out 10M CPU** (`20x` to `10^12x` + hover, [2026-11-16-deep-zoom-out-10m-cpu.csv](docs/benchmarks/2026-11-16-deep-zoom-out-10m-cpu.csv)): `total_p50 = 0.8311 ms`, `total_p95 = 1.4256 ms`, `pick_p95 = 0.0115 ms`.
+- **Native Windows `eframe + wgpu` swapchain** (`AMD Radeon RX 7800 XT (Vulkan)`, `AutoNoVsync`, [2026-11-16-dynamic-10m-window-wgpu.csv](docs/benchmarks/2026-11-16-dynamic-10m-window-wgpu.csv)):
+  - `wgpu_10m_waveform_live_32k`: **699.99 FPS** (2,450 frames, `frame_p50 = 1.3124 ms`, `frame_p95 = 1.7540 ms`, 131,072 B/frame upload)
+  - `cpu_10m_stream_ring_live_32k` (CPU incremental tree + LOD): **174.13 FPS** (610 frames, `frame_p50 = 5.5789 ms`, `frame_p95 = 6.3164 ms`)
+- **Stage 16 3D/Modern CPU** (`1280x800`, [2026-11-17-stage16-volshow-opt-cpu.csv](docs/benchmarks/2026-11-17-stage16-volshow-opt-cpu.csv) & [2026-11-17-stage16-windows-cpu.csv](docs/benchmarks/2026-11-17-stage16-windows-cpu.csv)):
+  - `volshow_64x64x64_direct_alpha` (cached idle): `total_p95 = 2.889 ms` (`orbiting_uncached`: `1.893 ms`), `pcshow_200k_octree_lod_zbuffer`: `0.890 ms`, `geoglobe_wgs84_coastlines_track`: `0.053 ms`, `modern_suite_5charts_figure`: `0.104 ms`.
 
-## 交付记录与长期对照
+To run benchmarks manually (`CUSTOMPLOT_BENCH_SECONDS=2` for quick smoke runs; keep `30` s for official runs):
 
-- [源码职责、目录和扩展规则](docs/ARCHITECTURE.md)：按 data / model / axis / layout / interaction / render / widget 分域，带架构回归检查。
-- [全量实施进度](docs/PROGRESS.md)
-- [阶段 11 全量对照核销与 EGUI / PERF 审计](docs/STAGE_11.md)
-- [阶段 10 地理绘图：经纬度线图、地理散点/密度/气泡与离线/缓存底图契约](docs/STAGE_10.md)
-- [阶段 9 三维与体数据：三维全能力与 Stage 9A～9C 证据](docs/STAGE_9.md)
-- [阶段 8 阶梯线 / 茎状图 / 二维矢量场及二维类型补全](docs/STAGE_8.md)
-- [阶段 7 显示快照、PNG / 混合 SVG 与字体 / 分辨率边界](docs/STAGE_7.md)
-- [阶段 6 多面板、双轴、数值网格、柱 / 误差棒与直方图](docs/STAGE_6.md)
-- [阶段 5 GPU 暂缓决策、证据与重新评估条件](docs/STAGE_5.md)
-- [阶段 4 索引、LOD、缓存、流式与资源边界](docs/STAGE_4.md)
-- [阶段 3 样式、主题、提示与注解](docs/STAGE_3.md)
-- [阶段 2 功能、验证与限制](docs/STAGE_2.md)
-- [首轮实现、测试证据与已知限制](docs/STAGE_1.md)
+```sh
+cargo bench -p egui-customplot --bench dynamic_10m_performance --locked
+cargo bench -p egui-customplot --bench stage16_performance --locked
+```
 
-- [项目规划与分阶段验收](docs/PLAN.md)
-- [MATLAB 绘图类型完整交付对照](docs/MATLAB_PLOT_CHECKLIST.md)：R2026b 官方总览 82 项，另含本体补充与传统接口；工具箱扩展单列。
-- [egui 集成、性能与资源占用约束](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)：原生嵌入、多遍布局、按需重绘、CPU / GPU 预算与长期验收要求。
-- 推荐推进顺序：最小闭环 → 绘图能力 → 定制能力 → 数据性能 → 按需 GPU 加速 → 导出与发布。
+---
 
-尚无独立印刷布局 / 全矢量文字导出、专用 `wgpu` GPU 后端与全局资源硬预算；Figure 暂不支持跨行列布局。索引拾取仅按 X 筛选，密集同 X / 多断段仍可能很贵；标记、柱 / 误差棒 / 茎状图 / 矢量场仍扫描原始记录。流式快照发布 / 索引不是增量更新；全区百万 cell 热力图、密集杆 / markers、大规模三角网、全区 10 万非零 `spy`、高密三维 Z-buffer/网格/`fimplicit3`/`isosurface` 等值提取与 2 万点 `geoscatter` 的 CPU / 几何成本很高（`ZBuffer` 限制为最大 360px 边长且不代表硬件 GPU 光栅化），没有静默 LOD 或帧率承诺。MATLAB 清单全部 133 项已落入“开发中”（0 项“未实现”），但没有图类型通过完整交付门槛（0 项“已交付”）；不能声称已通过跨平台实机或硬件 GPU 验收。
+## Documentation
 
-## 许可
+- [Architecture & Domain Boundaries](docs/ARCHITECTURE.md)
+- [Implementation Progress & Evidence Log](docs/PROGRESS.md)
+- [Project Plan & Milestones](docs/PLAN.md)
+- [Stages 12–16 Expansion Plan (`EXT-01..26`)](docs/EXPANSION_PLAN.md)
+- [MATLAB Plot Delivery Checklist (133 items + Toolboxes)](docs/MATLAB_PLOT_CHECKLIST.md)
+- [egui Integration & Performance Contracts](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)
+- Stage Reports: [1](docs/STAGE_1.md) · [2](docs/STAGE_2.md) · [3](docs/STAGE_3.md) · [4](docs/STAGE_4.md) · [5](docs/STAGE_5.md) · [6](docs/STAGE_6.md) · [7](docs/STAGE_7.md) · [8](docs/STAGE_8.md) · [9](docs/STAGE_9.md) · [10](docs/STAGE_10.md) · [11](docs/STAGE_11.md) · [12](docs/STAGE_12.md) · [13](docs/STAGE_13.md) · [14](docs/STAGE_14.md) · [15](docs/STAGE_15.md) · [16](docs/STAGE_16.md)
+- Community & Policies: [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)
 
-本项目采用与 [`egui`](https://github.com/emilk/egui) 相同的双重许可（`MIT OR Apache-2.0`）：
+---
 
-- Apache License, Version 2.0（见 [LICENSE-APACHE](LICENSE-APACHE)）
-- MIT License（见 [LICENSE-MIT](LICENSE-MIT)）
+## Contributing & License
 
-按 Apache-2.0 第 5 条约定，向本仓库提交贡献均默认按上述双重许可提供，不附加额外条款。当前 workspace 包仍设为 `publish = false`，未经明确发布准备不发布 crates.io。
+Contributions are welcome — please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+Dual-licensed under either of:
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT License ([LICENSE-MIT](LICENSE-MIT))
+
+at your option, matching [`egui`](https://github.com/emilk/egui). Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this repository shall be dual-licensed as above, without any additional terms or conditions (Apache-2.0 Section 5).
