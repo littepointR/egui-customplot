@@ -4,10 +4,10 @@ English | [简体中文](README.zh-CN.md)
 
 A native, embeddable scientific and engineering plotting library for [`egui`](https://github.com/emilk/egui), inspired by MATLAB's breadth of plot types while embracing Rust ownership, host-owned immutable data, explicit view state, and deterministic multi-pass UI behavior.
 
-> **Project Status (`0.1.0-dev`, pre-crates.io)**
+> **Project Status (`0.1.0`)**
 >
-> - **Implemented & tested**: Stages 1–16 — 133/133 items in the [MATLAB Plot Checklist](docs/MATLAB_PLOT_CHECKLIST.md) (`82 ML + 35 EX + 16 LG`) plus 26 extended engineering/modern capabilities (`EXT-01..26`) in [EXPANSION_PLAN](docs/EXPANSION_PLAN.md), the three-tier 10M-point `L1/L2/L3` performance engine, optional `feature = "wgpu"` hardware compute/instanced acceleration, optional `feature = "export"` PNG/hybrid-SVG snapshots, bilingual (`EN | 简体中文`) `rustdoc`, and a 27-gallery tri-lingual (`EN / 简体中文 / 日本語`) interactive demo.
-> - **Open boundaries (honest release status)**: Physical Linux/macOS/WebAssembly display verification, hardware GPU acceleration for 3D surfaces/volume raycasting/large distributions, standalone print-layout vector typography, and full long-duration app-wide resource regression remain open boundaries. As a result, all 133 checklist items remain marked **"开发中" (in progress, 0 delivered)** and workspace crates remain `publish = false` until crates.io release criteria are finalized.
+> - **Implemented & tested**: Stages 1–16 — 133/133 items in the [MATLAB Plot Checklist](docs/MATLAB_PLOT_CHECKLIST.md) (`82 ML + 35 EX + 16 LG`) plus 26 extended engineering/modern capabilities (`EXT-01..26`) in [EXPANSION_PLAN](docs/EXPANSION_PLAN.md), the three-tier 10M-point `L1/L2/L3` performance engine, optional `feature = "wgpu"` hardware compute/instanced acceleration, optional `feature = "export"` PNG/hybrid-SVG snapshots, bilingual (`EN | 简体中文`) `rustdoc`, and a 27-gallery interactive demo.
+> - **Open boundaries (honest release status)**: Physical Linux/macOS/WebAssembly display verification, hardware GPU acceleration for 3D surfaces/volume raycasting/large distributions, standalone print-layout vector typography, and full long-duration app-wide resource regression remain open boundaries. As a result, all 133 checklist items remain marked **"开发中" (in progress, 0 delivered)**.
 > - **Safety & isolation**: `#![forbid(unsafe_code)]` workspace-wide (`[workspace.lints.rust] unsafe_code = "forbid"`), zero window/event-loop/device hijacking, zero implicit background threads or network requests in the core crate (including offline maps/globe).
 
 ---
@@ -43,14 +43,14 @@ A native, embeddable scientific and engineering plotting library for [`egui`](ht
 
 ## Quick Start
 
-Because `publish = false` is currently set while release readiness boundaries remain open, depend on the workspace crate via Git or local path:
+Add `egui-customplot` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 egui = "0.37.0"
-egui-customplot = { git = "https://github.com/littepointR/egui-customplot" }
+egui-customplot = "0.1.0"
 # Optional features:
-# egui-customplot = { git = "https://github.com/littepointR/egui-customplot", features = ["export", "wgpu"] }
+# egui-customplot = { version = "0.1.0", features = ["export", "wgpu"] }
 ```
 
 ### Minimal 2D Plot
@@ -98,17 +98,17 @@ cargo doc --workspace --no-deps --all-features --open
 
 ## Interactive Demo (`customplot-demo`)
 
-The demo showcases **27 mutually exclusive galleries**, global `PlotDefaults` controls, OS light/dark theme sync, PNG/SVG export, and runtime switching across **English / 简体中文 / 日本語** (interactive launch defaults to Simplified Chinese or `$CUSTOMPLOT_LANG` / `$LANG`):
+The demo showcases **27 mutually exclusive galleries**, global `PlotDefaults` controls, OS light/dark theme sync, and PNG/SVG export:
 
 ```sh
 cargo run -p customplot-demo --release --locked
-cargo run -p customplot-demo --release --locked -- --en --dynamic-10m
+cargo run -p customplot-demo --release --locked -- --dynamic-10m
 cargo run -p customplot-demo --release --locked -- --glow --plot3d
 ```
 
 Available CLI options:
 
-- **Language & renderer**: `--en`, `--zh` / `--zh-cn`, `--ja`, `--lang=<code>`, `--glow` (use `eframe::Renderer::Glow` instead of default `Wgpu`), `--uncapped`, `--bench-window-10m=<path.csv>`
+- **Renderer & benchmark**: `--glow` (use `eframe::Renderer::Glow` instead of default `Wgpu`), `--uncapped`, `--bench-window-10m=<path.csv>`
 - **2D core & fields**: (default 2D signal/power-law), `--scalar`, `--statistical`, `--stairs`, `--stems`, `--quiver`, `--polygons`, `--contours`, `--functions`, `--geometry`
 - **Stats, polar & networks**: `--distributions`, `--multivariate`, `--polar`, `--networks`
 - **3D, volumes & geo**: `--plot3d`, `--surfaces3d`, `--volumes3d`, `--geo`

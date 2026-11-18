@@ -149,7 +149,7 @@ fn checklist_capabilities_egui_perf_and_benchmarks_are_complete_and_traceable() 
         );
     }
 
-    // 6. Workspace adopts egui's dual license (MIT OR Apache-2.0) while keeping publish = false.
+    // 6. Workspace adopts egui's dual license (MIT OR Apache-2.0); library crate is publishable while demo stays non-publishable.
     assert!(root.join("LICENSE-MIT").is_file(), "missing LICENSE-MIT");
     assert!(
         root.join("LICENSE-APACHE").is_file(),
@@ -160,14 +160,18 @@ fn checklist_capabilities_egui_perf_and_benchmarks_are_complete_and_traceable() 
         root_toml.contains("license = \"MIT OR Apache-2.0\""),
         "workspace license must match egui (MIT OR Apache-2.0)"
     );
-    assert!(
-        root_toml.contains("publish = false"),
-        "workspace publish = false guard must remain intact"
-    );
     let lib_toml = fs::read_to_string(root.join("crates/egui-customplot/Cargo.toml")).unwrap();
     let demo_toml = fs::read_to_string(root.join("examples/demo/Cargo.toml")).unwrap();
     assert!(lib_toml.contains("license.workspace = true"));
     assert!(demo_toml.contains("license.workspace = true"));
+    assert!(
+        !lib_toml.contains("publish = false"),
+        "library crate must remain publishable to crates.io"
+    );
+    assert!(
+        demo_toml.contains("publish = false"),
+        "demo crate must remain non-publishable"
+    );
 }
 
 #[test]

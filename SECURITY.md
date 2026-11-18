@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-`egui-customplot` is currently in pre-release development (`0.1.0-dev`) on the `main` branch. Security fixes are applied directly to `main`.
+`egui-customplot` is currently in the `0.1.x` (`0.1.0`) release series on the `main` branch. Security fixes are applied directly to `main`.
 
 ## Safety & Isolation Design
 

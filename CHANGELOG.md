@@ -3,7 +3,7 @@
 All notable milestones for `egui-customplot` are documented in this file.
 Detailed per-stage verification logs and benchmark records live under `docs/STAGE_*.md` and `docs/PROGRESS.md`.
 
-## [Unreleased] (`0.1.0-dev`)
+## [0.1.0] - 2026-11-18
 
 ### Added
 
@@ -34,4 +34,4 @@ Detailed per-stage verification logs and benchmark records live under `docs/STAG
 - **Interactive Demo, Localization & Documentation**:
   - `customplot-demo` expanded to 27 mutually exclusive galleries (including `--dynamic-10m` and 4 `--custom-*` showcases), global controls panel, wall-clock decoupled animations, vector theme selector, Windows OS theme sync, and `简体中文 / English / 日本語` runtime UI switching.
   - Bilingual (`EN | 简体中文`) `rustdoc` crate overview, user guide, and API documentation with interactive header/sidebar language toggle (`crates/egui-customplot/docs/rustdoc-i18n-header.html`).
-  - Open-source community files (`README.md`, `README.zh-CN.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `SECURITY.md`, GitHub issue/PR templates, CI `cargo doc` checks), `MIT OR Apache-2.0` dual licensing (`publish = false` retained pending crates.io release readiness).
+  - Open-source community files (`README.md`, `README.zh-CN.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `SECURITY.md`, GitHub issue/PR templates, CI `cargo doc` & crates.io packaging checks), `MIT OR Apache-2.0` dual licensing, and `egui-customplot` `0.1.0` crates.io release packaging (`customplot-demo` remains `publish = false`).

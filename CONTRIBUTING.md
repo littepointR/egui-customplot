@@ -39,7 +39,7 @@ cargo build -p customplot-demo --release --locked
 
 - Never overwrite existing files in `docs/benchmarks/`. Record new benchmark outputs under a new dated filename with environment details.
 - Clearly distinguish headless CPU + tessellation timings from native swapchain/GPU frame timings.
-- Do not change `publish = false` in `Cargo.toml` or alter the frozen `docs/MATLAB_PLOT_BASELINE.json` / `docs/MATLAB_PLOT_CHECKLIST.md` 133-item denominator unless explicitly requested.
+- Keep `publish = false` in `examples/demo/Cargo.toml` and do not bump versions, trigger crates.io releases, or alter the frozen `docs/MATLAB_PLOT_BASELINE.json` / `docs/MATLAB_PLOT_CHECKLIST.md` 133-item denominator unless explicitly requested.
 
 ## Licensing
 

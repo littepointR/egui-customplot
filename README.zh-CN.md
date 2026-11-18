@@ -4,10 +4,10 @@
 
 面向 [`egui`](https://github.com/emilk/egui) 的原生嵌入式高性能科学计算与工程绘图库：以 MATLAB 全系绘图体验为参考，坚持宿主持有不可变数据、调用方显式持有视图状态、`egui` 多遍布局严格幂等，且绝不劫持窗口与渲染上下文。
 
-> **项目状态（`0.1.0-dev`，尚未发布 crates.io）**
+> **项目状态（`0.1.0`）**
 >
-> - **已实现并持续验证**：阶段 1～16 全部落地——覆盖 [MATLAB 绘图类型对照表](docs/MATLAB_PLOT_CHECKLIST.md) 全部 133/133 项（`82 ML + 35 EX + 16 LG`）、[Stages 12–16 扩展规划](docs/EXPANSION_PLAN.md) `EXT-01..26`、三层千万点 `L1/L2/L3` 引擎、可选 `feature = "wgpu"` 硬件 Compute/实例化加速、可选 `feature = "export"` PNG/混合 SVG 离线导出、支持交互式 `EN | 简体中文` 切换的 `rustdoc` 文档，以及涵盖 27 组展厅与 `EN / 简体中文 / 日本語` 三语界面的交互演示程序。
-> - **开放边界（诚实交付口径）**：Linux / macOS / WebAssembly 实机显示回归、三维曲面/体渲染与大型分布图的硬件 GPU 管线、独立印刷排版纯矢量文字导出，以及长时全应用资源回归仍保留为开放边界。因此 133 项对照均保持 **“开发中”（0 已交付）**，workspace 包保持 `publish = false`，在正式发布准备完成前暂不发布 crates.io。
+> - **已实现并持续验证**：阶段 1～16 全部落地——覆盖 [MATLAB 绘图类型对照表](docs/MATLAB_PLOT_CHECKLIST.md) 全部 133/133 项（`82 ML + 35 EX + 16 LG`）、[Stages 12–16 扩展规划](docs/EXPANSION_PLAN.md) `EXT-01..26`、三层千万点 `L1/L2/L3` 引擎、可选 `feature = "wgpu"` 硬件 Compute/实例化加速、可选 `feature = "export"` PNG/混合 SVG 离线导出、支持交互式 `EN | 简体中文` 切换的 `rustdoc` 文档，以及涵盖 27 组展厅的交互演示程序。
+> - **开放边界（诚实交付口径）**：Linux / macOS / WebAssembly 实机显示回归、三维曲面/体渲染与大型分布图的硬件 GPU 管线、独立印刷排版纯矢量文字导出，以及长时全应用资源回归仍保留为开放边界。因此 133 项对照均保持 **“开发中”（0 已交付）**。
 > - **安全与宿主隔离**：全 workspace 禁用 `unsafe`（`[workspace.lints.rust] unsafe_code = "forbid"`），绝不在核心库内另建窗口、事件循环、`wgpu::Device`、隐式后台线程或发起网络请求（含完全离线的二维地图与三维地球仪）。
 
 ---
@@ -43,14 +43,14 @@
 
 ## 快速开始
 
-当前 workspace 保持 `publish = false`，可通过 Git 或本地路径引入：
+在 `Cargo.toml` 中引入 `egui-customplot`：
 
 ```toml
 [dependencies]
 egui = "0.37.0"
-egui-customplot = { git = "https://github.com/littepointR/egui-customplot" }
+egui-customplot = "0.1.0"
 # 按需开启特性：
-# egui-customplot = { git = "https://github.com/littepointR/egui-customplot", features = ["export", "wgpu"] }
+# egui-customplot = { version = "0.1.0", features = ["export", "wgpu"] }
 ```
 
 ### 最小二维绘图示例
@@ -98,17 +98,17 @@ cargo doc --workspace --no-deps --all-features --open
 
 ## 交互式演示程序（`customplot-demo`）
 
-演示程序内置 **27 组互斥画廊**、全局 `PlotDefaults` 控制面板、系统深浅主题实时同步、PNG/SVG 导出，以及 **简体中文 / English / 日本語** 实时切换（交互启动默认简体中文，也可通过环境变量 `CUSTOMPLOT_LANG` / `LANG` 或参数覆盖）：
+演示程序内置 **27 组互斥画廊**、全局 `PlotDefaults` 控制面板、系统深浅主题实时同步及 PNG/SVG 导出：
 
 ```sh
 cargo run -p customplot-demo --release --locked
-cargo run -p customplot-demo --release --locked -- --en --dynamic-10m
+cargo run -p customplot-demo --release --locked -- --dynamic-10m
 cargo run -p customplot-demo --release --locked -- --glow --plot3d
 ```
 
 常用启动参数：
 
-- **语言与后端**：`--zh` / `--zh-cn`、`--en`、`--ja`、`--lang=<代码>`、`--glow`（使用 `eframe::Renderer::Glow` 替代默认 `Wgpu`）、`--uncapped`、`--bench-window-10m=<路径.csv>`
+- **渲染后端与基准**：`--glow`（使用 `eframe::Renderer::Glow` 替代默认 `Wgpu`）、`--uncapped`、`--bench-window-10m=<路径.csv>`
 - **基础二维与场**：默认二维信号/幂律、`--scalar`、`--statistical`、`--stairs`、`--stems`、`--quiver`、`--polygons`、`--contours`、`--functions`、`--geometry`
 - **统计、极坐标与网络**：`--distributions`、`--multivariate`、`--polar`、`--networks`
 - **三维、体数据与地理**：`--plot3d`、`--surfaces3d`、`--volumes3d`、`--geo`
