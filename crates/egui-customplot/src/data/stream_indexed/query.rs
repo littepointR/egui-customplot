@@ -152,7 +152,12 @@ impl IndexedStream {
                         self.find_first_ge(col_start..cand_end, boundary, &mut stats.comparisons)
                     }
                 };
-                if col_end > col_start {
+                if no_gaps && col_end > col_start {
+                    let range = col_start..col_end;
+                    let extrema = self.finite_extrema(range.clone(), &mut stats);
+                    emit_extrema(range, extrema.min, extrema.max, &mut slots);
+                    in_gap = false;
+                } else if col_end > col_start {
                     self.emit_column(
                         col_start..col_end,
                         mask,
@@ -198,18 +203,7 @@ impl IndexedStream {
             && (mask == 0 || summary.valid[mask] == summary.valid[0])
         {
             *in_gap = false;
-            let mut picks = [
-                range.start as u32,
-                summary.min_slot,
-                summary.max_slot,
-                (range.end - 1) as u32,
-            ];
-            picks.sort_unstable();
-            for s in picks {
-                if slots.last() != Some(&s) {
-                    slots.push(s);
-                }
-            }
+            emit_extrema(range, summary.min_slot, summary.max_slot, slots);
             return;
         }
         let mut mixed_splits = 16usize;
@@ -256,18 +250,7 @@ impl IndexedStream {
             if node.valid[0] == (node_hi - node_lo) as u32 && (mask == 0 || valid == node.valid[0])
             {
                 *in_gap = false;
-                let mut picks = [
-                    node_lo as u32,
-                    node.min_slot,
-                    node.max_slot,
-                    (node_hi - 1) as u32,
-                ];
-                picks.sort_unstable();
-                for s in picks {
-                    if slots.last() != Some(&s) {
-                        slots.push(s);
-                    }
-                }
+                emit_extrema(node_lo..node_hi, node.min_slot, node.max_slot, slots);
                 return;
             }
             if *mixed_splits == 0 {
@@ -370,5 +353,15 @@ impl IndexedStream {
             stats,
             mixed_splits,
         );
+    }
+}
+
+fn emit_extrema(range: Range<usize>, min: u32, max: u32, slots: &mut Vec<u32>) {
+    let mut picks = [range.start as u32, min, max, (range.end - 1) as u32];
+    picks.sort_unstable();
+    for slot in picks {
+        if slots.last() != Some(&slot) {
+            slots.push(slot);
+        }
     }
 }

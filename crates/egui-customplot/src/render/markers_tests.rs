@@ -114,3 +114,53 @@ fn invalid_log_samples_and_far_offscreen_centers_do_not_emit_geometry() {
     assert_eq!(p.output_markers, 1);
     assert_eq!(p.numeric_rejections, 0);
 }
+
+#[test]
+fn dense_disc_and_mesh_paths_keep_the_same_pixel_grid_representatives() {
+    use super::super::markers_lod::prepare_markers_with_sampling;
+    use crate::{MarkerSampling, PlotData};
+
+    let points = (0..30_000)
+        .map(|i| [i as f64 / 30_000.0, (i % 97) as f64 / 97.0])
+        .collect::<Vec<_>>();
+    let data = PlotData::new(points);
+    let ctx = egui::Context::default();
+    let color = Color32::from_rgba_unmultiplied(10, 20, 30, 128);
+    let output = ctx.run_ui(Default::default(), |_| {
+        let prepare = |enabled| {
+            ctx.tessellation_options_mut(|o| o.prerasterized_discs = enabled);
+            prepare_markers_with_sampling(
+                &data,
+                transform(),
+                MarkerStyle::default(),
+                color,
+                None,
+                None,
+                &ctx,
+                MarkerSampling::Auto,
+            )
+        };
+        let native = prepare(true);
+        let mesh = prepare(false);
+        assert!(native.reduced && native.output_markers > 2_048);
+        assert_eq!(native.output_markers, mesh.output_markers);
+        assert_eq!(native.discs.len(), mesh.output_markers);
+        assert!(native.mesh.is_empty() && mesh.discs.is_empty());
+        assert!(mesh.mesh.is_valid());
+        assert_eq!(mesh.mesh.vertices.len(), 17 * native.discs.len());
+        let (markers, remainder) = mesh.mesh.vertices.as_chunks::<17>();
+        assert!(remainder.is_empty());
+        for (disc, vertices) in native.discs.iter().zip(markers) {
+            let egui::Shape::Circle(disc) = disc else {
+                panic!("expected a filled disc")
+            };
+            assert_eq!(disc.center, vertices[0].pos);
+            assert_eq!(disc.fill, vertices[0].color);
+            assert_eq!(
+                disc.radius,
+                MarkerStyle::default().radius + 0.5 / ctx.pixels_per_point()
+            );
+        }
+    });
+    output.drop_without_applying_deltas();
+}

@@ -26,8 +26,6 @@ pub(crate) struct StreamNode {
     pub max_slot: u32,
     pub first_x: f64,
     pub last_x: f64,
-    pub starts_finite: bool,
-    pub ends_finite: bool,
     pub monotonic_x: bool,
     pub non_empty: bool,
 }
@@ -44,8 +42,6 @@ impl Default for StreamNode {
             max_slot: u32::MAX,
             first_x: f64::NAN,
             last_x: f64::NAN,
-            starts_finite: false,
-            ends_finite: false,
             monotonic_x: true,
             non_empty: false,
         }

@@ -85,3 +85,36 @@ fn query_and_pick_handle_ring_wraps_and_evicted_unsorted_glitches() {
         Err(StreamError::StaleBatch { .. })
     ));
 }
+
+#[test]
+fn wrapped_finite_column_extrema_match_raw_slots_including_ties() {
+    let mut stream = IndexedStream::new(1_031, 512 * 1024).unwrap();
+    for batch in 0..13 {
+        let points = (0..113)
+            .map(|i| {
+                let k = batch * 113 + i;
+                [k as f64, ((k / 3) % 17) as f64]
+            })
+            .collect::<Vec<_>>();
+        stream.append_once(batch, &points).unwrap();
+    }
+    for start in (0..stream.capacity()).step_by(7) {
+        for len in [1, 3, 127, 128, 129, 256, 711] {
+            let end = (start + len).min(stream.capacity());
+            let mut min = start;
+            let mut max = start;
+            for i in start + 1..end {
+                if stream.points[i][1] < stream.points[min][1] {
+                    min = i;
+                }
+                if stream.points[i][1] > stream.points[max][1] {
+                    max = i;
+                }
+            }
+            let mut stats = crate::data::QueryStats::default();
+            let ext = stream.finite_extrema(start..end, &mut stats);
+            assert_eq!((ext.min, ext.max), (min as u32, max as u32));
+            assert!(stats.scanned_points <= 2 * (STREAM_BLOCK_SIZE - 1));
+        }
+    }
+}

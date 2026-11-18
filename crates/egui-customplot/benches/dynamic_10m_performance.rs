@@ -10,6 +10,25 @@ use egui_customplot::{
     PlotResponse, PlotState, Scatter, Series, StreamLine, UniformWaveform, WaveformLine,
 };
 
+#[derive(Debug)]
+struct ReferenceLevel;
+impl egui_customplot::CustomPlotLayer for ReferenceLevel {
+    fn id(&self) -> egui::IdSalt {
+        egui::IdSalt::new("reference")
+    }
+    fn extent(&self, _: [egui_customplot::AxisScale; 2]) -> Option<(PlotPoint, PlotPoint)> {
+        None
+    }
+    fn paint(&self, c: &egui_customplot::LayerPaintContext<'_>) {
+        let y = c.transform.position_from_point([0., 0.5]).y;
+        let rect = c.transform.rect();
+        c.painter.line_segment(
+            [egui::pos2(rect.left(), y), egui::pos2(rect.right(), y)],
+            c.stroke,
+        );
+    }
+}
+
 fn percentile(samples: &mut [f64], q: f64) -> f64 {
     samples.sort_unstable_by(f64::total_cmp);
     samples[((samples.len() - 1) as f64 * q).round() as usize]
@@ -28,6 +47,7 @@ fn input(events: Vec<egui::Event>) -> egui::RawInput {
 
 #[allow(clippy::too_many_arguments)]
 fn measure_scene<S>(
+    missed: &mut Vec<String>,
     bench_mode: bool,
     seconds: f64,
     points: usize,
@@ -113,16 +133,13 @@ fn measure_scene<S>(
         counters.auto_lod_series,
         counters.marker_lod_series,
     );
-    if bench_mode {
-        assert!(
-            all[1] < 8.33,
-            "Scene {scene} missed 120 FPS budget: total_p95_ms={:.4} ms (>= 8.33 ms)",
-            all[1]
-        );
+    if bench_mode && all[1] >= 8.33 {
+        missed.push(format!("{scene} ({:.4} ms)", all[1]));
     }
 }
 
 fn main() {
+    let mut missed = Vec::new();
     let bench_mode = std::env::args().any(|a| a == "--bench");
     let seconds = std::env::var("CUSTOMPLOT_BENCH_SECONDS")
         .ok()
@@ -160,6 +177,7 @@ fn main() {
     let s_stream = PlotState::default();
     let next_x = line_count;
     measure_scene(
+        &mut missed,
         bench_mode,
         seconds,
         line_count,
@@ -193,6 +211,7 @@ fn main() {
     let s_wave = PlotState::default();
     let wave_cursor = 0usize;
     measure_scene(
+        &mut missed,
         bench_mode,
         seconds,
         line_count,
@@ -227,29 +246,44 @@ fn main() {
             })
             .collect::<Vec<_>>(),
     );
-    let s_line = PlotState::default();
-    let hover_pos = egui::pos2(960.0, 560.0);
-    measure_scene(
-        bench_mode,
-        seconds,
-        line_count,
-        0,
-        "plotdata_auto_10m_pan_hover",
-        (hover_pos, s_line),
-        |(pos, s_line), _, ui, f| {
-            let x = 25.0 + (f as f64 * 0.03).sin() * 20.0;
-            s_line.set_bounds(PlotBounds::new([x, -1.3], [x + 30.0, 1.3]).unwrap());
-            let r = Plot::new("l10m").height(1124.0).show_hover(true).show(
-                ui,
-                s_line,
-                &[Line::new(&mono)],
-            );
-            *pos = r.transform.rect().center();
-            r
-        },
-        |(pos, _), _| vec![egui::Event::PointerMoved(*pos)],
-        |_, _| {},
-    );
+    for with_reference in [false, true] {
+        let s_line = PlotState::default();
+        let hover_pos = egui::pos2(960.0, 560.0);
+        measure_scene(
+            &mut missed,
+            bench_mode,
+            seconds,
+            line_count,
+            0,
+            if with_reference {
+                "plotdata_auto_10m_pan_hover_custom_reference"
+            } else {
+                "plotdata_auto_10m_pan_hover"
+            },
+            (hover_pos, s_line),
+            |(pos, s_line), _, ui, f| {
+                let x = 25.0 + (f as f64 * 0.03).sin() * 20.0;
+                s_line.set_bounds(PlotBounds::new([x, -1.3], [x + 30.0, 1.3]).unwrap());
+                let layers = [Line::new(&mono).into(), PlotLayer::custom(&ReferenceLevel)];
+                let r = Plot::new("l10m")
+                    .height(1124.)
+                    .show_hover(true)
+                    .show_layers(
+                        ui,
+                        s_line,
+                        if with_reference {
+                            &layers
+                        } else {
+                            &layers[..1]
+                        },
+                    );
+                *pos = r.transform.rect().center();
+                r
+            },
+            |(pos, _), _| vec![egui::Event::PointerMoved(*pos)],
+            |_, _| {},
+        );
+    }
     drop(mono);
 
     // 4. Default PlotData::new(1M) + Scatter::new PixelGrid auto LOD continuous pan
@@ -263,6 +297,7 @@ fn main() {
     );
     let s_scatter = PlotState::default();
     measure_scene(
+        &mut missed,
         bench_mode,
         seconds,
         scatter_count,
@@ -285,6 +320,7 @@ fn main() {
     let s_sc_zoom = PlotState::default();
     let sc_hover = egui::pos2(960.0, 560.0);
     measure_scene(
+        &mut missed,
         bench_mode,
         seconds,
         scatter_count,
@@ -332,6 +368,7 @@ fn main() {
     let z_hover = egui::pos2(960.0, 560.0);
     let z_anchor_x = (line_count as f64 * 0.001) * 0.5;
     measure_scene(
+        &mut missed,
         bench_mode,
         seconds,
         line_count,
@@ -390,5 +427,10 @@ fn main() {
             *next_x += batch_size;
             z_stream.append_once(f as u64 + 2, z_stream_batch).unwrap();
         },
+    );
+    assert!(
+        missed.is_empty(),
+        "CPU + tessellation p95 exceeded 8.33 ms: {}",
+        missed.join(", ")
     );
 }

@@ -2,6 +2,7 @@
 //! $O(1)$ coordinate slicing, an incremental min/max tree, and partial GPU
 //! upload tracking.
 
+mod extrema;
 mod pick;
 mod query;
 #[cfg(test)]

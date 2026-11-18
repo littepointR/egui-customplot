@@ -1,10 +1,11 @@
-use egui::{Color32, Mesh, Vec2};
+use egui::{Color32, Mesh, Pos2, Vec2};
 
 use crate::{MarkerShape, MarkerStyle, PlotPoint, PlotTransform};
 
 #[derive(Default)]
 pub(super) struct PreparedMarkers {
     pub mesh: Mesh,
+    pub discs: Vec<egui::Shape>,
     pub visited_points: usize,
     pub output_markers: usize,
     pub numeric_rejections: usize,
@@ -235,6 +236,106 @@ pub(crate) fn marker_outline(shape: MarkerShape) -> Vec<Vec2> {
         | MarkerShape::TriangleUpHollow
         | MarkerShape::TriangleDownHollow => unreachable!("handled by to_filled"),
     }
+}
+
+pub(super) fn prepare_selected_markers(
+    chosen: Vec<(Pos2, f32, Color32)>,
+    visited_points: usize,
+    numeric_rejections: usize,
+    reduced: bool,
+    style: MarkerStyle,
+    radii: Option<&[f32]>,
+    ctx: &egui::Context,
+) -> PreparedMarkers {
+    let mut result = PreparedMarkers {
+        visited_points,
+        numeric_rejections,
+        reduced,
+        ..PreparedMarkers::default()
+    };
+    let ppp = ctx.pixels_per_point().max(0.01);
+    let fringe = 1.0 / ppp;
+    let small_circles = chosen.len() > 2_048
+        && style.shape == MarkerShape::Circle
+        && style.radius * ppp <= 5.0
+        && radii.is_none();
+    if small_circles
+        && ctx.tessellation_options(|options| options.prerasterized_discs)
+        && !super::is_capturing_snapshot(ctx)
+    {
+        // Let egui resolve the disc UVs after the host has finished growing its
+        // font atlas. The previous outer fringe has half coverage at this radius.
+        let radius = style.radius + fringe * 0.5;
+        result.output_markers = chosen.len();
+        result.discs = chosen
+            .into_iter()
+            .map(|(center, _, color)| egui::Shape::circle_filled(center, radius, color))
+            .collect();
+        return result;
+    }
+    let outline = if small_circles {
+        (0..8)
+            .map(|i| Vec2::angled(i as f32 * std::f32::consts::TAU / 8.0))
+            .collect()
+    } else {
+        marker_outline(style.shape)
+    };
+    let n = outline.len();
+    result.mesh.vertices.reserve(chosen.len() * (1 + 2 * n));
+    result.mesh.indices.reserve(chosen.len() * 9 * n);
+    if radii.is_none() && !style.shape.is_hollow() {
+        let inner: Vec<Vec2> = outline.iter().map(|u| *u * style.radius).collect();
+        let outer: Vec<Vec2> = outline
+            .iter()
+            .map(|u| *u * style.radius + u.normalized() * fringe)
+            .collect();
+        let ring = n as u32;
+        let triangles: Vec<u32> = (0..ring)
+            .flat_map(|edge| {
+                let i = 1 + edge;
+                let j = 1 + (edge + 1) % ring;
+                [0, i, j, i, ring + i, ring + j, i, ring + j, j]
+            })
+            .collect();
+        for (center, _, c) in chosen {
+            if result.mesh.vertices.len() > (u32::MAX as usize).saturating_sub(64) {
+                result.numeric_rejections += 1;
+                continue;
+            }
+            let base = result.mesh.vertices.len() as u32;
+            result.mesh.colored_vertex(center, c);
+            for off in &inner {
+                result.mesh.colored_vertex(center + *off, c);
+            }
+            for off in &outer {
+                result
+                    .mesh
+                    .colored_vertex(center + *off, Color32::TRANSPARENT);
+            }
+            result
+                .mesh
+                .indices
+                .extend(triangles.iter().map(|index| base + index));
+            result.output_markers += 1;
+        }
+    } else {
+        for (center, r, c) in chosen {
+            if !push_shaped_marker(
+                &mut result.mesh,
+                center,
+                r,
+                c,
+                style.shape,
+                &outline,
+                fringe,
+            ) {
+                result.numeric_rejections += 1;
+                continue;
+            }
+            result.output_markers += 1;
+        }
+    }
+    result
 }
 
 #[cfg(test)]

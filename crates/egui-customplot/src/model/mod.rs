@@ -71,7 +71,7 @@ pub use graph::{GraphHighlight, GraphPlot};
 pub use heatmap::Heatmap;
 pub use image::PlotImage;
 pub use interpolation::LineInterpolation;
-pub use layer::PlotLayer;
+pub use layer::{CustomPlotLayer, LayerPaintContext, PlotLayer};
 pub use line::Line;
 pub use line_pattern::LinePattern;
 pub use marker::{MarkerShape, MarkerStyle};

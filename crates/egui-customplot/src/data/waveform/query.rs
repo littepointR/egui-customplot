@@ -2,7 +2,7 @@ use std::ops::Range;
 
 use crate::{AxisScale, PlotPoint, PlotTransform, data::QueryStats};
 
-use super::{UniformWaveform, WAVE_BLOCK_SIZE};
+use super::{UniformWaveform, WAVE_BLOCK_SIZE, extrema::Column};
 
 pub(crate) struct WaveQuery {
     pub indices: Vec<u32>,
@@ -176,6 +176,7 @@ impl UniformWaveform {
         let mut col_start = range.start;
         let mut in_gap = false;
         let root_span = self.leaf_count * WAVE_BLOCK_SIZE;
+        let all_valid = self.tree[1].valid_count(log_y) as usize == self.len();
         for column in first_col..=last_col {
             let col_end = if column == last_col {
                 range.end
@@ -193,41 +194,34 @@ impl UniformWaveform {
                 }
             };
             if col_end > col_start {
-                let node = self.range_node(col_start..col_end, Some(&mut stats));
-                let valid = if log_y {
-                    node.valid_log_y
-                } else {
-                    node.valid_linear
-                };
-                if valid == (col_end - col_start) as u32 {
-                    in_gap = false;
-                    let (min_i, max_i) = if log_y {
-                        (node.min_pos_idx, node.max_pos_idx)
-                    } else {
-                        (node.min_idx, node.max_idx)
-                    };
-                    push_sorted4(
-                        &mut indices,
-                        [col_start as u32, min_i, max_i, (col_end - 1) as u32],
-                    );
-                } else if valid == 0 {
-                    if !in_gap && !indices.is_empty() {
-                        indices.push(col_start as u32);
-                        in_gap = true;
+                match self.column(col_start..col_end, log_y, all_valid, &mut stats) {
+                    Column::Extrema(min_i, max_i) => {
+                        in_gap = false;
+                        push_sorted4(
+                            &mut indices,
+                            [col_start as u32, min_i, max_i, (col_end - 1) as u32],
+                        );
                     }
-                } else {
-                    let mut mixed_splits = 16usize;
-                    self.emit_mixed_column(
-                        1,
-                        0,
-                        root_span,
-                        col_start..col_end,
-                        log_y,
-                        &mut indices,
-                        &mut in_gap,
-                        &mut stats,
-                        &mut mixed_splits,
-                    );
+                    Column::Gap => {
+                        if !in_gap && !indices.is_empty() {
+                            indices.push(col_start as u32);
+                            in_gap = true;
+                        }
+                    }
+                    Column::Mixed => {
+                        let mut mixed_splits = 16usize;
+                        self.emit_mixed_column(
+                            1,
+                            0,
+                            root_span,
+                            col_start..col_end,
+                            log_y,
+                            &mut indices,
+                            &mut in_gap,
+                            &mut stats,
+                            &mut mixed_splits,
+                        );
+                    }
                 }
             }
             col_start = col_end;

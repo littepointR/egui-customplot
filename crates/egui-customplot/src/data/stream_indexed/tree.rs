@@ -1,41 +1,45 @@
 use std::ops::Range;
 
-use crate::PlotPoint;
+use crate::{
+    PlotPoint,
+    data::{QueryStats, index::Extrema},
+};
 
 use super::{IndexedStream, STREAM_BLOCK_SIZE, StreamNode};
 
 impl StreamNode {
-    pub(super) fn from_point(slot: u32, p: PlotPoint) -> Self {
-        if !p[0].is_finite() || !p[1].is_finite() {
-            return Self {
-                non_empty: true,
-                ..Self::default()
-            };
-        }
+    fn from_slice(start: usize, points: &[PlotPoint]) -> Self {
         let mut node = Self {
-            min_x: [f64::INFINITY; 4],
-            max_x: [f64::NEG_INFINITY; 4],
-            min_y: [f64::INFINITY; 4],
-            max_y: [f64::NEG_INFINITY; 4],
-            valid: [0; 4],
-            min_slot: slot,
-            max_slot: slot,
-            first_x: p[0],
-            last_x: p[0],
-            starts_finite: true,
-            ends_finite: true,
-            monotonic_x: true,
-            non_empty: true,
+            non_empty: !points.is_empty(),
+            ..Self::default()
         };
-        for mask in 0..4 {
-            if (mask & 1 != 0 && p[0] <= 0.0) || (mask & 2 != 0 && p[1] <= 0.0) {
+        for (offset, &[x, y]) in points.iter().enumerate() {
+            if !x.is_finite() || !y.is_finite() {
                 continue;
             }
-            node.valid[mask] = 1;
-            node.min_x[mask] = p[0];
-            node.max_x[mask] = p[0];
-            node.min_y[mask] = p[1];
-            node.max_y[mask] = p[1];
+            if node.valid[0] == 0 {
+                node.first_x = x;
+            } else {
+                node.monotonic_x &= node.last_x <= x;
+            }
+            node.last_x = x;
+            let slot = (start + offset) as u32;
+            if y < node.min_y[0] {
+                node.min_slot = slot;
+            }
+            if y > node.max_y[0] {
+                node.max_slot = slot;
+            }
+            for mask in 0..4 {
+                if (mask & 1 != 0 && x <= 0.0) || (mask & 2 != 0 && y <= 0.0) {
+                    continue;
+                }
+                node.valid[mask] += 1;
+                node.min_x[mask] = node.min_x[mask].min(x);
+                node.max_x[mask] = node.max_x[mask].max(x);
+                node.min_y[mask] = node.min_y[mask].min(y);
+                node.max_y[mask] = node.max_y[mask].max(y);
+            }
         }
         node
     }
@@ -65,8 +69,6 @@ impl StreamNode {
             } else {
                 self.last_x
             },
-            starts_finite: self.starts_finite,
-            ends_finite: other.ends_finite,
             monotonic_x: self.monotonic_x
                 && other.monotonic_x
                 && (self.valid[0] == 0 || other.valid[0] == 0 || self.last_x <= other.first_x),
@@ -144,28 +146,64 @@ impl IndexedStream {
     fn recompute_leaf(&mut self, leaf_idx: usize) {
         let start = leaf_idx * STREAM_BLOCK_SIZE;
         let end = (start + STREAM_BLOCK_SIZE).min(self.capacity());
-        let mut acc = StreamNode::default();
-        for slot in start..end {
-            acc = acc.merge(StreamNode::from_point(slot as u32, self.points[slot]));
+        self.tree[self.leaf_count + leaf_idx] =
+            StreamNode::from_slice(start, &self.points[start..end]);
+    }
+
+    /// Partial leaves surround the half-open range of complete tree leaves.
+    fn split_range(&self, range: Range<usize>) -> (Range<usize>, Range<usize>, Range<usize>) {
+        let start = range
+            .start
+            .next_multiple_of(STREAM_BLOCK_SIZE)
+            .min(range.end);
+        let end = (range.end / STREAM_BLOCK_SIZE * STREAM_BLOCK_SIZE).max(start);
+        let blocks = (self.leaf_count + start / STREAM_BLOCK_SIZE)
+            ..(self.leaf_count + end / STREAM_BLOCK_SIZE);
+        (range.start..start, blocks, end..range.end)
+    }
+
+    /// The caller already proved every point in the column is in-domain.
+    /// Only the two Y extrema (with earliest-slot ties) are needed here.
+    pub(super) fn finite_extrema(&self, range: Range<usize>, stats: &mut QueryStats) -> Extrema {
+        let (prefix, blocks, suffix) = self.split_range(range);
+        let mut extrema = Extrema::default();
+        for edge in [prefix, suffix] {
+            stats.scanned_points += edge.len();
+            for (i, p) in self.points[edge.clone()].iter().enumerate() {
+                extrema = extrema.merge(Extrema::point((edge.start + i) as u32, p[1]));
+            }
         }
-        self.tree[self.leaf_count + leaf_idx] = acc;
+        let mut merge = |i: usize| {
+            stats.visited_nodes += 1;
+            let node = &self.tree[i];
+            extrema = extrema.merge(Extrema {
+                min: node.min_slot,
+                max: node.max_slot,
+                min_y: node.min_y[0],
+                max_y: node.max_y[0],
+            });
+        };
+        let (mut left, mut right) = (blocks.start, blocks.end);
+        while left < right {
+            if left % 2 == 1 {
+                merge(left);
+                left += 1;
+            }
+            if right % 2 == 1 {
+                right -= 1;
+                merge(right);
+            }
+            left /= 2;
+            right /= 2;
+        }
+        extrema
     }
 
     pub(super) fn range_node(&self, range: Range<usize>) -> StreamNode {
-        let mut left_acc = StreamNode::default();
-        let mut right_acc = StreamNode::default();
-        let mut start = range.start;
-        let mut end = range.end;
-        while start < end && !start.is_multiple_of(STREAM_BLOCK_SIZE) {
-            left_acc = left_acc.merge(StreamNode::from_point(start as u32, self.points[start]));
-            start += 1;
-        }
-        while start < end && !end.is_multiple_of(STREAM_BLOCK_SIZE) {
-            end -= 1;
-            right_acc = StreamNode::from_point(end as u32, self.points[end]).merge(right_acc);
-        }
-        let mut left = start / STREAM_BLOCK_SIZE + self.leaf_count;
-        let mut right = end / STREAM_BLOCK_SIZE + self.leaf_count;
+        let (prefix, blocks, suffix) = self.split_range(range);
+        let mut left_acc = StreamNode::from_slice(prefix.start, &self.points[prefix]);
+        let mut right_acc = StreamNode::from_slice(suffix.start, &self.points[suffix]);
+        let (mut left, mut right) = (blocks.start, blocks.end);
         while left < right {
             if left % 2 == 1 {
                 left_acc = left_acc.merge(self.tree[left]);

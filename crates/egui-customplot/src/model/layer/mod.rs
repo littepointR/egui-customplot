@@ -13,6 +13,8 @@ use crate::{
     },
 };
 
+mod custom;
+pub use custom::{CustomPlotLayer, LayerPaintContext};
 mod from;
 mod stage8c;
 mod stage8d;
@@ -25,6 +27,7 @@ mod style;
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum PlotLayer<'a> {
+    Custom(&'a dyn CustomPlotLayer, YAxis),
     Series(Series<'a>),
     StreamLine(StreamLine<'a>),
     WaveformLine(WaveformLine<'a>),
@@ -85,8 +88,12 @@ pub enum PlotLayer<'a> {
 }
 
 impl<'a> PlotLayer<'a> {
+    pub fn custom(layer: &'a dyn CustomPlotLayer) -> Self {
+        Self::Custom(layer, layer.y_axis())
+    }
     pub fn name(self) -> &'a str {
         match self {
+            Self::Custom(s, _) => s.name(),
             Self::Series(s) => s.name(),
             Self::StreamLine(s) => s.name,
             Self::WaveformLine(s) => s.name,
@@ -149,6 +156,7 @@ impl<'a> PlotLayer<'a> {
 
     pub fn y_axis(self) -> YAxis {
         match self {
+            Self::Custom(_, axis) => axis,
             Self::Series(s) => s.y_axis(),
             Self::StreamLine(s) => s.y_axis,
             Self::WaveformLine(s) => s.y_axis,

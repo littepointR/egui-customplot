@@ -1,12 +1,13 @@
 use std::ops::Range;
 
-use egui::{Color32, Pos2, Vec2};
+use egui::{Color32, Pos2};
 
-use super::markers::{PreparedMarkers, marker_outline, prepare_markers, push_shaped_marker};
+use super::markers::{
+    PreparedMarkers, marker_outline, prepare_markers, prepare_selected_markers, push_shaped_marker,
+};
 use super::markers_grid_tree::collect_indexed_grid_markers;
 use crate::{
-    AxisScale, MarkerSampling, MarkerShape, MarkerStyle, PlotData, PlotPoint, PlotTransform,
-    data::QueryStats,
+    AxisScale, MarkerSampling, MarkerStyle, PlotData, PlotPoint, PlotTransform, data::QueryStats,
 };
 
 const AUTO_PIXEL_GRID_THRESHOLD: usize = 16_384;
@@ -19,14 +20,14 @@ pub(super) fn prepare_markers_with_sampling(
     color: Color32,
     colors: Option<&[Color32]>,
     radii: Option<&[f32]>,
-    pixels_per_point: f32,
+    ctx: &egui::Context,
     sampling: MarkerSampling,
 ) -> PreparedMarkers {
     let points = data.points();
     if points.is_empty() {
         return PreparedMarkers::default();
     }
-    let ppp = pixels_per_point.max(0.01);
+    let ppp = ctx.pixels_per_point().max(0.01);
     let fringe = 1.0 / ppp;
     let ranges_opt = candidate_ranges(data, points, transform, style.radius, fringe, radii);
     let candidate_count = ranges_opt
@@ -66,20 +67,17 @@ pub(super) fn prepare_markers_with_sampling(
             ppp,
             fringe,
         );
-        return emit_chosen_marker_mesh(
+        return prepare_selected_markers(
             grid.chosen,
             grid.visited_points,
             grid.numeric_rejections,
             grid.reduced,
             style,
             radii,
-            ppp,
-            fringe,
+            ctx,
         );
     }
-    prepare_markers_pixel_grid(
-        points, ranges, transform, style, color, colors, radii, ppp, fringe,
-    )
+    prepare_markers_pixel_grid(points, ranges, transform, style, color, colors, radii, ctx)
 }
 
 fn candidate_ranges(
@@ -176,9 +174,10 @@ fn prepare_markers_pixel_grid(
     color: Color32,
     colors: Option<&[Color32]>,
     radii: Option<&[f32]>,
-    ppp: f32,
-    fringe: f32,
+    ctx: &egui::Context,
 ) -> PreparedMarkers {
+    let ppp = ctx.pixels_per_point().max(0.01);
+    let fringe = 1.0 / ppp;
     let mut result = PreparedMarkers::default();
     let rect = transform.rect();
     let cell = (1.0 / ppp).max(0.5);
@@ -296,103 +295,13 @@ fn prepare_markers_pixel_grid(
 
     chosen.reverse();
     let reduced = chosen.len() < eligible;
-    emit_chosen_marker_mesh(
+    prepare_selected_markers(
         chosen,
         result.visited_points,
         result.numeric_rejections,
         reduced,
         style,
         radii,
-        ppp,
-        fringe,
+        ctx,
     )
-}
-
-#[allow(clippy::too_many_arguments)]
-fn emit_chosen_marker_mesh(
-    chosen: Vec<(Pos2, f32, Color32)>,
-    visited_points: usize,
-    numeric_rejections: usize,
-    reduced: bool,
-    style: MarkerStyle,
-    radii: Option<&[f32]>,
-    ppp: f32,
-    fringe: f32,
-) -> PreparedMarkers {
-    let mut result = PreparedMarkers {
-        visited_points,
-        numeric_rejections,
-        reduced,
-        ..PreparedMarkers::default()
-    };
-    let outline = if chosen.len() > 2_048
-        && style.shape == MarkerShape::Circle
-        && style.radius * ppp <= 5.0
-        && radii.is_none()
-    {
-        (0..8)
-            .map(|i| Vec2::angled(i as f32 * std::f32::consts::TAU / 8.0))
-            .collect()
-    } else {
-        marker_outline(style.shape)
-    };
-    let n = outline.len();
-    result.mesh.vertices.reserve(chosen.len() * (1 + 2 * n));
-    result.mesh.indices.reserve(chosen.len() * 9 * n);
-    if radii.is_none() && !style.shape.is_hollow() {
-        let inner: Vec<Vec2> = outline.iter().map(|u| *u * style.radius).collect();
-        let outer: Vec<Vec2> = outline
-            .iter()
-            .map(|u| *u * style.radius + u.normalized() * fringe)
-            .collect();
-        let n_u32 = n as u32;
-        for (center, _, c) in chosen {
-            if result.mesh.vertices.len() > (u32::MAX as usize).saturating_sub(64) {
-                result.numeric_rejections += 1;
-                continue;
-            }
-            let base = result.mesh.vertices.len() as u32;
-            result.mesh.colored_vertex(center, c);
-            for off in &inner {
-                result.mesh.colored_vertex(center + *off, c);
-            }
-            for off in &outer {
-                result
-                    .mesh
-                    .colored_vertex(center + *off, Color32::TRANSPARENT);
-            }
-            for edge in 0..n_u32 {
-                let next = (edge + 1) % n_u32;
-                result
-                    .mesh
-                    .add_triangle(base, base + 1 + edge, base + 1 + next);
-                result.mesh.add_triangle(
-                    base + 1 + edge,
-                    base + 1 + n_u32 + edge,
-                    base + 1 + n_u32 + next,
-                );
-                result
-                    .mesh
-                    .add_triangle(base + 1 + edge, base + 1 + n_u32 + next, base + 1 + next);
-            }
-            result.output_markers += 1;
-        }
-    } else {
-        for (center, r, c) in chosen {
-            if !push_shaped_marker(
-                &mut result.mesh,
-                center,
-                r,
-                c,
-                style.shape,
-                &outline,
-                fringe,
-            ) {
-                result.numeric_rejections += 1;
-                continue;
-            }
-            result.output_markers += 1;
-        }
-    }
-    result
 }

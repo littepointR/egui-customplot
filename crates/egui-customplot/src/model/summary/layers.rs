@@ -26,6 +26,13 @@ pub(super) fn accumulate_layer(
     seen: &mut SeenPayloads,
 ) -> Option<(PlotPoint, PlotPoint)> {
     match layer {
+        PlotLayer::Custom(layer, _) => layer.extent(scales).filter(|(lo, hi)| {
+            (0..2).all(|i| {
+                lo[i] <= hi[i]
+                    && scales[i].forward(lo[i]).is_some()
+                    && scales[i].forward(hi[i]).is_some()
+            })
+        }),
         PlotLayer::Series(_) | PlotLayer::Stems(_) => {
             let data = layer.point_data().expect("point-data layer");
             diagnostics.input_points += data.len();

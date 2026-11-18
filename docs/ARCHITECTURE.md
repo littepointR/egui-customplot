@@ -13,8 +13,8 @@ crates/egui-customplot/
       points.rs               # Arc 样本、自动单调 X 树构建（>=8,192 样本，64 MiB 上限）与显式禁用入口
       index/                  # 单调 X 索引（内联极值、gallop 划分与 2D 屏幕 AABB 最优优先原始拾取剪枝）
       stream.rs               # 固定容量环形样本、批次幂等与显式快照发布
-      stream_indexed/         # 固定容量环形缓冲 + 128 槽增量物理线段树（search.rs/pick.rs 2D 剪枝与有限预算混断发点）
-      waveform/               # 均匀步长 f32 波形源（x=x0+i*dx）+ 64 样本树（pick.rs 2D 最优优先拾取 + 脏区间上传）
+      stream_indexed/         # 固定容量环形缓冲 + 128 槽增量物理线段树，连续有效的像素列只查询 Y 极值，混合有效域按段处理
+      waveform/               # 均匀步长 f32 波形源（x=x0+i*dx）+ 64 样本增量树；extrema.rs 按像素列裁剪边界扫描，pick.rs 做二维拾取，写入记录脏区间供上传
       grid.rs                 # 共享边缘 / 行优先标量、数值 / log 域预处理
       extents.rs              # 独立图元四坐标域固定范围缓存
       bars.rs                 # 原始柱记录、两方向范围摘要
@@ -115,8 +115,8 @@ crates/egui-customplot/
       line_query.rs           # 采样查询、缓存和参考几何准备的适配
       cache.rs                # 宿主持有的有界 pre-style 折线几何 LRU
       fast_series.rs          # StreamLine / WaveformLine CPU 几何准备与可选 wgpu 调度
-      markers.rs              # 标记批量 mesh 与物理像素羽化（含 15 种实心/空心符号）
-      markers_lod.rs          # MarkerSampling::Auto/PixelGrid 像素网格去重、X 索引裁剪与 8 边形圆形快路径
+      markers.rs              # 标记几何与物理像素羽化；密集小实心圆可交给 egui 圆片图集，快照使用独立网格
+      markers_lod.rs          # MarkerSampling::Auto/PixelGrid 像素网格去重与 X 索引裁剪，按绘制顺序保留每格最后一个样本
       markers_grid_tree.rs    # 单调 X 散点/标记的线段树层级单格坍缩与 64 位占用掩码满格剪枝
       wgpu/                   # 可选 feature=wgpu：复用宿主 RenderState 的 WGSL 计算规约与实例化渲染（含散点深缩过绘制节流、15 种 SDF 标记与极端缩放防溢出，无硬件/导出时回退 Painter）
       pattern.rs              # 屏幕空间虚线 phase 与工作量安全阀

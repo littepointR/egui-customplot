@@ -79,3 +79,118 @@ fn waveform_query_and_pick_are_exact_and_o1_bounded() {
         ramp_stats.scanned_points
     );
 }
+
+#[test]
+fn swept_write_keeps_exact_column_peaks_without_rescanning_both_edges() {
+    let n = 200_003;
+    let samples: Vec<f32> = (0..n).map(|i| 2.0 + (i % 7) as f32).collect();
+    let mut wave = UniformWaveform::from_f32(0.0, 1.0, samples, 8 << 20).unwrap();
+    let patch: Vec<f32> = (0..32_768)
+        .map(|i| if i % 79 == 0 { 12.0 } else { 4.0 })
+        .collect();
+    wave.write_range_once(1, 65_531, &patch).unwrap();
+    let columns = 389;
+    let bounds = PlotBounds::new([0.0, 1.0], [(n - 1) as f64, 13.0]).unwrap();
+    for scale in [AxisScale::Linear, AxisScale::Log10] {
+        let transform = PlotTransform::with_axes(
+            bounds,
+            egui::Rect::from_min_size(pos2(0.0, 0.0), egui::vec2(columns as f32, 120.0)),
+            [AxisScale::Linear, scale],
+            [true, true],
+        )
+        .unwrap();
+        let q = wave.query(transform, 1.0, true);
+        let mut expected = Vec::new();
+        let mut start = 0;
+        for col in 1..=columns {
+            let end = if col == columns {
+                n
+            } else {
+                ((n - 1) as f64 * col as f64 / columns as f64).ceil() as usize
+            };
+            let mut lo = start;
+            let mut hi = start;
+            for i in start + 1..end {
+                if wave.samples()[i] < wave.samples()[lo] {
+                    lo = i;
+                }
+                if wave.samples()[i] > wave.samples()[hi] {
+                    hi = i;
+                }
+            }
+            let mut picks = [start, lo, hi, end - 1];
+            picks.sort_unstable();
+            expected.extend(picks.map(|i| i as u32));
+            start = end;
+        }
+        expected.dedup();
+        assert_eq!(q.indices, expected);
+        assert!(
+            q.stats.scanned_points < columns * WAVE_BLOCK_SIZE / 2,
+            "{} raw edge samples",
+            q.stats.scanned_points
+        );
+    }
+}
+
+#[test]
+fn partial_writes_update_all_domain_summaries_across_leaf_edges() {
+    let n = 385;
+    let mut wave = UniformWaveform::new_zeroed(-11.0, 0.25, n, 1 << 20).unwrap();
+    let patch = (0..187)
+        .map(|i| [f32::NAN, 7.0, 7.0, -3.0, f32::INFINITY, -0.0, 1.0][i % 7])
+        .collect::<Vec<_>>();
+    for (batch, start) in [3, 127, 61, 198].into_iter().enumerate() {
+        wave.write_range_once(batch as u64, start, &patch).unwrap();
+        for start in (0..n).step_by(17) {
+            for len in [1, 63, 64, 65, 188, n] {
+                let range = start..(start + len).min(n);
+                let summary = wave.range_node(range.clone(), None);
+                for log in [false, true] {
+                    let valid = range
+                        .clone()
+                        .filter(|&i| {
+                            let y = wave.samples()[i];
+                            y.is_finite() && (!log || y > 0.0)
+                        })
+                        .collect::<Vec<_>>();
+                    let (count, first, last, low, high) = if log {
+                        (
+                            summary.valid_log_y,
+                            summary.first_pos_valid,
+                            summary.last_pos_valid,
+                            summary.min_pos_idx,
+                            summary.max_pos_idx,
+                        )
+                    } else {
+                        (
+                            summary.valid_linear,
+                            summary.first_valid,
+                            summary.last_valid,
+                            summary.min_idx,
+                            summary.max_idx,
+                        )
+                    };
+                    assert_eq!(count as usize, valid.len());
+                    if let Some(&first_valid) = valid.first() {
+                        let (mut min, mut max) = (first_valid, first_valid);
+                        for &i in &valid {
+                            if wave.samples()[i] < wave.samples()[min] {
+                                min = i;
+                            }
+                            if wave.samples()[i] > wave.samples()[max] {
+                                max = i;
+                            }
+                        }
+                        assert_eq!(
+                            [first, last, low, high],
+                            [first_valid, *valid.last().unwrap(), min, max].map(|i| i as u32)
+                        );
+                    } else {
+                        assert_eq!([first, last, low, high], [u32::MAX; 4]);
+                    }
+                }
+            }
+        }
+    }
+}

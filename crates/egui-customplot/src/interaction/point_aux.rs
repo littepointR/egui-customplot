@@ -16,6 +16,21 @@ pub(super) fn pick_aux_point(
     diagnostics: &mut PlotDiagnostics,
 ) -> Option<Option<(usize, PlotPoint, f32)>> {
     match layer {
+        PlotLayer::Custom(custom, axis) => {
+            let transform = transforms.for_axis(axis);
+            Some(
+                custom
+                    .pick(transform, position, radius)
+                    .and_then(|(index, point)| {
+                        let screen = transform.position_from_point(point);
+                        let distance = screen.distance(position);
+                        (transform.is_valid_point(point)
+                            && transform.rect().contains(screen)
+                            && distance <= radius)
+                            .then_some((index, point, distance))
+                    }),
+            )
+        }
         PlotLayer::Quiver(quiver) => {
             let (hit, visited) = pick_quiver_data(
                 quiver.data,

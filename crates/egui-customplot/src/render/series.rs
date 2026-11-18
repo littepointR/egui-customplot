@@ -33,6 +33,16 @@ pub(crate) fn paint_series(
         let transform = transforms.for_axis(s.y_axis());
         let resolved = s.resolved_style(index, style);
         let s = match *s {
+            PlotLayer::Custom(layer, _) => {
+                layer.paint(&crate::LayerPaintContext {
+                    painter: &painter,
+                    transform,
+                    stroke: resolved.stroke,
+                    pixels_per_point: ui.ctx().pixels_per_point(),
+                    exporting: super::is_capturing_snapshot(ui.ctx()),
+                });
+                continue;
+            }
             PlotLayer::StreamLine(line) => {
                 super::fast_series::paint_stream_line(
                     &painter,
@@ -341,7 +351,7 @@ pub(crate) fn paint_series(
                 color,
                 colors,
                 radii,
-                ui.ctx().pixels_per_point(),
+                ui.ctx(),
                 marker_sampling,
             );
             diagnostics.visited_marker_points += prepared.visited_points;
@@ -353,7 +363,11 @@ pub(crate) fn paint_series(
             diagnostics.geometry_capacity_bytes += prepared.mesh.vertices.capacity()
                 * std::mem::size_of::<egui::epaint::Vertex>()
                 + prepared.mesh.indices.capacity() * std::mem::size_of::<u32>();
-            if !prepared.mesh.is_empty() {
+            if !prepared.discs.is_empty() {
+                diagnostics.geometry_capacity_bytes +=
+                    prepared.discs.capacity() * std::mem::size_of::<egui::Shape>();
+                painter.add(egui::Shape::Vec(prepared.discs));
+            } else if !prepared.mesh.is_empty() {
                 painter.add(egui::Shape::mesh(prepared.mesh));
             }
         }

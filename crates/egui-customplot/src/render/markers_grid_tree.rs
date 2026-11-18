@@ -45,6 +45,28 @@ impl GridBuildState {
         (((sy - self.rect_t) * self.scale_y).clamp(0.0, self.max_gy as f32) as usize)
             .min(self.max_gy)
     }
+    fn select(&mut self, center: Pos2, radius: f32, color: Color32) {
+        if !center.is_finite() {
+            self.numeric_rejections += 1;
+            return;
+        }
+        if !(center.x >= self.min_px
+            && center.x <= self.max_px
+            && center.y >= self.min_py
+            && center.y <= self.max_py)
+        {
+            return;
+        }
+        let bit = self.cell_y(center.y) * self.cols + self.cell_x(center.x);
+        let word = &mut self.occupied[bit >> 6];
+        let mask = 1u64 << (bit & 63);
+        if *word & mask == 0 {
+            *word |= mask;
+            self.chosen.push((center, radius, color));
+        } else {
+            self.reduced = true;
+        }
+    }
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -208,33 +230,22 @@ fn visit_node(
     }
 
     if node_idx >= index.leaf_count() {
-        for &point in points[sub_lo..sub_hi].iter().rev() {
-            state.visited_points += 1;
-            if !transform.is_valid_point(point) {
-                continue;
+        let leaf = &points[sub_lo..sub_hi];
+        state.visited_points += leaf.len();
+        if scales == [AxisScale::Linear; 2] {
+            // Candidate runs contain only finite samples. Project consecutive samples
+            // together, then keep the latest sample in each cell as in the scalar path.
+            let mut buffer = [Pos2::ZERO; BLOCK_SIZE];
+            let positions = &mut buffer[..leaf.len()];
+            transform.project_linear_batch(leaf, positions);
+            for &center in positions.iter().rev() {
+                state.select(center, radius, color);
             }
-            let center = transform.position_from_point(point);
-            if !center.is_finite() {
-                state.numeric_rejections += 1;
-                continue;
-            }
-            if !(center.x >= state.min_px
-                && center.x <= state.max_px
-                && center.y >= state.min_py
-                && center.y <= state.max_py)
-            {
-                continue;
-            }
-            let gx = state.cell_x(center.x);
-            let gy = state.cell_y(center.y);
-            let bit = gy * state.cols + gx;
-            let word = &mut state.occupied[bit >> 6];
-            let mask = 1u64 << (bit & 63);
-            if (*word & mask) == 0 {
-                *word |= mask;
-                state.chosen.push((center, radius, color));
-            } else {
-                state.reduced = true;
+        } else {
+            for &point in leaf.iter().rev() {
+                if transform.is_valid_point(point) {
+                    state.select(transform.position_from_point(point), radius, color);
+                }
             }
         }
         return;

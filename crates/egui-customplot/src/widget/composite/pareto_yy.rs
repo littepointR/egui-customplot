@@ -189,6 +189,7 @@ impl<'a> ParetoChart<'a> {
 
 fn with_y_axis(layer: PlotLayer<'_>, axis: YAxis) -> PlotLayer<'_> {
     match layer {
+        PlotLayer::Custom(s, _) => PlotLayer::Custom(s, axis),
         PlotLayer::Series(crate::Series::Line(s)) => PlotLayer::from(s.y_axis(axis)),
         PlotLayer::Series(crate::Series::Scatter(s)) => PlotLayer::from(s.y_axis(axis)),
         PlotLayer::StreamLine(s) => PlotLayer::from(s.y_axis(axis)),

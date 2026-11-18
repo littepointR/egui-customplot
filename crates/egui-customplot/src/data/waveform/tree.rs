@@ -5,27 +5,39 @@ use crate::data::QueryStats;
 use super::{UniformWaveform, WAVE_BLOCK_SIZE, WaveNode};
 
 impl WaveNode {
-    pub(super) fn from_sample(idx: u32, y: f32) -> Self {
-        if !y.is_finite() {
-            return Self::default();
+    fn from_slice(start: usize, samples: &[f32]) -> Self {
+        let mut node = Self::default();
+        for (offset, &y) in samples.iter().enumerate() {
+            if !y.is_finite() {
+                continue;
+            }
+            let idx = (start + offset) as u32;
+            node.valid_linear += 1;
+            node.first_valid = node.first_valid.min(idx);
+            node.last_valid = idx;
+            if y < node.min_y {
+                node.min_y = y;
+                node.min_idx = idx;
+            }
+            if y > node.max_y {
+                node.max_y = y;
+                node.max_idx = idx;
+            }
+            if y > 0.0 {
+                node.valid_log_y += 1;
+                node.first_pos_valid = node.first_pos_valid.min(idx);
+                node.last_pos_valid = idx;
+                if y < node.min_pos_y {
+                    node.min_pos_y = y;
+                    node.min_pos_idx = idx;
+                }
+                if y > node.max_pos_y {
+                    node.max_pos_y = y;
+                    node.max_pos_idx = idx;
+                }
+            }
         }
-        let log_ok = y > 0.0;
-        Self {
-            min_y: y,
-            max_y: y,
-            min_pos_y: if log_ok { y } else { f32::INFINITY },
-            max_pos_y: if log_ok { y } else { f32::NEG_INFINITY },
-            min_idx: idx,
-            max_idx: idx,
-            min_pos_idx: if log_ok { idx } else { u32::MAX },
-            max_pos_idx: if log_ok { idx } else { u32::MAX },
-            valid_linear: 1,
-            valid_log_y: u32::from(log_ok),
-            first_valid: idx,
-            last_valid: idx,
-            first_pos_valid: if log_ok { idx } else { u32::MAX },
-            last_pos_valid: if log_ok { idx } else { u32::MAX },
-        }
+        node
     }
 
     pub(super) fn merge(self, other: Self) -> Self {
@@ -159,11 +171,20 @@ impl UniformWaveform {
     fn recompute_leaf(&mut self, leaf_idx: usize) {
         let start = leaf_idx * WAVE_BLOCK_SIZE;
         let end = (start + WAVE_BLOCK_SIZE).min(self.samples.len());
-        let mut acc = WaveNode::default();
-        for idx in start..end {
-            acc = acc.merge(WaveNode::from_sample(idx as u32, self.samples[idx]));
-        }
-        self.tree[self.leaf_count + leaf_idx] = acc;
+        self.tree[self.leaf_count + leaf_idx] =
+            WaveNode::from_slice(start, &self.samples[start..end]);
+    }
+
+    /// Partial sample ranges around the half-open range of complete tree leaves.
+    pub(super) fn split_range(
+        &self,
+        range: Range<usize>,
+    ) -> (Range<usize>, Range<usize>, Range<usize>) {
+        let start = range.start.next_multiple_of(WAVE_BLOCK_SIZE).min(range.end);
+        let end = (range.end / WAVE_BLOCK_SIZE * WAVE_BLOCK_SIZE).max(start);
+        let leaves =
+            (self.leaf_count + start / WAVE_BLOCK_SIZE)..(self.leaf_count + end / WAVE_BLOCK_SIZE);
+        (range.start..start, leaves, end..range.end)
     }
 
     pub(super) fn range_node(
@@ -171,24 +192,12 @@ impl UniformWaveform {
         range: Range<usize>,
         stats: Option<&mut QueryStats>,
     ) -> WaveNode {
-        let mut left_acc = WaveNode::default();
-        let mut right_acc = WaveNode::default();
-        let mut start = range.start;
-        let mut end = range.end;
-        let mut scanned = 0usize;
-        let mut nodes = 0usize;
-        while start < end && !start.is_multiple_of(WAVE_BLOCK_SIZE) {
-            left_acc = left_acc.merge(WaveNode::from_sample(start as u32, self.samples[start]));
-            scanned += 1;
-            start += 1;
-        }
-        while start < end && !end.is_multiple_of(WAVE_BLOCK_SIZE) {
-            end -= 1;
-            right_acc = WaveNode::from_sample(end as u32, self.samples[end]).merge(right_acc);
-            scanned += 1;
-        }
-        let mut left = start / WAVE_BLOCK_SIZE + self.leaf_count;
-        let mut right = end / WAVE_BLOCK_SIZE + self.leaf_count;
+        let (prefix, leaves, suffix) = self.split_range(range);
+        let scanned = prefix.len() + suffix.len();
+        let mut nodes = 0;
+        let mut left_acc = WaveNode::from_slice(prefix.start, &self.samples[prefix]);
+        let mut right_acc = WaveNode::from_slice(suffix.start, &self.samples[suffix]);
+        let (mut left, mut right) = (leaves.start, leaves.end);
         while left < right {
             if left % 2 == 1 {
                 left_acc = left_acc.merge(self.tree[left]);

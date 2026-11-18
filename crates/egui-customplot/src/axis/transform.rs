@@ -103,6 +103,23 @@ impl PlotTransform {
         self.position_from_normalized(p)
     }
 
+    /// Project an in-domain linear batch with the same rounding as scalar projection.
+    /// Keeping the loop free of occupancy checks lets the compiler vectorize it.
+    pub(crate) fn project_linear_batch(self, points: &[[f64; 2]], positions: &mut [Pos2]) {
+        debug_assert_eq!(self.scales, [AxisScale::Linear; 2]);
+        debug_assert_eq!(points.len(), positions.len());
+        let min = self.axis_bounds.min;
+        let span = self.axis_bounds.span();
+        for (point, pos) in points.iter().zip(positions) {
+            let x = (point[0] - min[0]) / span[0];
+            let y = (point[1] - min[1]) / span[1];
+            *pos = self.position_from_normalized([
+                if self.reversed[0] { 1.0 - x } else { x },
+                if self.reversed[1] { 1.0 - y } else { y },
+            ]);
+        }
+    }
+
     pub fn point_from_position(self, position: Pos2) -> [f64; 2] {
         let span = self.axis_bounds.span();
         let mut fraction = [
@@ -213,6 +230,28 @@ impl PlotTransform {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn linear_batch_matches_scalar_rounding_at_cell_boundaries() {
+        let origin = 1e12;
+        let bounds = PlotBounds::new([origin, -1.0], [origin + 64.0, 1.0]).unwrap();
+        let rect = Rect::from_min_size(egui::pos2(3.25, 7.5), egui::vec2(128.0, 57.0));
+        let points: Vec<_> = (-5..135)
+            .flat_map(|i| {
+                let x = origin + i as f64 * 0.5;
+                [x.next_down(), x, x.next_up()].map(|v| [v, (i as f64 - 18.0) / 57.0])
+            })
+            .collect();
+        for reversed in [[false, false], [true, false], [false, true], [true, true]] {
+            let t =
+                PlotTransform::with_axes(bounds, rect, [AxisScale::Linear; 2], reversed).unwrap();
+            let mut positions = vec![Pos2::ZERO; points.len()];
+            t.project_linear_batch(&points, &mut positions);
+            for (point, projected) in points.iter().zip(positions) {
+                assert_eq!(projected, t.position_from_point(*point));
+            }
+        }
+    }
 
     #[test]
     fn rejects_invalid_bounds() {
