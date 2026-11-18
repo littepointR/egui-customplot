@@ -1,3 +1,5 @@
+mod camera_controller;
+pub use camera_controller::{CameraGesture3D, CameraNavigation3D};
 mod hover;
 mod legend;
 mod pick_geom;
@@ -22,6 +24,7 @@ struct Plot3DFrameSnapshot {
     id: Id,
     frame_nr: u64,
     base_camera: Camera3D,
+    base_edges: [Option<crate::AxisEdge3D>; 3],
     base_bounds: Option<Bounds3D>,
     orbit_delta: Option<[f32; 2]>,
     pan_delta: Option<[f32; 2]>,
@@ -38,11 +41,15 @@ pub struct Plot3DState {
     camera_override: Option<Camera3D>,
     bounds_override: Option<Bounds3D>,
     hidden: HashSet<IdSalt>,
+    pub(crate) edges: [Option<crate::AxisEdge3D>; 3],
     frame: Option<Plot3DFrameSnapshot>,
     pub(crate) zbuffer_cache: Option<crate::render::ZBufferCache>,
 }
 
 impl Plot3DState {
+    pub(crate) fn previous_edges(&self) -> [Option<crate::AxisEdge3D>; 3] {
+        self.frame.as_ref().map_or([None; 3], |f| f.base_edges)
+    }
     pub fn camera(&self) -> Option<Camera3D> {
         self.camera_override
     }
@@ -65,6 +72,7 @@ impl Plot3DState {
         self.zbuffer_cache = None;
     }
     pub fn reset(&mut self) {
+        self.edges = [None; 3];
         self.camera_override = None;
         self.bounds_override = None;
         self.frame = None;
@@ -107,6 +115,7 @@ impl Plot3DState {
                 viewport,
                 id,
                 frame_nr,
+                base_edges: self.edges,
                 base_camera: self.camera_override.unwrap_or(default_camera),
                 base_bounds: self.bounds_override,
                 orbit_delta: None,
@@ -153,6 +162,7 @@ pub(crate) fn navigate_plot3d(
     auto_bounds: Bounds3D,
     default_camera: Camera3D,
     forced_proj: Option<Projection3D>,
+    controller: Option<&dyn CameraNavigation3D>,
     allow_scroll_zoom: bool,
     legend_rect: Option<Rect>,
 ) -> Plot3DNavigation {
@@ -205,25 +215,16 @@ pub(crate) fn navigate_plot3d(
         camera = default_camera;
         bounds = auto_bounds;
         changed = camera != frame.base_camera || frame.base_bounds.is_some();
-    } else {
-        if let Some([dx, dy]) = frame.orbit_delta {
-            camera.azimuth_deg = (camera.azimuth_deg - f64::from(dx) * 0.45).rem_euclid(360.0);
-            camera.elevation_deg = (camera.elevation_deg + f64::from(dy) * 0.45).clamp(-89.5, 89.5);
-            state.camera_override = Some(camera);
-            changed = true;
-        }
-        if let Some([dx, dy]) = frame.pan_delta {
-            let scale = f64::from(response.rect.width().min(response.rect.height())).max(40.0)
-                * 0.44
-                * camera.zoom;
-            camera.pan[0] = (camera.pan[0] + f64::from(dx) / scale).clamp(-2.5, 2.5);
-            camera.pan[1] = (camera.pan[1] - f64::from(dy) / scale).clamp(-2.5, 2.5);
-            state.camera_override = Some(camera);
-            changed = true;
-        }
-        if let Some(scroll) = frame.scroll_y {
-            let factor = (f64::from(scroll) / 220.0).exp().clamp(0.5, 2.0);
-            camera.zoom = (camera.zoom * factor).clamp(0.15, 20.0);
+    } else if frame.orbit_delta.is_some() || frame.pan_delta.is_some() || frame.scroll_y.is_some() {
+        let gesture = CameraGesture3D {
+            orbit_points: frame.orbit_delta,
+            pan_points: frame.pan_delta,
+            scroll_points: frame.scroll_y,
+        };
+        camera = controller
+            .unwrap_or(&camera_controller::OrbitNavigation)
+            .camera(frame.base_camera, gesture, response.rect);
+        if camera != frame.base_camera {
             state.camera_override = Some(camera);
             changed = true;
         }

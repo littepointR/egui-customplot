@@ -5,7 +5,7 @@ use crate::{AxisScale, ContourError, ContourLevels, Point3D, axis::intersect_pla
 use super::{
     CachedExtents3D, Contour3DData, Contour3DLine, Plot3DError, ScalarVolume3D, Surface3DData,
     contour3::{intersect_tri_scalar, resolve_levels, stitch_chains},
-    domain_idx, union_bounds3,
+    union_bounds3,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -115,18 +115,7 @@ impl VolumeSliceData {
             .fold(None, |acc, s| union_bounds3(acc, s.extent(scales)))
     }
     pub(crate) fn domain_invalid(&self, scales: [AxisScale; 3]) -> usize {
-        let mut inv = 0usize;
-        for s in self.slices.iter() {
-            inv += s.non_finite_points();
-            if domain_idx(scales) != 0 {
-                inv += s
-                    .points()
-                    .iter()
-                    .filter(|p| p[0] <= 0.0 || p[1] <= 0.0 || p[2] <= 0.0)
-                    .count();
-            }
-        }
-        inv
+        self.slices.iter().map(|s| s.domain_invalid(scales)).sum()
     }
 }
 

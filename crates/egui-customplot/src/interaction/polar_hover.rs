@@ -236,6 +236,7 @@ pub(crate) fn show_polar_legend(
     layers: &[PolarLayer<'_>],
     rect: Rect,
     legend_id: Id,
+    component: Option<&dyn crate::LegendComponent>,
     style: &ResolvedPlotStyle<'_>,
 ) -> Vec<LegendEntry> {
     let mut entries = Vec::new();
@@ -265,6 +266,9 @@ pub(crate) fn show_polar_legend(
                         let swatch = layer.resolved_style(idx, style).stroke.color;
                         let response = ui
                             .push_id(id, |ui| {
+                                if let Some(c) = component {
+                                    return c.item(ui, layer.name(), swatch, visible);
+                                }
                                 crate::layout::legend_item_button(
                                     ui,
                                     layer.name(),

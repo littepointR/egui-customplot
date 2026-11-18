@@ -75,8 +75,8 @@ pub use contour::{
     ContourBand, ContourData, ContourError, ContourLevels, ContourLine, FilledContourData,
 };
 pub use control::{
-    ControlError, FrequencyResponseData, RootLocusData, StabilityMargins, TransferFunction,
-    poly_eval_complex, poly_roots_aberth,
+    ControlError, FrequencyResponseData, RootLocusData, StabilityMargins, StepResponseData,
+    StepResponseError, TransferFunction, poly_eval_complex, poly_roots_aberth,
 };
 pub use curvilinear::CurvilinearField2D;
 pub use delaunay::{AlphaShapeData, TriMesh2D, TriMeshError, VoronoiData};

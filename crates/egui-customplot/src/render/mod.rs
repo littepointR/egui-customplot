@@ -8,6 +8,8 @@ mod bars;
 mod bubble_bivariate;
 mod cache;
 mod color_bar;
+mod cursors;
+pub(crate) use cursors::paint_shared_cursors;
 mod confusion;
 mod contour;
 mod curvilinear;
@@ -15,6 +17,12 @@ mod distribution;
 mod error_bars;
 #[cfg(feature = "export")]
 mod export;
+#[cfg(feature = "export")]
+pub(crate) use export::export_density;
+#[cfg(not(feature = "export"))]
+pub(crate) fn export_density(_: &egui::Context) -> Option<f32> {
+    None
+}
 mod fast_series;
 mod flow;
 mod geo;

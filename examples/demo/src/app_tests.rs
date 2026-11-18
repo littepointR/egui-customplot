@@ -329,3 +329,6 @@ mod dynamic10m_tests;
 
 #[path = "i18n_tests.rs"]
 mod i18n_tests;
+
+#[path = "readme_plots.rs"]
+mod readme_plots;

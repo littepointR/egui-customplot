@@ -26,6 +26,8 @@ pub struct PolarPlot {
     lock_r_zero: bool,
     regions: Arc<[PolarRegionAnnotation]>,
     bubble_legend: Option<BubbleLegend>,
+    decorations: crate::layout::DecorationSlots,
+    legend_component: Option<Arc<dyn crate::LegendComponent>>,
     show_legend: bool,
     show_grid: bool,
     show_hover: bool,
@@ -78,6 +80,8 @@ impl PolarPlot {
             lock_r_zero: true,
             regions: Arc::from([]),
             bubble_legend: None,
+            decorations: Default::default(),
+            legend_component: None,
             show_legend: true,
             show_grid: true,
             show_hover: true,
@@ -128,6 +132,15 @@ impl PolarPlot {
         self.bubble_legend = Some(legend);
         self
     }
+    pub fn title_component(mut self, component: Arc<dyn crate::PlotDecoration>) -> Self {
+        self.decorations.title = Some(component);
+        self
+    }
+    pub fn legend_component(mut self, component: Arc<dyn crate::LegendComponent>) -> Self {
+        self.legend_component = Some(component);
+        self.show_legend = true;
+        self
+    }
     pub fn show_legend(mut self, show: bool) -> Self {
         self.show_legend = show;
         self
@@ -167,12 +180,32 @@ impl PolarPlot {
             );
         }
         let outer = allocate_plot(ui, self.height);
+        let mut body = outer;
+        let placed = self.decorations.reserve(ui, &mut body, &self.title, None);
+        let title = if self.decorations.title.is_some() {
+            ""
+        } else {
+            &self.title
+        };
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
         let (mut diagnostics, present, auto_r_lim) =
             summarize_polar(layers, state, self.neg_mode, self.lock_r_zero);
         state.retain_layers(&present);
 
-        let legend_count = if self.show_legend {
+        let custom = self
+            .legend_component
+            .as_deref()
+            .filter(|_| self.show_legend)
+            .and_then(|c| {
+                crate::layout::reserve_component(
+                    ui,
+                    &mut body,
+                    layers.iter().map(|l| l.name()),
+                    c,
+                    crate::LegendPosition::OutsideRight,
+                )
+            });
+        let legend_count = if self.show_legend && self.legend_component.is_none() {
             layers.iter().filter(|l| !l.name().is_empty()).count()
         } else {
             0
@@ -187,8 +220,10 @@ impl PolarPlot {
             .as_ref()
             .zip(bubble_samples.as_ref())
             .map(|(b, s)| bubble_legend_size(b, s));
-        let layout = compute_polar_layout(outer, !self.title.is_empty(), legend_count, bubble_size);
+        let mut layout = compute_polar_layout(body, !title.is_empty(), legend_count, bubble_size);
 
+        layout.outer = outer;
+        layout.legend_rect = custom.or(layout.legend_rect);
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
         let mut response = ui.interact(layout.plot_area, id, Sense::click_and_drag());
@@ -226,7 +261,7 @@ impl PolarPlot {
                 &self.regions,
                 transform,
                 self.neg_mode,
-                &self.title,
+                title,
                 self.show_grid,
                 ui.ctx().pixels_per_point(),
                 &style,
@@ -241,8 +276,17 @@ impl PolarPlot {
             }
         }
 
+        crate::layout::show_decorations(ui, id, placed, style.text_color);
         let legend_entries = layout.legend_rect.map_or_else(Vec::new, |rect| {
-            show_polar_legend(ui, state, layers, rect, id.with("legend"), &style)
+            show_polar_legend(
+                ui,
+                state,
+                layers,
+                rect,
+                id.with("legend"),
+                self.legend_component.as_deref(),
+                &style,
+            )
         });
 
         let (hovered_point, hovered_bin, hover_text) = if self.show_hover

@@ -8,6 +8,7 @@ pub(crate) fn paint_color_bar(
     scale: ColorScale,
     ticks: &[AxisTick],
     label: &str,
+    text_color: egui::Color32,
 ) {
     let painter = ui.painter().with_clip_rect(outer);
     let mut mesh = Mesh::default();
@@ -39,7 +40,7 @@ pub(crate) fn paint_color_bar(
                 egui::Align2::LEFT_CENTER,
                 &tick.label,
                 font.clone(),
-                ui.visuals().text_color(),
+                text_color,
             );
         }
     }
@@ -54,6 +55,6 @@ pub(crate) fn paint_color_bar(
         egui::Align2::LEFT_TOP,
         label,
         font,
-        ui.visuals().text_color(),
+        text_color,
     );
 }

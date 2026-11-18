@@ -58,6 +58,20 @@ pub(crate) fn pick_plot3d_hover(
             continue;
         }
         match layer {
+            Layer3D::Custom(s) => {
+                if let Some((index, p)) = s.pick(transform, pointer, pick_radius) {
+                    consider_pt(
+                        &mut best_pt,
+                        id,
+                        li,
+                        index,
+                        p,
+                        transform,
+                        pointer,
+                        pick_radius,
+                    );
+                }
+            }
             Layer3D::Line(s) => {
                 if s.primitive {
                     continue;
@@ -104,7 +118,7 @@ pub(crate) fn pick_plot3d_hover(
                 }
             }
             Layer3D::Comet(c) => {
-                for (pi, &p) in c.data.points().iter().enumerate() {
+                for (pi, &p) in c.visible_points().iter().enumerate() {
                     consider_pt(&mut best_pt, id, li, pi, p, transform, pointer, pick_radius);
                 }
             }

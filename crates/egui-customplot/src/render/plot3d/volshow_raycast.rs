@@ -95,7 +95,10 @@ pub(super) fn raycast_into_buffer(
     let ch = plot_area.height() / h as f32;
     let steps = vr.sample_steps.max(8);
     let light_dir = [0.42_f64, 0.58, 0.70];
-    let linear_axes = transform.scales() == [AxisScale::Linear; 3];
+    let linear_axes = transform
+        .mappings()
+        .iter()
+        .all(|m| m.domain() == AxisScale::Linear && m.function_key().is_none());
 
     for py in y0..=y1 {
         let sy = plot_area.top() + (py as f32 + 0.5) * ch;

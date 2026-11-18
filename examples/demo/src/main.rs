@@ -38,6 +38,7 @@ mod statistical;
 mod stems;
 mod stream;
 mod surfaces3d;
+mod time_measurements;
 mod volumes3d;
 
 fn main() -> eframe::Result {

@@ -30,6 +30,11 @@ pub(super) fn compute_zbuffer_key(
     style.background.hash(&mut hsh);
     style.text_color.hash(&mut hsh);
 
+    if let Some(lens) = transform.lens() {
+        for v in lens.coefficients() {
+            v.to_bits().hash(&mut hsh);
+        }
+    }
     let cam = transform.camera();
     cam.azimuth_deg.to_bits().hash(&mut hsh);
     cam.elevation_deg.to_bits().hash(&mut hsh);
@@ -50,6 +55,10 @@ pub(super) fn compute_zbuffer_key(
     for s in transform.scales() {
         (s as u8).hash(&mut hsh);
     }
+    transform
+        .mappings()
+        .map(|m| m.function_key())
+        .hash(&mut hsh);
     transform.reversed().hash(&mut hsh);
     for bs in transform.box_scale() {
         bs.to_bits().hash(&mut hsh);
@@ -124,6 +133,10 @@ fn light_key(light: LightSource3D) -> ([u64; 2], [u32; 4]) {
 // label builders. Borrowed per-layer overrides are compared by value.
 fn hash_layer_payload(layer: Layer3D<'_>, hsh: &mut DefaultHasher) {
     match layer {
+        Layer3D::Custom(s) => {
+            s.id().hash(hsh);
+            s.revision().hash(hsh);
+        }
         Layer3D::Line(s) => {
             s.data.version.hash(hsh);
             s.show_markers.hash(hsh);

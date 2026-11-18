@@ -16,12 +16,10 @@ pub(crate) fn paint_smith(
     transform: SmithTransform,
     grid_kind: SmithGridKind,
     show_grid: bool,
-    title: &str,
     style: &ResolvedPlotStyle<'_>,
     hovered: Option<&HoveredSmithPoint>,
     visible_series: &mut usize,
 ) {
-    let rect = transform.disk_rect();
     let unit_center = transform.gamma_to_pos([0.0, 0.0]);
     let unit_edge = transform.gamma_to_pos([1.0, 0.0]);
     let unit_radius = (unit_edge.x - unit_center.x).abs().max(2.0);
@@ -68,16 +66,6 @@ pub(crate) fn paint_smith(
 
     if let Some(hit) = hovered {
         painter.circle_stroke(hit.screen_pos, 6.5, Stroke::new(2.0, style.text_color));
-    }
-
-    if !title.is_empty() {
-        painter.text(
-            egui::pos2(rect.center().x, rect.top() + 4.0),
-            Align2::CENTER_TOP,
-            title,
-            FontId::proportional(13.0),
-            style.text_color,
-        );
     }
 }
 

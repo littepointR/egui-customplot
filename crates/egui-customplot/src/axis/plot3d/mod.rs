@@ -1,4 +1,11 @@
 mod camera;
+mod lens;
+mod mapping;
+pub use lens::CameraLens3D;
+pub use mapping::ScaleMapping3D;
+mod decoration;
+pub(crate) use decoration::edge_geometry;
+pub use decoration::{AxisDecoration3D, AxisEdge3D, AxisLabel3D, AxisLayoutContext3D};
 mod clip;
 
 pub use camera::{Camera3D, Projection3D, Transform3D};
@@ -67,6 +74,17 @@ impl Bounds3D {
         self.max
     }
 
+    pub(crate) fn for_scales(self, scales: [ScaleMapping3D; 3], fallback: Self) -> Self {
+        let mut bounds = self;
+        for (i, scale) in scales.into_iter().enumerate() {
+            if !scale.valid_range([self.min[i], self.max[i]]) {
+                bounds.min[i] = fallback.min[i];
+                bounds.max[i] = fallback.max[i];
+            }
+        }
+        bounds
+    }
+
     pub fn span(self) -> Point3D {
         [
             self.max[0] - self.min[0],
@@ -82,13 +100,13 @@ impl Bounds3D {
     pub(crate) fn validated_for_scales(
         min: Point3D,
         max: Point3D,
-        scales: [AxisScale; 3],
+        scales: [ScaleMapping3D; 3],
     ) -> Result<Self, BoundsError> {
         let b = Self::new(min, max)?;
         for (i, scale) in scales.iter().enumerate() {
             let a = scale.forward(min[i]).ok_or(BoundsError)?;
             let z = scale.forward(max[i]).ok_or(BoundsError)?;
-            if !a.is_finite() || !z.is_finite() || z <= a {
+            if !(z - a).is_finite() || z <= a {
                 return Err(BoundsError);
             }
         }
@@ -132,6 +150,9 @@ impl DataAspect3D {
 #[derive(Clone, Debug)]
 pub struct Axis3D {
     inner: Axis,
+    mapping: ScaleMapping3D,
+    pub(crate) fixed_edge: Option<AxisEdge3D>,
+    pub(crate) decoration: Option<std::sync::Arc<dyn AxisDecoration3D>>,
     bounds: Option<[f64; 2]>,
     grid: bool,
 }
@@ -140,6 +161,9 @@ impl Default for Axis3D {
     fn default() -> Self {
         Self {
             inner: Axis::default(),
+            mapping: AxisScale::Linear.into(),
+            fixed_edge: None,
+            decoration: None,
             bounds: None,
             grid: true,
         }
@@ -151,8 +175,17 @@ impl Axis3D {
         Self::default()
     }
     pub fn scale(mut self, scale: AxisScale) -> Self {
+        self.mapping = scale.into();
         self.inner = self.inner.scale(scale);
         self
+    }
+    pub fn coordinate_mapping(mut self, mapping: ScaleMapping3D) -> Self {
+        self.inner = self.inner.scale(mapping.domain());
+        self.mapping = mapping;
+        self
+    }
+    pub fn mapping(&self) -> ScaleMapping3D {
+        self.mapping
     }
     pub fn reversed(mut self, reversed: bool) -> Self {
         self.inner = self.inner.reversed(reversed);
@@ -172,6 +205,16 @@ impl Axis3D {
     }
     pub fn tick_labels_visible(mut self, visible: bool) -> Self {
         self.inner = self.inner.tick_labels_visible(visible);
+        self
+    }
+    /// Pin ticks and title to the chosen data-box edge.
+    pub fn label_edge(mut self, edge: AxisEdge3D) -> Self {
+        self.fixed_edge = Some(edge);
+        self
+    }
+    /// Customize selection, label layout or drawing on this axis.
+    pub fn decoration(mut self, decoration: std::sync::Arc<dyn AxisDecoration3D>) -> Self {
+        self.decoration = Some(decoration);
         self
     }
     pub fn grid(mut self, show: bool) -> Self {
@@ -207,6 +250,9 @@ impl Axis3D {
     }
     pub fn is_reversed(&self) -> bool {
         self.inner.reversed
+    }
+    pub fn is_visible(&self) -> bool {
+        self.inner.visible
     }
     pub fn axis_label(&self) -> &str {
         &self.inner.label

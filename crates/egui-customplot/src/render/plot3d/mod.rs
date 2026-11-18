@@ -1,4 +1,5 @@
 mod axes;
+mod custom;
 mod layers;
 mod meshes_contours;
 mod scene;
@@ -32,14 +33,24 @@ pub(crate) fn paint_plot3d(
     transform: Transform3D,
     depth_mode: DepthMode,
     box_style: BoxStyle3D,
+    show_grid: bool,
     title: &str,
     style: &ResolvedPlotStyle<'_>,
     diagnostics: &mut Plot3DDiagnostics,
 ) {
-    axes::paint_axes_3d(painter, axes, transform, box_style, title, style);
+    state.edges = axes::paint_axes_3d(
+        painter,
+        state.previous_edges(),
+        axes,
+        transform,
+        box_style,
+        show_grid,
+        title,
+        style,
+    );
     let area = transform.rect();
     if depth_mode == DepthMode::ZBuffer {
-        let (w, h) = zbuffer::zbuffer_dims(area);
+        let (w, h) = zbuffer::zbuffer_dims(area, crate::render::export_density(painter.ctx()));
         let key = zbuffer_key::compute_zbuffer_key(
             state, layers, planes, texts, transform, box_style, style, w, h,
         );
@@ -68,6 +79,7 @@ pub(crate) fn paint_plot3d(
             area,
             style.text_color,
             key,
+            (w, h),
             before_render,
             diagnostics,
         );

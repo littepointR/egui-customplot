@@ -81,60 +81,57 @@ impl std::fmt::Display for Plot3DError {
 
 impl std::error::Error for Plot3DError {}
 
-/// Precomputed 8-domain extent cache (`(Linear | Log10)^3`) for O(1) bounds queries.
+/// Cached bounds for finite, positive and probability domains on each axis.
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct CachedExtents3D {
-    extents: [Option<[Point3D; 2]>; 8],
-    invalid: [usize; 8],
+    extents: [Option<[Point3D; 2]>; 27],
+    counts: [usize; 27],
 }
 
 impl CachedExtents3D {
     pub fn push_point(&mut self, p: Point3D) {
-        if !p[0].is_finite() || !p[1].is_finite() || !p[2].is_finite() {
-            for inv in &mut self.invalid {
-                *inv += 1;
-            }
+        if !p.iter().all(|v| v.is_finite()) {
             return;
         }
-        let pos = [p[0] > 0.0, p[1] > 0.0, p[2] > 0.0];
-        for (domain, ext) in self.extents.iter_mut().enumerate() {
-            let need_pos = [domain & 1 != 0, domain & 2 != 0, domain & 4 != 0];
-            if (0..3).all(|a| !need_pos[a] || pos[a]) {
-                let b = ext.get_or_insert([p, p]);
-                for a in 0..3 {
-                    b[0][a] = b[0][a].min(p[a]);
-                    b[1][a] = b[1][a].max(p[a]);
-                }
+        let domains = p.map(|v| {
+            if crate::axis::valid_probability(v) {
+                2
             } else {
-                self.invalid[domain] += 1;
+                usize::from(v > 0.0)
+            }
+        });
+        for z in 0..=domains[2] {
+            for y in 0..=domains[1] {
+                for x in 0..=domains[0] {
+                    let i = x + 3 * y + 9 * z;
+                    self.extents[i] = union_bounds3(self.extents[i], Some([p, p]));
+                    self.counts[i] += 1;
+                }
             }
         }
     }
 
     pub fn push_box(&mut self, lo: Point3D, hi: Point3D) {
-        if !(0..3).all(|a| lo[a].is_finite() && hi[a].is_finite() && lo[a] <= hi[a]) {
-            for inv in &mut self.invalid {
-                *inv += 1;
-            }
-            return;
+        if (0..3).all(|a| lo[a].is_finite() && hi[a].is_finite() && lo[a] <= hi[a]) {
+            self.push_point(lo);
+            self.push_point(hi);
         }
-        self.push_point(lo);
-        self.push_point(hi);
     }
-
-    pub fn extent(self, scales: [AxisScale; 3]) -> Option<[Point3D; 2]> {
+    pub fn extent(&self, scales: [AxisScale; 3]) -> Option<[Point3D; 2]> {
         self.extents[domain_idx(scales)]
     }
-
-    pub fn domain_invalid(self, scales: [AxisScale; 3]) -> usize {
-        self.invalid[domain_idx(scales)].saturating_sub(self.invalid[0])
+    pub fn domain_invalid(&self, scales: [AxisScale; 3]) -> usize {
+        self.counts[0] - self.counts[domain_idx(scales)]
     }
 }
 
-pub(crate) fn domain_idx(scales: [AxisScale; 3]) -> usize {
-    usize::from(scales[0] == AxisScale::Log10)
-        + usize::from(scales[1] == AxisScale::Log10) * 2
-        + usize::from(scales[2] == AxisScale::Log10) * 4
+fn domain_idx(scales: [AxisScale; 3]) -> usize {
+    let [x, y, z] = scales.map(|s| match s {
+        AxisScale::Linear => 0,
+        AxisScale::Log10 => 1,
+        AxisScale::Probit | AxisScale::Weibull => 2,
+    });
+    x + 3 * y + 9 * z
 }
 
 pub(crate) fn union_bounds3(

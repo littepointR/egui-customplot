@@ -32,6 +32,9 @@ pub(super) fn collect_layers_3d(
         }
         let resolved = layer.resolved_style(idx, style);
         match layer {
+            Layer3D::Custom(layer) => {
+                super::custom::collect(scene, layer, resolved, transform, diagnostics)
+            }
             Layer3D::Line(line) => {
                 collect_polyline(
                     scene,
@@ -105,11 +108,11 @@ pub(super) fn collect_layers_3d(
                 }
             }
             Layer3D::Comet(comet) => {
-                let pts = comet.data.points();
-                let head = (comet.playback.progress_points().round() as usize)
-                    .min(pts.len().saturating_sub(1));
-                let tail_len =
-                    ((pts.len() as f64) * comet.playback.tail_fraction_value()).round() as usize;
+                let pts = comet.visible_points();
+                let head = pts.len().saturating_sub(1);
+                let tail_len = ((comet.data.points().len() as f64)
+                    * comet.playback.tail_fraction_value())
+                .round() as usize;
                 let body_end = head.saturating_sub(tail_len.max(1));
                 if body_end > 0 {
                     let body_stroke = Stroke::new(

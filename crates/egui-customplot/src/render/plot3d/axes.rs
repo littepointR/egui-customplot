@@ -2,14 +2,17 @@ use egui::{Align2, Color32, FontId, Mesh, Painter, Pos2, Shape, Stroke, epaint};
 
 use crate::{Axis3D, BoxStyle3D, Transform3D, model::ResolvedPlotStyle};
 
+#[allow(clippy::too_many_arguments)]
 pub(super) fn paint_axes_3d(
     painter: &Painter,
+    previous: [Option<crate::AxisEdge3D>; 3],
     axes: [&Axis3D; 3],
     transform: Transform3D,
     box_style: BoxStyle3D,
+    show_grid: bool,
     title: &str,
     style: &ResolvedPlotStyle<'_>,
-) {
+) -> [Option<crate::AxisEdge3D>; 3] {
     let rect = transform.rect();
     painter.rect_filled(rect, 0.0, style.background);
     if !title.is_empty() {
@@ -24,11 +27,7 @@ pub(super) fn paint_axes_3d(
 
     let (_, _, forward) = transform.camera().basis();
     let rev = transform.reversed();
-    let back_idx = [
-        back_face_unit(forward[0], rev[0]),
-        back_face_unit(forward[1], rev[1]),
-        back_face_unit(forward[2], rev[2]),
-    ];
+    let back_idx = forward.map(|v| if v >= 0.0 { 1.0 } else { 0.0 });
 
     if box_style == BoxStyle3D::BackPlanes {
         let wall_c = style
@@ -40,7 +39,7 @@ pub(super) fn paint_axes_3d(
     }
 
     let bounds = transform.bounds();
-    let scales = transform.scales();
+    let scales = transform.mappings();
     let bmin = bounds.min();
     let bmax = bounds.max();
     let ticks = [
@@ -51,7 +50,7 @@ pub(super) fn paint_axes_3d(
 
     // Grid lines across the 3 back walls
     for axis in 0..3 {
-        if !axes[axis].show_grid() {
+        if !show_grid || !axes[axis].show_grid() {
             continue;
         }
         let smin = scales[axis].forward(bmin[axis]).unwrap_or(0.0);
@@ -118,68 +117,23 @@ pub(super) fn paint_axes_3d(
         }
     }
 
-    // Silhouette tick labels & axis labels on the front-most bottom / side axis edges
-    let ccenter = rect.center();
-    for axis in 0..3 {
-        let o1 = (axis + 1) % 3;
-        let o2 = (axis + 2) % 3;
-        let front1 = 1.0 - back_idx[o1];
-        let front2 = if axis == 2 { front1 } else { 0.0 };
-        let mid_u = {
-            let mut m = [0.5; 3];
-            m[o1] = if axis == 2 { 1.0 - back_idx[0] } else { front1 };
-            m[o2] = if axis == 2 { back_idx[1] } else { front2 };
-            m
+    std::array::from_fn(|i| {
+        let context = crate::AxisLayoutContext3D {
+            axis: i,
+            transform,
+            previous: previous[i],
         };
-        let smin = scales[axis].forward(bmin[axis]).unwrap_or(0.0);
-        let smax = scales[axis].forward(bmax[axis]).unwrap_or(1.0);
-        for tick in &ticks[axis] {
-            if !tick.major || tick.label.is_empty() {
-                continue;
-            }
-            let Some(st) = scales[axis].forward(tick.value) else {
-                continue;
-            };
-            let mut u = ((st - smin) / (smax - smin)).clamp(0.0, 1.0);
-            if rev[axis] {
-                u = 1.0 - u;
-            }
-            let mut pos_u = mid_u;
-            pos_u[axis] = u;
-            if let Some((sp, _)) = transform.project_unit(pos_u) {
-                let out_dir = (sp - ccenter).normalized();
-                painter.text(
-                    sp + out_dir * 12.0,
-                    Align2::CENTER_CENTER,
-                    &tick.label,
-                    FontId::proportional(10.0),
-                    style.text_color,
-                );
+        let placed =
+            crate::layout::axis_labels(painter, context, axes[i], &ticks[i], style.text_color);
+        for label in &placed.labels {
+            if let Some(custom) = &axes[i].decoration {
+                custom.paint_label(painter, label);
+            } else {
+                label.paint(painter);
             }
         }
-        let lbl = axes[axis].axis_label();
-        if !lbl.is_empty()
-            && let Some((sp, _)) = transform.project_unit(mid_u)
-        {
-            let out_dir = (sp - ccenter).normalized();
-            painter.text(
-                sp + out_dir * 26.0,
-                Align2::CENTER_CENTER,
-                lbl,
-                FontId::proportional(12.0),
-                style.text_color,
-            );
-        }
-    }
-}
-
-fn back_face_unit(fwd_component: f64, axis_reversed: bool) -> f64 {
-    let f = if axis_reversed {
-        -fwd_component
-    } else {
-        fwd_component
-    };
-    if f >= 0.0 { 1.0 } else { 0.0 }
+        Some(placed.edge)
+    })
 }
 
 fn line_u(painter: &Painter, transform: Transform3D, u0: [f64; 3], u1: [f64; 3], stroke: Stroke) {

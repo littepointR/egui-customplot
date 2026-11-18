@@ -1,6 +1,6 @@
 use egui::{Rect, Vec2};
 
-use crate::{Axis3D, AxisScale, Bounds3D, Point3D};
+use crate::{Axis3D, Bounds3D, Point3D, ScaleMapping3D};
 
 /// Computed screen regions for a [`crate::Plot3D`] widget.
 #[derive(Clone, Copy, Debug)]
@@ -19,10 +19,15 @@ pub(crate) fn compute_plot3d_layout(
     bubble_size: Option<Vec2>,
     has_color_bar: bool,
 ) -> Plot3DLayout {
-    let title_pad = if has_title { 28.0 } else { 8.0 };
+    let title_pad = if has_title && outer.height() >= 48.0 {
+        28.0
+    } else {
+        8.0
+    };
+    let side_pad = (outer.width() * 0.2).min(8.0);
     let content = Rect::from_min_max(
-        egui::pos2(outer.left() + 8.0, outer.top() + title_pad),
-        egui::pos2(outer.right() - 8.0, outer.bottom() - 8.0),
+        egui::pos2(outer.left() + side_pad, outer.top() + title_pad),
+        egui::pos2(outer.right() - side_pad, outer.bottom() - 8.0),
     );
     let cb_w = if has_color_bar && content.width() >= 260.0 {
         76.0
@@ -45,10 +50,7 @@ pub(crate) fn compute_plot3d_layout(
     };
     let plot_area = Rect::from_min_max(
         content.min,
-        egui::pos2(
-            (content_main_right - legend_w).max(content.left() + 32.0),
-            content.bottom(),
-        ),
+        egui::pos2(content_main_right - legend_w, content.bottom()),
     );
     let legend_rect = if legend_count > 0 && legend_w > 0.0 {
         let h = (legend_count as f32 * 24.0 + 16.0).min((content.height() - 8.0).max(24.0));
@@ -82,31 +84,13 @@ pub(crate) fn compute_plot3d_layout(
 pub(crate) fn compute_auto_bounds_3d(
     extent: Option<[Point3D; 2]>,
     axes: [&Axis3D; 3],
-    scales: [AxisScale; 3],
+    scales: [ScaleMapping3D; 3],
 ) -> Bounds3D {
-    let mut lo = extent.map_or([-1.0; 3], |[a, _]| a);
-    let mut hi = extent.map_or([1.0; 3], |[_, b]| b);
-    for i in 0..3 {
-        if let Some([alo, ahi]) = axes[i].manual_bounds() {
-            lo[i] = alo;
-            hi[i] = ahi;
-        } else if extent.is_none() {
-            if scales[i] == AxisScale::Log10 {
-                lo[i] = 1.0;
-                hi[i] = 10.0;
-            }
-        } else if scales[i] == AxisScale::Log10 {
-            lo[i] = (lo[i] * 0.8).max(f64::MIN_POSITIVE);
-            hi[i] *= 1.25;
-            if hi[i] <= lo[i] {
-                hi[i] = lo[i] * 10.0;
-            }
-        } else {
-            let span = (hi[i] - lo[i]).abs();
-            let pad = if span <= 1e-12 { 0.5 } else { span * 0.06 };
-            lo[i] -= pad;
-            hi[i] += pad;
-        }
-    }
-    Bounds3D::new(lo, hi).unwrap_or_default()
+    let ranges: [[f64; 2]; 3] = std::array::from_fn(|i| {
+        axes[i]
+            .manual_bounds()
+            .filter(|r| scales[i].valid_range(*r))
+            .unwrap_or_else(|| scales[i].padded_range(extent.map(|[a, b]| [a[i], b[i]])))
+    });
+    Bounds3D::new(ranges.map(|r| r[0]), ranges.map(|r| r[1])).expect("validated axis ranges")
 }

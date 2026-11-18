@@ -41,6 +41,25 @@ impl BodePlotResponse {
     }
 }
 
+/// Named subviews of the Bode chart.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BodePanel {
+    Magnitude,
+    Phase,
+}
+
+impl BodePlotResponse {
+    /// Return the original subplot response at a screen position, including its frequency transform.
+    pub fn panel_at(&self, position: egui::Pos2) -> Option<(BodePanel, &PlotResponse)> {
+        [
+            (BodePanel::Magnitude, &self.mag),
+            (BodePanel::Phase, &self.phase),
+        ]
+        .into_iter()
+        .find(|(_, p)| p.transform.rect().contains(position))
+    }
+}
+
 /// Paired Bode Magnitude (dB) + Unwrapped Phase (deg) widget with X-axis link & margins (`EXT-21`).
 ///
 /// 对数频率轴联动伯德图控件：上下同步显示幅值(dB)与解卷绕相位(deg)，可选自动标注增益裕度与相位裕度。
@@ -104,13 +123,29 @@ impl<'a> BodePlot<'a> {
     }
 
     pub fn show(self, ui: &mut Ui, state: &mut BodePlotState) -> BodePlotResponse {
+        self.show_with_panels(ui, state, |_, plot, line| (plot, line))
+    }
+
+    /// Customize each fully configured panel and its curve before it is drawn.
+    pub fn show_with_panels(
+        self,
+        ui: &mut Ui,
+        state: &mut BodePlotState,
+        mut configure: impl FnMut(BodePanel, Plot, Line<'a>) -> (Plot, Line<'a>),
+    ) -> BodePlotResponse {
         let avail_w = ui.available_width().max(200.0);
         let (outer_rect, response) =
             ui.allocate_exact_size(vec2(avail_w, self.height), Sense::hover());
 
         let title_h = if self.title.is_empty() { 0.0 } else { 22.0 };
         if !self.title.is_empty() && ui.is_rect_visible(outer_rect) {
-            let text_col = ui.visuals().text_color();
+            let text_col = crate::model::resolve_plot_style(
+                ui,
+                self.theme.as_deref(),
+                self.inherited_style,
+                self.style,
+            )
+            .text_color;
             ui.painter().text(
                 egui::pos2(outer_rect.center().x, outer_rect.top() + 3.0),
                 egui::Align2::CENTER_TOP,
@@ -177,11 +212,12 @@ impl<'a> BodePlot<'a> {
         if let Some(t) = self.theme.as_ref() {
             mag_plot = mag_plot.theme(t.clone());
         }
-        let mag = mag_plot.show(
-            &mut mag_ui,
-            &mut state.mag,
-            &[Line::new(self.data.mag_curve()).color(line_col).width(1.8)],
+        let (plot, line) = configure(
+            BodePanel::Magnitude,
+            mag_plot,
+            Line::new(self.data.mag_curve()).color(line_col).width(1.8),
         );
+        let mag = plot.show(&mut mag_ui, &mut state.mag, &[line]);
 
         let mut phase_ui = ui.new_child(
             UiBuilder::new()
@@ -205,13 +241,14 @@ impl<'a> BodePlot<'a> {
         if let Some(t) = self.theme.as_ref() {
             phase_plot = phase_plot.theme(t.clone());
         }
-        let phase = phase_plot.show(
-            &mut phase_ui,
-            &mut state.phase,
-            &[Line::new(self.data.phase_curve())
+        let (plot, line) = configure(
+            BodePanel::Phase,
+            phase_plot,
+            Line::new(self.data.phase_curve())
                 .color(line_col)
-                .width(1.8)],
+                .width(1.8),
         );
+        let phase = plot.show(&mut phase_ui, &mut state.phase, &[line]);
 
         let ctx = ui.ctx().clone();
         let mut x_refs = [&mut state.mag, &mut state.phase];

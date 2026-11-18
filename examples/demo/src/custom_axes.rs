@@ -269,7 +269,7 @@ impl CustomAxesDemo {
                         .show_frame(self.show_frame)
                         .x_axis(x0.clone())
                         .y_axis(y0.clone())
-                        .legend(true)
+                        .legend_position(egui_customplot::LegendPosition::OutsideRight)
                         .title(tr(
                             l,
                             "Custom Tick Formatter & Max Ticks",
@@ -290,7 +290,7 @@ impl CustomAxesDemo {
                         .x_axis(Axis::new().datetime().label("UTC Time"))
                         .y_axis(Axis::new().label("Temp (°C)"))
                         .right_y_axis(Axis::new().duration().label("Latency (Dur)"))
-                        .legend(true)
+                        .legend_position(egui_customplot::LegendPosition::OutsideRight)
                         .title(tr(
                             l,
                             "UTC DateTime & Elapsed Duration Axes",
@@ -339,7 +339,7 @@ impl CustomAxesDemo {
                                 .label("Left Gain"),
                         )
                         .right_y_axis(Axis::new().scale(AxisScale::Log10).label("Right Growth"))
-                        .legend(true)
+                        .legend_position(egui_customplot::LegendPosition::OutsideRight)
                         .title(tr(
                             l,
                             "Dual-Y + Axis Locks + Pan Limits",
@@ -366,7 +366,7 @@ impl CustomAxesDemo {
                         .height(height)
                         .allow_scroll_zoom(true)
                         .show_frame(self.show_frame)
-                        .legend(true);
+                        .legend_position(egui_customplot::LegendPosition::OutsideRight);
                     if self.equal_aspect {
                         p = p.data_aspect(1.0).title(tr(
                             l,

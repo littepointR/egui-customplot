@@ -4,7 +4,7 @@ use std::f64::consts::TAU;
 
 use eframe::egui;
 use egui_customplot::{
-    Axis, BodePlot, BodePlotState, ColorBar, ColorMap, ColorScale, CwtData, CwtPlot, Figure,
+    Axis, BodePlot, BodePlotState, ColorMap, ColorScale, CwtData, CwtPlot, Figure,
     FrequencyResponseData, Heatmap, Line, NicholsPlot, NyquistPlot, Plot, PlotLayer, PlotResponse,
     PlotState, PoleZeroData, PspectrumData, RootLocus, RootLocusData, SmithGridKind, SmithPlot,
     SmithPlotData, SmithPlotState, SmithTrace, SpectrogramData, TransferFunction, WindowKind,
@@ -18,6 +18,8 @@ pub(super) struct Stage15Demo {
     pub nyquist_mirror: bool,
     pub nichols_grid: bool,
     pub use_cwt: bool,
+    pub show_measurements: bool,
+    measurements: crate::time_measurements::TimeMeasurements,
     smith: SmithPlotData,
     zplane: PoleZeroData,
     freq_resp: FrequencyResponseData,
@@ -92,6 +94,8 @@ impl Default for Stage15Demo {
             nyquist_mirror: true,
             nichols_grid: true,
             use_cwt: false,
+            show_measurements: false,
+            measurements: crate::time_measurements::TimeMeasurements::new(&sig, fs),
             smith,
             zplane,
             freq_resp,
@@ -109,6 +113,7 @@ impl Default for Stage15Demo {
 
 impl Stage15Demo {
     pub(super) fn reset_views(&mut self) {
+        self.measurements.reset();
         self.smith_state.reset();
         self.bode_state = BodePlotState::default();
         self.states.iter_mut().for_each(PlotState::reset);
@@ -122,6 +127,18 @@ impl Stage15Demo {
             "射频 Smith 圆图、控制系统与时频分析",
             "RF Smith・制御解析・DSP/CWT",
         ));
+        ui.checkbox(
+            &mut self.show_measurements,
+            tr(
+                l,
+                "Waveform, shared cursors & step response",
+                "波形、共享游标与阶跃响应",
+                "波形・共有カーソル・ステップ応答",
+            ),
+        );
+        if self.show_measurements {
+            return;
+        }
         ui.checkbox(
             &mut self.smith_admittance,
             tr(
@@ -162,6 +179,9 @@ impl Stage15Demo {
 
     pub(super) fn show(&mut self, ui: &mut egui::Ui) -> Vec<PlotResponse> {
         let l = lang(ui.ctx());
+        if self.show_measurements {
+            return self.measurements.show(ui, &self.spec);
+        }
         let height = ((ui.available_height() - 96.0) * 0.5).clamp(165.0, 255.0);
         let fig = Figure::new("stage15_fig")
             .columns(4)
@@ -330,8 +350,8 @@ impl Stage15Demo {
                         let scale = ColorScale::new(self.spec.value_range())
                             .expect("spec range")
                             .color_map(ColorMap::Inferno);
-                        let _ = ColorBar::new(scale);
                         let plot = Plot::new("s15_tf")
+                            .color_bar(scale, "dB")
                             .height(height)
                             .allow_scroll_zoom(true)
                             .x_axis(Axis::new().label("Time (s)"))

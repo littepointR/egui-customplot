@@ -1,15 +1,15 @@
-use std::{collections::HashSet, sync::Arc};
+use super::GeoPlotResponse;
+use std::sync::Arc;
 
-use egui::{AsIdSalt, Color32, IdSalt, Response, Sense, Stroke, Ui};
+use egui::{AsIdSalt, Color32, IdSalt, Sense, Stroke, Ui};
 
 use crate::{
-    Axis, BubbleLegend, ColorScale, GeoAttribution, GeoBasemapStyle, GeoBounds, GeoLayer,
-    GeoPlotState, GeoProjection, GeoTileCache, GeoTransform, HoveredGeoPoint, LegendEntry,
-    PlotDiagnostics, PlotResponse, PlotStyle, PlotTheme,
+    BubbleLegend, ColorScale, GeoAttribution, GeoBasemapStyle, GeoBounds, GeoLayer, GeoPlotState,
+    GeoProjection, GeoTileCache, GeoTransform, PlotStyle, PlotTheme,
     interaction::{navigate_geo, pick_geo_hover, show_geo_legend},
     layout::{allocate_plot, bubble_legend_size, compute_geo_layout, paint_bubble_legend},
     model::{resolve_plot_style, summarize_geo},
-    render::{paint_color_bar, paint_geo},
+    render::paint_geo,
 };
 
 /// 2D geographic coordinate map widget (`geoplot`, `geoscatter`, `geodensityplot`, `geobubble`).
@@ -28,6 +28,8 @@ pub struct GeoPlot {
     manual_lon_lim: Option<[f64; 2]>,
     allow_scroll_zoom: bool,
     show_grid: bool,
+    decorations: crate::layout::DecorationSlots,
+    legend_component: Option<Arc<dyn crate::LegendComponent>>,
     show_legend: bool,
     show_hover: bool,
     pick_radius: f32,
@@ -36,36 +38,6 @@ pub struct GeoPlot {
     pub(crate) inherited_style: PlotStyle,
     style: PlotStyle,
     pub(crate) theme: Option<Arc<PlotTheme>>,
-}
-
-/// Layout geometry, [`GeoTransform`], hover point, and diagnostics returned by `GeoPlot::show`.
-///
-/// `GeoPlot::show` 返回的地图区域、地理坐标变换、悬停命中与诊断信息。
-pub struct GeoPlotResponse {
-    pub outer_rect: egui::Rect,
-    pub plot_area: egui::Rect,
-    pub viewport: egui::Rect,
-    pub response: Response,
-    pub transform: GeoTransform,
-    pub diagnostics: PlotDiagnostics,
-    pub view_changed: bool,
-    pub hovered_point: Option<HoveredGeoPoint>,
-    pub hover_text: Option<String>,
-    pub legend_entries: Vec<LegendEntry>,
-}
-
-impl GeoPlotResponse {
-    pub fn into_plot_response(self) -> PlotResponse {
-        PlotResponse::from_embedded(
-            self.outer_rect,
-            self.plot_area,
-            self.response,
-            self.diagnostics,
-            self.view_changed,
-            self.hover_text,
-            self.legend_entries,
-        )
-    }
 }
 
 impl GeoPlot {
@@ -82,6 +54,8 @@ impl GeoPlot {
             manual_lon_lim: None,
             allow_scroll_zoom: false,
             show_grid: true,
+            decorations: Default::default(),
+            legend_component: None,
             show_legend: true,
             show_hover: true,
             pick_radius: 10.0,
@@ -145,6 +119,15 @@ impl GeoPlot {
         self
     }
 
+    pub fn title_component(mut self, component: Arc<dyn crate::PlotDecoration>) -> Self {
+        self.decorations.title = Some(component);
+        self
+    }
+    pub fn legend_component(mut self, component: Arc<dyn crate::LegendComponent>) -> Self {
+        self.legend_component = Some(component);
+        self.show_legend = true;
+        self
+    }
     pub fn show_legend(mut self, show: bool) -> Self {
         self.show_legend = show;
         self
@@ -167,6 +150,10 @@ impl GeoPlot {
         self
     }
 
+    pub fn color_bar_component(mut self, c: Arc<dyn crate::PlotDecoration>) -> Self {
+        self.decorations.color_bar = Some(c);
+        self
+    }
     pub fn color_bar(mut self, scale: ColorScale, label: impl Into<String>) -> Self {
         self.color_bar = Some((scale, label.into()));
         self
@@ -242,6 +229,15 @@ impl GeoPlot {
             );
         }
         let outer = allocate_plot(ui, self.height);
+        let mut body = outer;
+        let placed = self
+            .decorations
+            .reserve(ui, &mut body, &self.title, self.color_bar.as_ref());
+        let title = if self.decorations.title.is_some() {
+            ""
+        } else {
+            &self.title
+        };
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
         let (mut diagnostics, present, auto_raw) = summarize_geo(layers, state);
         state.retain_layers(&present);
@@ -250,10 +246,24 @@ impl GeoPlot {
             diagnostics.invalid_manual_bounds = true;
         }
 
-        let legend_rows = if self.show_legend {
-            count_legend_rows(layers, state)
+        let names = if self.show_legend {
+            crate::layout::geo_legend_names(layers, state)
         } else {
+            Vec::new()
+        };
+        let custom = self.legend_component.as_deref().and_then(|c| {
+            crate::layout::reserve_component(
+                ui,
+                &mut body,
+                names.iter().copied(),
+                c,
+                crate::LegendPosition::OutsideRight,
+            )
+        });
+        let legend_rows = if self.legend_component.is_some() {
             0
+        } else {
+            names.len()
         };
         let bubble_samples = self
             .bubble_legend
@@ -265,14 +275,16 @@ impl GeoPlot {
             .as_ref()
             .zip(bubble_samples.as_ref())
             .map(|(b, s)| bubble_legend_size(b, s));
-        let layout = compute_geo_layout(
-            outer,
-            !self.title.is_empty(),
+        let mut layout = compute_geo_layout(
+            body,
+            !title.is_empty(),
             legend_rows,
             bubble_size,
-            self.color_bar.is_some(),
+            self.color_bar.is_some() && self.decorations.color_bar.is_none(),
         );
 
+        layout.outer = outer;
+        layout.legend_rect = custom.or(layout.legend_rect);
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
         let mut response = ui.interact(layout.plot_area, id, Sense::click_and_drag());
@@ -307,7 +319,7 @@ impl GeoPlot {
                 self.basemap,
                 tile_cache,
                 self.attribution.as_ref(),
-                &self.title,
+                title,
                 self.show_grid,
                 ui.ctx().pixels_per_point(),
                 &style,
@@ -322,20 +334,28 @@ impl GeoPlot {
             }
             if let (Some(bar_rect), Some((scale, label))) = (layout.color_bar_rect, &self.color_bar)
             {
-                let ticks = Axis::new()
-                    .scale(scale.scale())
-                    .ticks(scale.range(), bar_rect.height());
-                let outer_cb = egui::Rect::from_min_max(
-                    egui::pos2(bar_rect.left(), bar_rect.top() - 20.0),
-                    egui::pos2(bar_rect.left() + 72.0, bar_rect.bottom() + 8.0),
-                )
-                .intersect(layout.outer);
-                paint_color_bar(ui, outer_cb, bar_rect, *scale, &ticks, label);
+                super::color_bar::paint_inset(
+                    ui,
+                    layout.outer,
+                    bar_rect,
+                    *scale,
+                    label,
+                    style.text_color,
+                );
             }
         }
 
+        crate::layout::show_decorations(ui, id, placed, style.text_color);
         let legend_entries = layout.legend_rect.map_or_else(Vec::new, |rect| {
-            show_geo_legend(ui, state, layers, rect, id.with("legend"), &style)
+            show_geo_legend(
+                ui,
+                state,
+                layers,
+                rect,
+                id.with("legend"),
+                self.legend_component.as_deref(),
+                &style,
+            )
         });
 
         let (hovered_point, hover_text) = if self.show_hover
@@ -377,21 +397,4 @@ impl GeoPlot {
             legend_entries,
         }
     }
-}
-
-fn count_legend_rows(layers: &[GeoLayer<'_>], state: &GeoPlotState) -> usize {
-    let mut rows = layers.iter().filter(|l| !l.name().is_empty()).count();
-    let mut seen = HashSet::new();
-    for (idx, layer) in layers.iter().enumerate() {
-        if let GeoLayer::Bubbles(b) = *layer
-            && state.layer_visible(layer.id(idx))
-        {
-            for c in b.data.categories() {
-                if seen.insert(c.as_str()) {
-                    rows += 1;
-                }
-            }
-        }
-    }
-    rows
 }

@@ -221,6 +221,11 @@ pub struct Comet3D<'a> {
 }
 
 impl<'a> Comet3D<'a> {
+    pub(crate) fn visible_points(&self) -> &'a [crate::Point3D] {
+        let points = self.data.points();
+        let head = self.playback.progress_points().round() as usize;
+        &points[..head.saturating_add(1).min(points.len())]
+    }
     pub fn new(data: &'a Point3DData, playback: &'a Comet3DPlayback) -> Self {
         Self {
             data,

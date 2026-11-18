@@ -83,3 +83,27 @@ pub(crate) fn compute_geo_layout(
         color_bar_rect,
     }
 }
+
+pub(crate) fn geo_legend_names<'a>(
+    layers: &'a [crate::GeoLayer<'a>],
+    state: &crate::GeoPlotState,
+) -> Vec<&'a str> {
+    let mut names: Vec<_> = layers
+        .iter()
+        .map(|l| l.name())
+        .filter(|n| !n.is_empty())
+        .collect();
+    let mut seen = std::collections::HashSet::new();
+    for (index, layer) in layers.iter().enumerate() {
+        if let crate::GeoLayer::Bubbles(b) = *layer
+            && state.layer_visible(layer.id(index))
+        {
+            for c in b.data.categories() {
+                if seen.insert(c.as_str()) {
+                    names.push(c);
+                }
+            }
+        }
+    }
+    names
+}

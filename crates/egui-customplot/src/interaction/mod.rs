@@ -1,6 +1,8 @@
 //! Application-owned interaction state, input arbitration and raw-point picking.
 
 mod bar;
+mod cursors;
+pub use cursors::{CursorMeasurements, CursorReading, SharedCursors};
 mod cell;
 mod geo;
 mod geoglobe;
@@ -39,7 +41,9 @@ pub(crate) use hover::{HoverPick, pick_hover};
 pub use link::{AxisLink, LinkError, LinkReport};
 pub(crate) use navigation::{NavigationOptions, navigate};
 pub use picking::HoveredPoint;
-pub use plot3d::{Hovered3DBar, Hovered3DPoint, Hovered3DRegion, Plot3DState};
+pub use plot3d::{
+    CameraGesture3D, CameraNavigation3D, Hovered3DBar, Hovered3DPoint, Hovered3DRegion, Plot3DState,
+};
 pub(crate) use plot3d::{navigate_plot3d, pick_plot3d_hover, show_plot3d_legend};
 pub use polar::PolarState;
 pub(crate) use polar::navigate_polar;

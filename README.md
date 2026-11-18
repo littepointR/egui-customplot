@@ -2,20 +2,18 @@ English | [简体中文](README.zh-CN.md)
 
 # egui-customplot
 
-A native, embeddable scientific and engineering plotting library for [`egui`](https://github.com/emilk/egui), inspired by MATLAB's breadth of plot types while embracing Rust ownership, host-owned immutable data, explicit view state, and deterministic multi-pass UI behavior.
+An embeddable Rust plotting library for scientific and engineering applications built with [`egui`](https://github.com/emilk/egui). Plot a live signal, inspect a volume or measure a control system’s response inside an existing UI. Your application owns the samples and view state.
 
 | 3D surface · `--surfaces3d` | Filled contours · `--contours` |
 | --- | --- |
 | [![Peaks surface with contours projected onto the floor and a height color bar](docs/images/surface.png)](docs/images/surface.png) | [![Filled scalar field with labeled white isolines around peaks and valleys](docs/images/contours.png)](docs/images/contours.png) |
 | Orbit the peaks to inspect their shape. Floor contours locate them in the plane, and the color bar gives their height. | Read a scalar field from above. Filled bands separate value ranges, and labels identify the level of each isoline. |
 
-Each figure on this page was exported individually from the demo data with `PlotSnapshot` at three output pixels per logical point. Open an image for the full resolution.
+[Explore the illustrated guide](#illustrated-chart-guide) or [look up a plot by name](#capability-index). High-density export, external legends, the STFT color bar, shared A/B cursors and unit-step plots are additions in the working tree after `0.1.0`.
 
-> **Project Status (`0.1.0`)**
+> **Integration and verification**
 >
-> - **Implemented & tested**: Stages 1–16 — 133/133 items in the [MATLAB Plot Checklist](docs/MATLAB_PLOT_CHECKLIST.md) (`82 ML + 35 EX + 16 LG`) plus 26 extended engineering/modern capabilities (`EXT-01..26`) in [EXPANSION_PLAN](docs/EXPANSION_PLAN.md), the three-tier 10M-point `L1/L2/L3` performance engine, optional `feature = "wgpu"` hardware compute/instanced acceleration, optional `feature = "export"` PNG/hybrid-SVG snapshots, bilingual (`EN | 简体中文`) `rustdoc`, and a 27-gallery interactive demo.
-> - **Open boundaries (honest release status)**: Physical Linux/macOS/WebAssembly display verification, hardware GPU acceleration for 3D surfaces/volume raycasting/large distributions, standalone print-layout vector typography, and full long-duration app-wide resource regression remain open boundaries. As a result, all 133 checklist items remain marked **"开发中" (in progress, 0 delivered)**.
-> - **Safety & isolation**: `#![forbid(unsafe_code)]` workspace-wide (`[workspace.lints.rust] unsafe_code = "forbid"`), zero window/event-loop/device hijacking, zero implicit background threads or network requests in the core crate (including offline maps/globe).
+> The demo contains 27 interactive galleries. The `export` feature enables PNG and hybrid SVG snapshots. The `wgpu` feature accelerates supported series on the host’s device. Physical display checks on Linux, macOS and WebAssembly and long-duration resource tests are pending. 3D surface and volume rendering use the CPU.
 
 ---
 
@@ -29,14 +27,29 @@ Each figure on this page was exported individually from the demo data with `Plot
   - **L1 Zero-config smart defaults**: `PlotData::new` auto-builds a monotonic-X index (`>= 8,192` samples, 64 MiB cap); `LineSampling::Auto` & `MarkerSampling::Auto` preserve peaks and switch to exact rendering when zoomed in; `PlotState` embeds a bounded 2 MiB auto cache; raw-point picking uses 2D screen-AABB branch-and-bound pruning.
   - **L2 Explicit customization**: `LineSampling::{Auto, Exact, Visible, MinMax}`, `MarkerSampling::{Auto, Exact, PixelGrid}`, `RenderBackend::{Auto, Painter, Wgpu}`, 5-layer style inheritance (`defaults -> Theme -> inherited/Figure -> Plot -> Series`), `PlotDefaults`, `PlotCache`, `Plot::pan_limits`, dual Y, linear/log10/probit/weibull/datetime/duration/categorical axes, and self-contained PNG/SVG snapshots (`feature = "export"`).
   - **L3 10M-point live streaming & GPU**: Zero-copy `IndexedStream` (`StreamLine`), `O(1)`-sliced `UniformWaveform` (`WaveformLine`), and optional `feature = "wgpu"` (`register_wgpu`) WGSL compute + instanced rendering reusing the host `egui_wgpu::RenderState`, with automatic CPU `Painter` fallback when unavailable or exporting.
-- **Coordinate Systems & Chart Breadth**
-  - **2D Cartesian & Geometry**: Line / stairs / stems / scatter / error bars / bars (grouped, stacked, horizontal) / area / fill / patch (Flat & Gouraud) / polyshape (holes) / rectangles / heatmap / pcolor / curvilinear grid / contours & filled contours / `imshow` / adaptive `fplot` & `fimplicit` / quiver / feather / streamlines / Delaunay `triplot` / Voronoi / `alphaShape` / CSR `spy` / `animatedline` & `comet` / `EX-027` annotations.
-  - **Statistics, Bio, SPC, Finance & Composites**: `histogram` / `histogram2` / `binscatter` / `boxchart` / `violinplot` / `raincloud` / `swarmchart` / `bubblechart` / `pie` & `donut` / `wordcloud` & `bubblecloud` / `categoricalHeatmap` / `confusionchart` / `parallelplot` / `biplot` / `ecdf` (Kaplan-Meier + Greenwood) / `probplot` (`Probit`, `Weibull`, `qqplot`) / `dendrogram` / `clustergram` / `controlchart` (SPC + Nelson rules) / `candlestick` & `ohlc` / `waterfall` / `Figure` (up to 256 cells), `StackedPlot`, `ScatterHistogram`, `PlotMatrix`, `PlotYy`, `ParetoChart`.
-  - **Polar, Sky, RF, Control & DSP**: `PolarPlot` (`polarplot`, `polarscatter`, `polarbubblechart`, `polarhistogram`, `rose`, `compass`, `thetaregion`/`radiusregion`/`polarregion`), `SkyPlot`, `SmithPlot` (conformal Z/Y/YZ grids), `ZPlanePlot`, `BodePlot`, `NyquistPlot`, `NicholsPlot`, `RootLocus`, and pure-Rust Radix-2 + Bluestein FFT / Welch / STFT / Morlet CWT (`CwtPlot`).
-  - **3D & Volumetric**: `Plot3D` with `Orthographic` / `Perspective`, `SortedPainter` / bounded `ZBuffer` (with idle-frame RLE span caching), `plot3`, `fplot3`, `comet3`, `scatter3`, `bubblechart3`, `swarmchart3`, `bar3`/`bar3h`, `stem3`, `quiver3`, `fill3`, `constantplane`, `pie3`, `surf`/`surfc`/`surfl`/`surfnorm`, `mesh`/`meshc`/`meshz`/`waterfall`, `contour3`, `ribbon`, `fsurf`/`fmesh`/`fimplicit3`, `sphere`/`cylinder`/`ellipsoid`/`trisurf`, `Patch3D`, `AlphaShape3D`, `Graph3D`, `slice`, `contourslice`, `isosurface`, `isocaps`, `tetramesh`, 3D stream plots/cones, CPU `VolumeRender3D` (`volshow`) raycasting, and octree-LOD `PointCloud3D` (`pcshow`).
-  - **Geographic & Modern Diagrams**: Offline 2D `GeoPlot` (`geoplot`, `geoscatter`, `geodensityplot`, `geobubble`, dateline splitting, `GeoTileCache` + `GeoOfflinePolicy`), 3D WGS84 `GeoGlobePlot`, plus `RadarChart`, `SankeyChart`, `TreemapChart`, `SunburstChart`, and `GanttChart`.
 
 ---
+
+## Customize a plot component
+
+In the surface gallery above, the height labels stay on the edge at minimum X and maximum Y as the camera orbits. X and Y select their own edges from the projected box. The edge endpoints are in data coordinates, so reversing X preserves the meaning of “minimum X”.
+
+```rust
+use egui_customplot::{Axis3D, AxisEdge3D, Plot3D};
+
+let surface = Plot3D::new("surface").z_axis(
+    Axis3D::new().label("Height").label_edge(AxisEdge3D::new(false, true)),
+);
+```
+
+| To change | Public entry point in the working tree |
+| --- | --- |
+| One 3D axis | Set a fixed edge with `Axis3D::label_edge`, or implement `AxisDecoration3D` to select an edge, position the labels or draw them. `ScaleMapping3D` accepts a monotone forward/inverse pair on a built-in validity domain. `CameraLens3D` supplies a projective lens with a matching picking ray. `CameraNavigation3D` maps orbit, pan and scroll gestures to the next camera pose. |
+| Legend, title or color bar | Attach a `LegendComponent` or `PlotDecoration` to a Cartesian 2D, 3D or geographic plot. Polar plots also accept custom legends and titles. The component measures its space in logical points. External components get a clipped drawing area outside plot navigation. |
+| A host-owned layer | Mix `PlotLayer::custom(&layer)` with native 2D layers. The layer supplies its range, paint batch and optional pick. During snapshot capture it can emit exportable shapes. In 3D submit `Layer3D::Custom` with point, polyline or triangle batches and a geometry revision for the depth cache. |
+| A control-system chart | Use `BodePlot::show_with_panels` for magnitude and phase, and `panel_at` to read the actual subplot transform. `StepResponsePlot::configure_plot` and `configure_curve` expose its axes, annotations and response curve. |
+
+[Runnable host-component tests](crates/egui-customplot/tests/host_components.rs) · [3D layout, scale and projection tests](crates/egui-customplot/tests/customization_3d.rs)
 
 ## Requirements & Cargo Features
 
@@ -103,19 +116,169 @@ cargo doc --workspace --no-deps --all-features --open
 
 ---
 
-## Engineering examples
+## Illustrated chart guide
 
-| Temperature and latency · `--custom-axes` | Time–frequency analysis · `--stage15` |
+Each heading gives the demo preset. Run `cargo run -p customplot-demo --release --locked -- --stage15` and substitute the preset you want. Select a figure to inspect it at full resolution.
+
+[Signals](#gallery-signals) · [Fields](#gallery-fields) · [Statistics](#gallery-statistics) · [RF and control](#gallery-control) · [Spatial data](#gallery-spatial) · [Relationships](#gallery-relationships)
+
+<a id="gallery-signals"></a>
+
+### Signals, samples and time
+
+Use a line for a continuous trace, steps for a held value and stems for isolated observations. The default gallery also supports log axes for power-law data.
+
+| Signal and observations · default gallery | Sample and hold · `--stairs` |
 | --- | --- |
-| [![Temperature and latency curves on a shared UTC timeline with separate vertical scales](docs/images/dual-axis.png)](docs/images/dual-axis.png) | [![STFT spectrogram with horizontal frequency bands crossed by a rising chirp](docs/images/spectrogram.png)](docs/images/spectrogram.png) |
-| Two signals share a UTC timeline. Read temperature on the left axis and elapsed duration on the right, each in its own units. | The short-time Fourier transform (STFT) separates a changing signal into time and frequency. The horizontal bands mark steady tones, and the rising band traces a chirp. |
+| [![Signal and observations](docs/images/signal.png)](docs/images/signal.png) | [![Sample and hold](docs/images/stairs.png)](docs/images/stairs.png) |
+| Overlay observations on a continuous signal and hover to inspect an original sample. | Markers show when the value changes. Horizontal segments show how long it holds. |
 
-| Impedance matching · `--stage15` | Transpacific route · `--geo` |
+| Signed stems · `--stems` | Bars with uncertainty · `--statistical` |
 | --- | --- |
-| [![Smith chart comparing reflection-coefficient traces for an RLC load and a matching stub](docs/images/smith.png)](docs/images/smith.png) | [![Pacific route crossing the international date line on an offline coastline map](docs/images/pacific-route.png)](docs/images/pacific-route.png) |
-| Plot impedance or S-parameter sweeps as reflection coefficients. Compare the load and matching network on one Smith chart and see where each trace approaches the matched center. | Center the map on the Pacific to follow a route across the date line. The bundled coastline data works offline. |
+| [![Signed stems](docs/images/stems.png)](docs/images/stems.png) | [![Bars with uncertainty](docs/images/bar-errors.png)](docs/images/bar-errors.png) |
+| Each endpoint has its own distance and direction from the baseline. | Compare signed measurements and their asymmetric error intervals. The gallery also includes explicit-bin histograms. |
 
-From the repository root, run `cargo run -p customplot-demo --release --locked -- --stage15` to open the RF and signal-processing gallery. Substitute a gallery flag from the tables to explore another example.
+| Two units, one timeline · `--custom-axes` | Ten million samples · `--dynamic-10m` |
+| --- | --- |
+| [![Two units, one timeline](docs/images/dual-axis.png)](docs/images/dual-axis.png) | [![Ten million samples](docs/images/streaming.png)](docs/images/streaming.png) |
+| Read temperature on the left and duration on the right. The legend sits outside the axes. | This 90-second window shows detail from a ten-million-sample waveform. The demo updates in batches and also supports an indexed ring for timestamped samples. |
+
+<a id="gallery-fields"></a>
+
+### Fields, functions and geometry
+
+The surface and filled contours at the top show two views of a scalar field. These examples cover cells, warped grids, implicit curves, polygon interiors, vectors and unstructured meshes.
+
+| Scalar cells and a line · `--scalar` | Curvilinear grid · `--stage13` |
+| --- | --- |
+| [![Scalar cells and a line](docs/images/scalar.png)](docs/images/scalar.png) | [![Curvilinear grid](docs/images/curvilinear.png)](docs/images/curvilinear.png) |
+| Cell color encodes intensity. A line overlay uses the same data coordinates. | Follow an isoline across a warped grid whose vertices have explicit X and Y coordinates. |
+
+| Implicit function · `--functions` | Fills and holes · `--polygons` |
+| --- | --- |
+| [![Implicit function](docs/images/implicit.png)](docs/images/implicit.png) | [![Fills and holes](docs/images/polygons.png)](docs/images/polygons.png) |
+| Trace the zero level of a Cassini oval. The gallery also samples explicit and parametric functions. | Concave outlines and polygon holes share the axes with patches and rectangles. |
+
+| Rotational vector field · `--quiver` | Delaunay and Voronoi · `--geometry` |
+| --- | --- |
+| [![Rotational vector field](docs/images/quiver.png)](docs/images/quiver.png) | [![Delaunay and Voronoi](docs/images/triangulation.png)](docs/images/triangulation.png) |
+| Arrow orientation and length encode a vector at each sample location. | Compare the triangulation and its Voronoi cells. This gallery also includes alpha shapes, RK4 streamlines, feather vectors and sparse matrix patterns. |
+
+<a id="gallery-statistics"></a>
+
+### Distributions, categories and multivariate data
+
+Choose a raincloud to see individual observations, an ECDF for time-to-event data, and a confusion matrix to locate classification errors. Other views include Q–Q and Weibull plots, Ward trees, clustered heatmaps, SPC control limits and financial waterfalls.
+
+| Raincloud · `--distributions` | Kaplan–Meier estimate · `--stage14` |
+| --- | --- |
+| [![Raincloud](docs/images/raincloud.png)](docs/images/raincloud.png) | [![Kaplan–Meier estimate](docs/images/survival.png)](docs/images/survival.png) |
+| Compare the raw dots, box summary and smoothed density for each group. | Read the cumulative event probability from the steps and its confidence interval from the band. The demo also offers the survival curve. |
+
+| Confusion matrix · `--stage13` | PCA biplot · `--stage14` |
+| --- | --- |
+| [![Confusion matrix](docs/images/confusion.png)](docs/images/confusion.png) | [![PCA biplot](docs/images/biplot.png)](docs/images/biplot.png) |
+| The diagonal counts correct predictions. Marginal summaries expose class-specific mistakes. | Inspect observation scores alongside arrows for variable loadings in the same component plane. |
+
+| Bubble size legend · `--multivariate` | Candlestick and OHLC · `--stage14` |
+| --- | --- |
+| [![Bubble size legend](docs/images/bubbles.png)](docs/images/bubbles.png) | [![Candlestick and OHLC](docs/images/candlestick.png)](docs/images/candlestick.png) |
+| Compare positions and use the size key to read a third variable. The gallery includes binned scatter, parallel coordinates and scatterplot matrices. | Read the open and close from the body and the intraperiod extremes from the wick. Switch to OHLC bars in the demo. |
+
+<a id="gallery-control"></a>
+
+### RF, control systems and time–frequency analysis
+
+Open `--stage15` for impedance/admittance grids, pole–zero plots, Bode stability margins, Nyquist, Nichols and root locus. Its signal tools include FFT spectra, Welch PSD, STFT and Morlet CWT with a cone of influence. Enable **Waveform, shared cursors & step response** for the cursor and unit-step examples.
+
+| Smith chart · `--stage15` | STFT in decibels · `--stage15` |
+| --- | --- |
+| [![Smith chart](docs/images/smith.png)](docs/images/smith.png) | [![STFT in decibels](docs/images/spectrogram.png)](docs/images/spectrogram.png) |
+| Compare the load and matching-stub trajectories in the reflection-coefficient plane. | Fixed tones form horizontal bands. The rising chirp crosses them. Read frequency vertically and magnitude from the color bar. |
+
+| Bode magnitude and phase · `--stage15` | Z-plane poles and zeros · `--stage15` |
+| --- | --- |
+| [![Bode magnitude and phase against logarithmic frequency](docs/images/bode.png)](docs/images/bode.png) | [![Poles and zeros against the unit circle](docs/images/pole-zero.png)](docs/images/pole-zero.png) |
+| Read gain in dB and unwrapped phase in degrees at the same frequency. The demo annotates stability margins when available. | Locate poles and zeros relative to the unit circle to inspect a discrete-time system. |
+
+| Shared time cursors · `--stage15` | Unit-step response · `--stage15` |
+| --- | --- |
+| [![Shared time cursors](docs/images/shared-cursors.png)](docs/images/shared-cursors.png) | [![Unit-step response](docs/images/step-response.png)](docs/images/step-response.png) |
+| Click to pin A and Shift-click to pin B. Both panels mark the same times. Read Δt across panels and Δy for two pins on one plot and Y axis. | The example overshoots by 44.4%. The guides mark the final value and sampled 2% settling time. Supported plants are stable, proper, delay-free first- and second-order continuous systems. |
+
+<a id="gallery-spatial"></a>
+
+### Spatial data and coordinate systems
+
+Switch projections to match the measurement. Polar axes describe direction, sky axes describe azimuth and elevation, and geographic axes account for longitude wrap. The 3D galleries add orbit, orthographic/perspective projection and depth testing.
+
+| Polar histogram and rose · `--polar` | Satellite sky plot · `--stage13` |
+| --- | --- |
+| [![Polar histogram and rose](docs/images/polar-histogram.png)](docs/images/polar-histogram.png) | [![Satellite sky plot](docs/images/sky.png)](docs/images/sky.png) |
+| Angular bins reveal preferred directions. The gallery also supports polar lines, bubbles, compass vectors and highlighted sectors. | North is at the top and the zenith at the center. Follow satellite tracks against an elevation mask. |
+
+| Pacific crossing · `--geo` | WGS84 globe · `--stage16` |
+| --- | --- |
+| [![Pacific crossing](docs/images/pacific-route.png)](docs/images/pacific-route.png) | [![WGS84 globe](docs/images/globe.png)](docs/images/globe.png) |
+| The route splits at the date line over an offline coastline. Density and bubble overlays use geographic coordinates. | Rotate a globe with coastlines, city markers and elevated tracks. Geometry on the far side is hidden. |
+
+| 3D scatter and bubbles · `--plot3d` | Point-cloud detail · `--stage16` |
+| --- | --- |
+| [![3D scatter and bubbles](docs/images/scatter3d.png)](docs/images/scatter3d.png) | [![Point-cloud detail](docs/images/point-cloud.png)](docs/images/point-cloud.png) |
+| Position gives XYZ, while marker size and color can carry additional values. | The demo draws a 40,000-point spiral. Octree level-of-detail sampling adapts to the camera view. |
+
+| Isosurface and caps · `--volumes3d` | Direct volume rendering · `--stage16` |
+| --- | --- |
+| [![Isosurface and caps](docs/images/isosurface.png)](docs/images/isosurface.png) | [![Direct volume rendering](docs/images/volume.png)](docs/images/volume.png) |
+| A constant-value surface reveals the shape inside a scalar volume. Explore slices, contour slices, tetrahedra and flow in the same gallery. | The CPU raycaster samples through the volume. Switch between alpha compositing, maximum intensity and an isosurface threshold. |
+
+<a id="gallery-relationships"></a>
+
+### Relationships, presentation and live views
+
+Use a graph to follow connections and a Sankey diagram to compare quantities along those connections. Annotations, shared styles and animation also work in the embedded demo.
+
+| Layered directed graph · `--networks` | Energy flows · `--stage16` |
+| --- | --- |
+| [![Layered directed graph](docs/images/network.png)](docs/images/network.png) | [![Energy flows](docs/images/sankey.png)](docs/images/sankey.png) |
+| Follow directed edges between nodes. The gallery also includes force layout, trees and highlights. | Band widths encode flow. Other modern views cover radar profiles, hierarchical treemaps and sunbursts, and Gantt dependencies. |
+
+| Peaks and valleys · `--custom-annotations` | Series styles · `--custom-styling` |
+| --- | --- |
+| [![Peaks and valleys](docs/images/annotations.png)](docs/images/annotations.png) | [![Series styles](docs/images/styling.png)](docs/images/styling.png) |
+| Callouts locate extrema on a damped signal. Click near a sample to pin its data tip. | Distinguish series by dash pattern, color and hollow markers. Series can override the surrounding plot and figure theme. |
+
+| Comet playback · `--custom-animation` | Gantt schedule · `--stage16` |
+| --- | --- |
+| [![Comet playback](docs/images/animation.png)](docs/images/animation.png) | [![Gantt schedule](docs/images/gantt.png)](docs/images/gantt.png) |
+| The dot marks the current position on a Lissajous path. The demo also animates a recording pen, streaming oscilloscope and 3D particles. | Compare task start times, durations and dependency links on one horizontal time axis. |
+
+### Capability index
+
+| Chart family | What you can plot | Rust entry points |
+| --- | --- | --- |
+| Signals and discrete samples | Continuous and stepped lines, stems, error bars, grouped and stacked bars, stacked areas and dual Y axes. | `Line`, `Stems`, `ErrorBars`, `Bars`, `Area`, `PlotYy` |
+| Scalar fields and images | Show an image, color regular or warped cells by value, or label isolines over filled contours. | `PlotImage`, `Heatmap`, `Pcolor`, `CurvilinearPcolor`, `Contours`, `FilledContours` |
+| Functions and planar geometry | Sample explicit and implicit curves, fill polygons with holes, shade patches, or inspect triangulations, Voronoi cells and sparse matrix patterns. | `FunctionPlot`, `ImplicitCurve`, `PolyShape`, `Patch`, `TriPlot`, `Voronoi`, `AlphaShape`, `Spy` |
+| Distributions and inference | Inspect binned counts, swarms, boxes, violins and rainclouds. Compare quantiles, fit probability axes, or examine empirical distributions and survival curves. | `Histogram2`, `BinScatter`, `SwarmChart`, `BoxChart`, `ViolinPlot`, `Raincloud`, `ProbabilityPlot`, `EcdfPlot` |
+| Categories and multiple variables | Compare category shares in pies and donuts, size bubbles and words by weight, inspect classification errors, or explore correlations and clusters. | `PieChart`, `BubbleChart`, `WordCloud`, `ConfusionChart`, `ParallelPlot`, `Biplot`, `Clustergram` |
+| Polar, sky and geographic coordinates | Plot bearings, angular histograms, compass vectors and satellite tracks. Show routes, density and bubbles on an offline map or elevated tracks on a globe. | `PolarPlot`, `CompassPlot`, `SkyPlot`, `GeoPlot`, `GeoDensity`, `GeoBubbles`, `GeoGlobePlot` |
+| 3D samples and surfaces | Inspect lines, bubbles, bars, stems, ribbons and point clouds. Add lighting, floor contours, triangular meshes or tetrahedra to show surface and mesh structure. | `Plot3D`, `PointCloud3D`, `Surface3D`, `MeshSurface3D`, `TriSurf3D`, `TetraMesh3D`, `Patch3D` |
+| Volume and flow | Cut slices, extract capped isosurfaces or raycast a volume. Show vector directions with arrows and cones, and follow trajectories with streamlines, ribbons, tubes and particles. | `VolumeSlice3D`, `Isosurface3D`, `Isocaps3D`, `VolumeRender3D`, `Quiver`, `ConePlot3D`, `Streamlines`, `StreamTube3D` |
+| RF, control and signal processing | Read impedance or admittance, inspect poles, zeros and frequency response, measure a unit step, or follow changing frequencies with FFT, Welch PSD, STFT and Morlet wavelets. | `SmithPlot`, `ZPlanePlot`, `BodePlot`, `NyquistPlot`, `NicholsPlot`, `RootLocus`, `StepResponsePlot`, `SpectrogramData`, `CwtPlot` |
+| Process control and finance | Identify Nelson rule violations, rank contributors in a Pareto chart, compare open/high/low/close prices or trace cumulative changes in a waterfall. | `ControlChart`, `ParetoChart`, `Candlestick`, `OhlcBars`, `Waterfall2D` |
+| Networks, hierarchies and schedules | Trace graph edges, branches and weighted flows. Compare profiles on radar axes, display nested shares as rectangles or rings, and place task dependencies on a timeline. | `GraphPlot`, `Graph3D`, `DendrogramPlot`, `SankeyChart`, `RadarChart`, `TreemapChart`, `SunburstChart`, `GanttChart` |
+| Live data and measurement | Display regularly or irregularly sampled streams, animate a trajectory, annotate points and intervals, and pin two cursors across plots to measure timing. | `WaveformLine`, `StreamLine`, `AnimatedLine`, `Comet`, `Annotation`, `SharedCursors` |
+
+Layout and interaction span the chart families. `Figure` arranges up to 256 cells. `PlotLayer` combines series in one cell, `AxisLink` synchronizes compatible axes, and `SharedCursors` measures between views. `StackedPlot`, `ScatterHistogram`, `PlotMatrix`, `PlotYy` and `ParetoChart` provide ready-made compositions. `Plot::legend_position` reserves space at the right or below. `Plot::color_bar` associates labeled units with the color scale.
+
+**Reproduce the illustrations.** The demo uses `PlotSnapshot::render_at` with three pixels per logical point, then exports each chart region to PNG. Fonts and software 3D depth buffers use the target density. The `export` feature also supports hybrid SVG. Run this from the repository root.
+
+```sh
+cargo test -p customplot-demo --locked render_readme_plots -- --ignored
+```
+
+---
 
 ## Interactive Demo (`customplot-demo`)
 
@@ -182,8 +345,7 @@ cargo bench -p egui-customplot --bench stage16_performance --locked
 - [Architecture & Domain Boundaries](docs/ARCHITECTURE.md)
 - [Implementation Progress & Evidence Log](docs/PROGRESS.md)
 - [Project Plan & Milestones](docs/PLAN.md)
-- [Stages 12–16 Expansion Plan (`EXT-01..26`)](docs/EXPANSION_PLAN.md)
-- [MATLAB Plot Delivery Checklist (133 items + Toolboxes)](docs/MATLAB_PLOT_CHECKLIST.md)
+- [Engineering chart design and acceptance criteria](docs/EXPANSION_PLAN.md)
 - [egui Integration & Performance Contracts](docs/EGUI_INTEGRATION_AND_PERFORMANCE.md)
 - Stage Reports: [1](docs/STAGE_1.md) · [2](docs/STAGE_2.md) · [3](docs/STAGE_3.md) · [4](docs/STAGE_4.md) · [5](docs/STAGE_5.md) · [6](docs/STAGE_6.md) · [7](docs/STAGE_7.md) · [8](docs/STAGE_8.md) · [9](docs/STAGE_9.md) · [10](docs/STAGE_10.md) · [11](docs/STAGE_11.md) · [12](docs/STAGE_12.md) · [13](docs/STAGE_13.md) · [14](docs/STAGE_14.md) · [15](docs/STAGE_15.md) · [16](docs/STAGE_16.md)
 - Community & Policies: [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md)

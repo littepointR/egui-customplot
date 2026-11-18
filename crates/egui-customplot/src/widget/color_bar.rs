@@ -20,6 +20,56 @@ pub struct ColorBarResponse {
     pub axis_ticks: Vec<AxisTick>,
 }
 
+pub(super) fn paint_aligned(
+    ui: &Ui,
+    area: Rect,
+    plot: Rect,
+    scale: ColorScale,
+    label: &str,
+    text_color: egui::Color32,
+) {
+    let bar = Rect::from_min_max(
+        egui::pos2(area.left(), plot.top()),
+        egui::pos2(area.left() + 14.0, plot.bottom()),
+    );
+    let range = scale.range();
+    let mut ticks = Axis::new()
+        .scale(scale.scale())
+        .ticks(range, bar.height() * 2.0);
+    ticks.retain(|tick| {
+        scale
+            .fraction(tick.value)
+            .is_some_and(|f| f.min(1.0 - f) * f64::from(bar.height()) > 16.0)
+    });
+    for value in range {
+        ticks.push(AxisTick {
+            value,
+            major: true,
+            label: crate::axis::format_tick(value, (range[1] - range[0]) / 100.0),
+        });
+    }
+    paint_color_bar(ui, area, bar, scale, &ticks, label, text_color);
+}
+
+pub(super) fn paint_inset(
+    ui: &Ui,
+    outer: Rect,
+    bar: Rect,
+    scale: ColorScale,
+    label: &str,
+    color: egui::Color32,
+) {
+    let ticks = Axis::new()
+        .scale(scale.scale())
+        .ticks(scale.range(), bar.height());
+    let area = Rect::from_min_max(
+        egui::pos2(bar.left(), bar.top() - 20.),
+        egui::pos2(bar.left() + 72., bar.bottom() + 8.),
+    )
+    .intersect(outer);
+    paint_color_bar(ui, area, bar, scale, &ticks, label, color);
+}
+
 impl ColorBar {
     pub fn new(scale: ColorScale) -> Self {
         Self {
@@ -45,7 +95,15 @@ impl ColorBar {
             .scale(self.scale.scale())
             .ticks(self.scale.range(), bar_rect.height());
         if ui.is_rect_visible(outer) {
-            paint_color_bar(ui, outer, bar_rect, self.scale, &axis_ticks, &self.label);
+            paint_color_bar(
+                ui,
+                outer,
+                bar_rect,
+                self.scale,
+                &axis_ticks,
+                &self.label,
+                ui.visuals().text_color(),
+            );
         }
         ColorBarResponse {
             response,

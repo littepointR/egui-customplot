@@ -170,7 +170,7 @@ impl ContourDemo {
                         let plot = Plot::new("contour-plot")
                             .height(height)
                             .allow_scroll_zoom(true)
-                            .legend(true);
+                            .legend_position(egui_customplot::LegendPosition::OutsideRight);
                         if self.show_pcolor {
                             let shading = if self.interp_shading {
                                 PcolorShading::Interp
@@ -233,7 +233,7 @@ impl ContourDemo {
                                 .imshow_axes()
                                 .height(height)
                                 .allow_scroll_zoom(true)
-                                .legend(true)
+                                .legend_position(egui_customplot::LegendPosition::OutsideRight)
                                 .title(tr(
                                     l,
                                     "RGBA Image (imshow_axes: top-down Y, 1:1 aspect)",

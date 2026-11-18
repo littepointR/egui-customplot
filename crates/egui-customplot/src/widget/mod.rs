@@ -14,6 +14,8 @@ mod response;
 mod show;
 mod sky;
 mod smith;
+mod step;
+pub use step::StepResponsePlot;
 
 use std::sync::Arc;
 
@@ -23,7 +25,7 @@ use crate::{
     Annotation, Axis, HoverInfo, PlotStyle, PlotTheme,
     interaction::{HoverFormatter, NavigationOptions},
 };
-pub use bode::{BodePlot, BodePlotResponse, BodePlotState};
+pub use bode::{BodePanel, BodePlot, BodePlotResponse, BodePlotState};
 pub use clustergram::{Clustergram, ClustergramResponse, ClustergramState};
 pub use color_bar::{ColorBar, ColorBarResponse};
 pub use composite::{
@@ -31,9 +33,13 @@ pub use composite::{
     StackedPlotResponse,
 };
 pub use figure::{Figure, FigureCell, FigureResponse};
-pub use geo::{GeoPlot, GeoPlotResponse};
+mod geo_response;
+pub use geo::GeoPlot;
+pub use geo_response::GeoPlotResponse;
 pub use geoglobe::{GeoGlobePlot, GeoGlobeResponse};
-pub use plot3d::{Plot3D, Plot3DResponse};
+mod plot3d_response;
+pub use plot3d::Plot3D;
+pub use plot3d_response::Plot3DResponse;
 pub use polar::{PolarPlot, PolarPlotResponse};
 pub use response::PlotResponse;
 pub use sky::{SkyPlot, SkyPlotResponse};
@@ -56,7 +62,11 @@ pub struct Plot {
     axes: [Axis; 2],
     right_y_axis: Option<Axis>,
     title: String,
+    decorations: crate::layout::DecorationSlots,
+    legend_component: Option<Arc<dyn crate::LegendComponent>>,
     show_legend: bool,
+    legend_position: crate::LegendPosition,
+    color_bar: Option<(crate::ColorScale, String)>,
     show_hover: bool,
     crosshair: bool,
     pick_radius: f32,
@@ -80,7 +90,11 @@ impl Plot {
             axes: [Axis::default(), Axis::default()],
             right_y_axis: None,
             title: String::new(),
+            decorations: Default::default(),
+            legend_component: None,
             show_legend: false,
+            legend_position: Default::default(),
+            color_bar: None,
             show_hover: true,
             crosshair: true,
             pick_radius: 12.0,
@@ -189,6 +203,34 @@ impl Plot {
     }
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = title.into();
+        self
+    }
+    /// Enables the legend at the chosen location. External legends reserve their own area.
+    pub fn legend_position(mut self, position: crate::LegendPosition) -> Self {
+        self.legend_position = position;
+        self.show_legend = true;
+        self
+    }
+
+    /// Replace title measurement and drawing.
+    pub fn title_component(mut self, component: Arc<dyn crate::PlotDecoration>) -> Self {
+        self.decorations.title = Some(component);
+        self
+    }
+    pub fn color_bar_component(mut self, component: Arc<dyn crate::PlotDecoration>) -> Self {
+        self.decorations.color_bar = Some(component);
+        self
+    }
+    /// Attach a color bar and include it in the outer rectangle and exports.
+    pub fn color_bar(mut self, scale: crate::ColorScale, label: impl Into<String>) -> Self {
+        self.color_bar = Some((scale, label.into()));
+        self
+    }
+
+    /// Use a host-measured legend with custom entry widgets.
+    pub fn legend_component(mut self, component: Arc<dyn crate::LegendComponent>) -> Self {
+        self.legend_component = Some(component);
+        self.show_legend = true;
         self
     }
     pub fn legend(mut self, show: bool) -> Self {

@@ -169,6 +169,15 @@ impl<'a> SmithPlot<'a> {
         };
 
         if !diagnostics.painting_skipped {
+            if !self.title.is_empty() {
+                ui.painter_at(layout.outer).text(
+                    egui::pos2(layout.plot_area.center().x, layout.outer.top() + 4.0),
+                    egui::Align2::CENTER_TOP,
+                    &self.title,
+                    egui::FontId::proportional(13.0),
+                    style.text_color,
+                );
+            }
             let painter = ui.painter_at(layout.plot_area);
             paint_smith(
                 &painter,
@@ -177,7 +186,6 @@ impl<'a> SmithPlot<'a> {
                 transform,
                 self.grid_kind,
                 self.show_grid,
-                &self.title,
                 &style,
                 hovered_point.as_ref(),
                 &mut diagnostics.visible_series,

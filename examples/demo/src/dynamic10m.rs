@@ -111,6 +111,11 @@ impl Dynamic10mDemo {
     }
 
     #[cfg(test)]
+    pub(super) fn set_view_bounds(&mut self, bounds: egui_customplot::PlotBounds) {
+        self.state.set_bounds(bounds);
+    }
+
+    #[cfg(test)]
     pub fn set_capacity_for_test(&mut self, points: usize) {
         self.target_points = points.max(128);
         self.batch_size = self.batch_size.min(self.target_points / 2).max(16);

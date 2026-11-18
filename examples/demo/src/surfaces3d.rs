@@ -3,9 +3,10 @@ use std::f64::consts::TAU;
 
 use eframe::egui::{self, Color32};
 use egui_customplot::{
-    Bounds3D, ColorMap, ColorScale, Contour3D, Contour3DData, ContourLevels, DepthMode, Figure,
-    ImplicitSurface3DData, Layer3D, MeshSurface3D, Plot3D, Plot3DState, PlotResponse, Point3D,
-    Ribbon3D, Ribbon3DData, Surface3D, Surface3DData, SurfaceShading, TriMesh3DData, TriSurf3D,
+    Axis3D, AxisEdge3D, Bounds3D, ColorMap, ColorScale, Contour3D, Contour3DData, ContourLevels,
+    DepthMode, Figure, ImplicitSurface3DData, Layer3D, MeshSurface3D, Plot3D, Plot3DState,
+    PlotResponse, Point3D, Ribbon3D, Ribbon3DData, Surface3D, Surface3DData, SurfaceShading,
+    TriMesh3DData, TriSurf3D,
 };
 
 use crate::i18n::{lang, tr};
@@ -230,6 +231,11 @@ impl Surfaces3DDemo {
                         Plot3D::new("s9b-surf")
                             .height(height)
                             .allow_scroll_zoom(true)
+                            .z_axis(
+                                Axis3D::new()
+                                    .label("Height")
+                                    .label_edge(AxisEdge3D::new(false, true)),
+                            )
                             .color_bar(z_scale, "Z")
                             .title("surf / surfc / surfl / surfnorm"),
                         s0,

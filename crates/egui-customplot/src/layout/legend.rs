@@ -2,6 +2,50 @@ use egui::{Color32, IdSalt, Rect, Sense, Stroke, Ui};
 
 use crate::{PlotLayer, PlotState, model::ResolvedPlotStyle};
 
+/// Placement of a Cartesian plot legend within the allocated widget.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum LegendPosition {
+    #[default]
+    InsideTopRight,
+    OutsideRight,
+    OutsideBottom,
+}
+
+pub(crate) fn reserve_legend(
+    ui: &Ui,
+    outer: &mut Rect,
+    series: &[PlotLayer<'_>],
+    placement: LegendPosition,
+) -> Option<Rect> {
+    if placement == LegendPosition::InsideTopRight {
+        return None;
+    }
+    let names = series.iter().map(|s| s.name()).filter(|n| !n.is_empty());
+    let count = names.clone().count();
+    if count == 0 || outer.width() < 96.0 || outer.height() < 60.0 {
+        return None;
+    }
+    let mut legend = *outer;
+    if placement == LegendPosition::OutsideRight {
+        let font = egui::TextStyle::Button.resolve(ui.style());
+        let width = names
+            .map(|n| {
+                ui.painter()
+                    .layout_no_wrap(n.to_owned(), font.clone(), ui.visuals().text_color())
+                    .size()
+                    .x
+            })
+            .fold(0.0, f32::max)
+            + 56.0;
+        legend.min.x = outer.right() - width.min(outer.width() * 0.42);
+        outer.max.x = legend.left() - 4.0;
+    } else {
+        legend.min.y = outer.bottom() - (24.0 * count as f32 + 18.0).min(outer.height() * 0.4);
+        outer.max.y = legend.top() - 4.0;
+    }
+    Some(legend)
+}
+
 #[derive(Clone, Debug)]
 pub struct LegendEntry {
     pub id: IdSalt,
@@ -43,7 +87,10 @@ pub(crate) fn legend_item_button(
     } else {
         style.text_color.gamma_multiply(0.42)
     };
-    let galley = ui.painter().layout_no_wrap(name.to_owned(), font_id, fg);
+    let wrap_width = (ui.available_width() - 18.0 - 2.0 * ui.spacing().button_padding.x).max(1.0);
+    let galley = ui
+        .painter()
+        .layout(name.to_owned(), font_id, fg, wrap_width);
     let pad = ui.spacing().button_padding;
     let swatch_w = 12.0_f32;
     let gap = 6.0_f32;
@@ -91,6 +138,7 @@ pub(crate) fn show_legend(
     series: &[PlotLayer<'_>],
     rect: Rect,
     id_salt: IdSalt,
+    component: Option<&dyn crate::LegendComponent>,
     style: &ResolvedPlotStyle<'_>,
 ) -> Vec<LegendEntry> {
     let mut entries = Vec::new();
@@ -120,7 +168,11 @@ pub(crate) fn show_legend(
                         let swatch = s.resolved_style(index, style).stroke.color;
                         let response = ui
                             .push_id(id, |ui| {
-                                legend_item_button(ui, s.name(), swatch, visible, style)
+                                if let Some(c) = component {
+                                    c.item(ui, s.name(), swatch, visible)
+                                } else {
+                                    legend_item_button(ui, s.name(), swatch, visible, style)
+                                }
                             })
                             .inner;
                         if response.clicked() && state.toggle_series(id) {

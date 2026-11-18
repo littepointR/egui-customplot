@@ -20,6 +20,7 @@ pub(crate) fn summarize_plot3d(
         let id = layer.id(idx);
         present.insert(id);
         let (alloc, pts, prims, non_fin, dom_inv) = match layer {
+            Layer3D::Custom(_) => ((0, 0), 0, 0, 0, 0),
             Layer3D::Line(Line3D { data: s, .. })
             | Layer3D::Scatter(Scatter3D { data: s, .. })
             | Layer3D::Comet(Comet3D { data: s, .. }) => (

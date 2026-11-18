@@ -1,7 +1,7 @@
 //! A standalone headless HOST using the same public API as a native egui app.
 use std::{io::Write, path::PathBuf};
 
-use egui::{Color32, Context, RawInput, Rect, pos2, vec2};
+use egui::{Color32, Context, vec2};
 use egui_customplot::{
     Axis, CaptureLimits, ColorScale, ErrorBar, ErrorBarData, ErrorBars, ExportOptions, GridData,
     Heatmap, Line, LineSampling, Plot, PlotData, PlotSnapshot, PlotState,
@@ -31,45 +31,46 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ErrorBar::new([2.0, 2.0f64.sin()]).y_error([0.25, 0.4]),
     ]);
     let mut state = PlotState::default();
-    let mut snapshot = None;
-    ctx.run_ui(
-        RawInput {
-            screen_rect: Some(Rect::from_min_size(pos2(0.0, 0.0), vec2(800.0, 500.0))),
-            ..Default::default()
-        },
+    let density = 3.0;
+    let snapshot = PlotSnapshot::render_at(
+        &ctx,
+        vec2(800.0, 480.0),
+        density,
+        CaptureLimits::default(),
         |ui| {
-            snapshot = Some(PlotSnapshot::capture(ui, CaptureLimits::default(), |ui| {
-                Plot::new("export-example")
-                    .height(480.0)
-                    .title("Displayed exact geometry / embedded host fonts")
-                    .x_axis(Axis::new().label("Time (s)"))
-                    .y_axis(Axis::new().label("Amplitude"))
-                    .show_layers(
-                        ui,
-                        &mut state,
-                        &[
-                            Heatmap::new(&grid, ColorScale::new([0.0, 1.0]).unwrap()).into(),
-                            Line::new(&data)
-                                .sampling(LineSampling::Exact)
-                                .color(Color32::WHITE)
-                                .name("Sine")
-                                .into(),
-                            ErrorBars::new(&errors)
-                                .color(Color32::RED)
-                                .name("Offsets")
-                                .into(),
-                        ],
-                    )
-                    .outer_rect
-            }));
+            Plot::new("export-example")
+                .height(480.0)
+                .title("Displayed exact geometry / embedded host fonts")
+                .x_axis(Axis::new().label("Time (s)"))
+                .y_axis(Axis::new().label("Amplitude"))
+                .show_layers(
+                    ui,
+                    &mut state,
+                    &[
+                        Heatmap::new(&grid, ColorScale::new([0.0, 1.0]).unwrap()).into(),
+                        Line::new(&data)
+                            .sampling(LineSampling::Exact)
+                            .color(Color32::WHITE)
+                            .name("Sine")
+                            .into(),
+                        ErrorBars::new(&errors)
+                            .color(Color32::RED)
+                            .name("Offsets")
+                            .into(),
+                    ],
+                )
+                .outer_rect
         },
-    )
-    .drop_without_applying_deltas();
-    let snapshot = snapshot.unwrap()?;
+    )?;
+    let options = ExportOptions {
+        pixels_per_point: density,
+        dpi: 96.0 * density,
+        ..Default::default()
+    };
     drop((ctx, state, data, grid, errors)); // encoding does not retain the host
     for (extension, bytes) in [
-        ("png", snapshot.to_png(ExportOptions::default())?),
-        ("svg", snapshot.to_svg(ExportOptions::default())?),
+        ("png", snapshot.to_png(options)?),
+        ("svg", snapshot.to_svg(options)?),
     ] {
         let file = base.with_extension(extension);
         if let Some(parent) = file.parent().filter(|p| !p.as_os_str().is_empty()) {

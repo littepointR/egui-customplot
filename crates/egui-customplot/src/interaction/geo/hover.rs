@@ -207,6 +207,7 @@ pub(crate) fn show_geo_legend(
     layers: &[GeoLayer<'_>],
     rect: Rect,
     legend_id: Id,
+    component: Option<&dyn crate::LegendComponent>,
     style: &ResolvedPlotStyle<'_>,
 ) -> Vec<LegendEntry> {
     let mut entries = Vec::new();
@@ -249,6 +250,9 @@ pub(crate) fn show_geo_legend(
                         let swatch = layer.resolved_style(idx, style).stroke.color;
                         let response = ui
                             .push_id(id, |ui| {
+                                if let Some(c) = component {
+                                    return c.item(ui, layer.name(), swatch, visible);
+                                }
                                 crate::layout::legend_item_button(
                                     ui,
                                     layer.name(),
@@ -273,6 +277,9 @@ pub(crate) fn show_geo_legend(
                         let color = style.palette[ci % style.palette.len()];
                         let response = ui
                             .push_id(("geo-cat", ci, cat.as_str()), |ui| {
+                                if let Some(c) = component {
+                                    return c.item(ui, cat, color, visible);
+                                }
                                 crate::layout::legend_item_button(ui, cat, color, visible, style)
                             })
                             .inner;

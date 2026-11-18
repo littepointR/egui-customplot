@@ -45,3 +45,19 @@ fn stage15_gallery_renders_multipass_and_toggles_modes() {
     assert!(svg.contains("<svg") && !svg.contains("<text"));
     assert!(snap.to_png(opts).unwrap().starts_with(b"\x89PNG"));
 }
+
+#[test]
+fn waveform_measurement_gallery_draws_three_stacked_charts() {
+    let ctx = egui::Context::default();
+    let mut demo = Demo::with_gallery(Some("--stage15"));
+    demo.stage15.show_measurements = true;
+    ctx.run_ui(input(0.0), |ui| {
+        let charts = demo.show_charts(ui);
+        assert_eq!(charts.len(), 3);
+        for pair in charts.windows(2) {
+            assert!(pair[0].outer_rect.bottom() <= pair[1].outer_rect.top());
+        }
+        assert!(charts[1].transform.rect().right() < charts[0].transform.rect().right());
+    })
+    .drop_without_applying_deltas();
+}

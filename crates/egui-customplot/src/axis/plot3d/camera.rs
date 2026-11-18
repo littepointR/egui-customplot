@@ -81,7 +81,7 @@ impl Camera3D {
 #[derive(Clone, Copy, Debug)]
 pub struct Transform3D {
     bounds: Bounds3D,
-    scales: [AxisScale; 3],
+    mappings: [super::ScaleMapping3D; 3],
     reversed: [bool; 3],
     trans_min: [f64; 3],
     trans_span: [f64; 3],
@@ -91,6 +91,7 @@ pub struct Transform3D {
     right: [f64; 3],
     up: [f64; 3],
     forward: [f64; 3],
+    lens: Option<super::CameraLens3D>,
     cam_dist: f64,
     fit_radius: f64,
 }
@@ -105,15 +106,32 @@ impl Transform3D {
         rect: Rect,
         camera: Camera3D,
     ) -> Result<Self, BoundsError> {
-        if !rect.is_finite() || rect.width() <= 1.0 || rect.height() <= 1.0 {
+        Self::with_mappings(
+            bounds,
+            scales.map(Into::into),
+            reversed,
+            aspect,
+            rect,
+            camera,
+        )
+    }
+    pub fn with_mappings(
+        bounds: Bounds3D,
+        mappings: [super::ScaleMapping3D; 3],
+        reversed: [bool; 3],
+        aspect: DataAspect3D,
+        rect: Rect,
+        camera: Camera3D,
+    ) -> Result<Self, BoundsError> {
+        if !rect.is_finite() || !rect.is_positive() {
             return Err(BoundsError);
         }
-        let validated = Bounds3D::validated_for_scales(bounds.min(), bounds.max(), scales)?;
+        let validated = Bounds3D::validated_for_scales(bounds.min(), bounds.max(), mappings)?;
         let mut trans_min = [0.0; 3];
         let mut trans_span = [0.0; 3];
         for i in 0..3 {
-            let a = scales[i].forward(validated.min()[i]).ok_or(BoundsError)?;
-            let b = scales[i].forward(validated.max()[i]).ok_or(BoundsError)?;
+            let a = mappings[i].forward(validated.min()[i]).ok_or(BoundsError)?;
+            let b = mappings[i].forward(validated.max()[i]).ok_or(BoundsError)?;
             trans_min[i] = a;
             trans_span[i] = b - a;
         }
@@ -137,7 +155,7 @@ impl Transform3D {
         let fit_radius = f64::from(rect.width().min(rect.height())) * 0.44 * zoom;
         Ok(Self {
             bounds: validated,
-            scales,
+            mappings,
             reversed,
             trans_min,
             trans_span,
@@ -147,16 +165,27 @@ impl Transform3D {
             right,
             up,
             forward,
+            lens: None,
             cam_dist,
             fit_radius,
         })
     }
 
+    pub fn with_lens(mut self, lens: super::CameraLens3D) -> Self {
+        self.lens = Some(lens);
+        self
+    }
+    pub fn lens(&self) -> Option<super::CameraLens3D> {
+        self.lens
+    }
     pub fn bounds(&self) -> Bounds3D {
         self.bounds
     }
     pub fn scales(&self) -> [AxisScale; 3] {
-        self.scales
+        self.mappings.map(|m| m.domain())
+    }
+    pub fn mappings(&self) -> [super::ScaleMapping3D; 3] {
+        self.mappings
     }
     pub fn reversed(&self) -> [bool; 3] {
         self.reversed
@@ -175,7 +204,7 @@ impl Transform3D {
     pub fn data_to_unit(&self, p: Point3D) -> Option<[f64; 3]> {
         let mut out = [0.0; 3];
         for i in 0..3 {
-            let t = self.scales[i].forward(p[i])?;
+            let t = self.mappings[i].forward(p[i])?;
             let u = (t - self.trans_min[i]) / self.trans_span[i];
             if !u.is_finite() {
                 return None;
@@ -221,13 +250,18 @@ impl Transform3D {
         if depth <= 0.12 || !depth.is_finite() {
             return None;
         }
-        let persp = match self.camera.projection {
-            Projection3D::Orthographic => 1.0,
-            Projection3D::Perspective { .. } => self.cam_dist / depth,
+        let [x, y] = if let Some(lens) = self.lens {
+            lens.project(xc, yc, depth)?
+        } else {
+            let factor = match self.camera.projection {
+                Projection3D::Orthographic => 1.0,
+                Projection3D::Perspective { .. } => self.cam_dist / depth,
+            };
+            [xc * factor, yc * factor]
         };
         let c = self.rect.center();
-        let sx = (f64::from(c.x) + xc * persp * self.fit_radius) as f32;
-        let sy = (f64::from(c.y) - yc * persp * self.fit_radius) as f32;
+        let sx = (f64::from(c.x) + x * self.fit_radius) as f32;
+        let sy = (f64::from(c.y) - y * self.fit_radius) as f32;
         if sx.is_finite() && sy.is_finite() {
             Some((Pos2::new(sx, sy), depth as f32))
         } else {
@@ -246,63 +280,43 @@ impl Transform3D {
         d.is_finite().then_some(d)
     }
 
-    pub(crate) fn unit_to_data(&self, u: [f64; 3]) -> Option<Point3D> {
+    pub fn unit_to_data(&self, u: [f64; 3]) -> Option<Point3D> {
         let mut out = [0.0; 3];
         for i in 0..3 {
             let frac = if self.reversed[i] { 1.0 - u[i] } else { u[i] };
             let t = self.trans_min[i] + frac * self.trans_span[i];
-            out[i] = self.scales[i].inverse(t)?;
+            out[i] = self.mappings[i].inverse(t)?;
         }
         Some(out)
     }
 
     /// Intersects pixel screen ray with `[0, 1]^3` unit cube: returns `(u_origin, u_dir, t_enter, t_exit)`
     /// parameterized by camera depth `t` such that `u(t) = u_origin + t * u_dir`.
-    pub(crate) fn screen_ray_unit(&self, pos: Pos2) -> Option<([f64; 3], [f64; 3], f64, f64)> {
+    pub fn screen_ray_unit(&self, pos: Pos2) -> Option<([f64; 3], [f64; 3], f64, f64)> {
         if self.fit_radius <= 1e-9 || self.cam_dist <= 0.12 {
             return None;
         }
         let c = self.rect.center();
         let sx = f64::from(pos.x - c.x) / self.fit_radius;
         let sy = -f64::from(pos.y - c.y) / self.fit_radius;
-        let (w0, wd) = match self.camera.projection {
-            Projection3D::Orthographic => (
-                [
-                    (sx - self.camera.pan[0]) * self.right[0]
-                        + (sy - self.camera.pan[1]) * self.up[0]
-                        - self.cam_dist * self.forward[0],
-                    (sx - self.camera.pan[0]) * self.right[1]
-                        + (sy - self.camera.pan[1]) * self.up[1]
-                        - self.cam_dist * self.forward[1],
-                    (sx - self.camera.pan[0]) * self.right[2]
-                        + (sy - self.camera.pan[1]) * self.up[2]
-                        - self.cam_dist * self.forward[2],
-                ],
-                self.forward,
-            ),
-            Projection3D::Perspective { .. } => {
-                let ux = (sx - self.camera.pan[0]) / self.cam_dist;
-                let uy = (sy - self.camera.pan[1]) / self.cam_dist;
-                (
-                    [
-                        -self.camera.pan[0] * self.right[0]
-                            - self.camera.pan[1] * self.up[0]
-                            - self.cam_dist * self.forward[0],
-                        -self.camera.pan[0] * self.right[1]
-                            - self.camera.pan[1] * self.up[1]
-                            - self.cam_dist * self.forward[1],
-                        -self.camera.pan[0] * self.right[2]
-                            - self.camera.pan[1] * self.up[2]
-                            - self.cam_dist * self.forward[2],
-                    ],
-                    [
-                        ux * self.right[0] + uy * self.up[0] + self.forward[0],
-                        ux * self.right[1] + uy * self.up[1] + self.forward[1],
-                        ux * self.right[2] + uy * self.up[2] + self.forward[2],
-                    ],
-                )
+        let (origin, slope) = if let Some(lens) = self.lens {
+            lens.ray(sx, sy)
+        } else {
+            match self.camera.projection {
+                Projection3D::Orthographic => ([sx, sy], [0., 0.]),
+                Projection3D::Perspective { .. } => {
+                    ([0., 0.], [sx / self.cam_dist, sy / self.cam_dist])
+                }
             }
         };
+        let w0: [f64; 3] = std::array::from_fn(|i| {
+            (origin[0] - self.camera.pan[0]) * self.right[i]
+                + (origin[1] - self.camera.pan[1]) * self.up[i]
+                - self.cam_dist * self.forward[i]
+        });
+        let wd: [f64; 3] = std::array::from_fn(|i| {
+            slope[0] * self.right[i] + slope[1] * self.up[i] + self.forward[i]
+        });
         let u0 = std::array::from_fn(|i| w0[i] / self.box_scale[i] + 0.5);
         let ud = std::array::from_fn(|i| wd[i] / self.box_scale[i]);
         let (mut t0, mut t1) = (0.15_f64, 1e9_f64);

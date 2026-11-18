@@ -1,3 +1,5 @@
+mod custom;
+pub use custom::{CustomLayer3D, GeometryBatch3D};
 mod bars_vecs_polys;
 mod from_impls;
 mod lines_scatter;
@@ -36,6 +38,7 @@ use crate::{
 #[derive(Clone, Copy, Debug)]
 #[non_exhaustive]
 pub enum Layer3D<'a> {
+    Custom(&'a dyn CustomLayer3D),
     Line(Line3D<'a>),
     Scatter(Scatter3D<'a>),
     Bubble(Bubble3D<'a>),
@@ -110,6 +113,7 @@ impl<'a> Layer3D<'a> {
             Self::AlphaShape(s) => s.name,
             Self::Graph(s) => s.name,
             Self::VolumeRender(s) => s.name,
+            Self::Custom(s) => s.name(),
             Self::PointCloud(s) => s.name,
         }
     }
@@ -144,6 +148,7 @@ impl<'a> Layer3D<'a> {
             Self::AlphaShape(s) => s.id_salt,
             Self::Graph(s) => s.id_salt,
             Self::VolumeRender(s) => s.id_salt,
+            Self::Custom(s) => Some(s.id()),
             Self::PointCloud(s) => s.id_salt,
         };
         custom.unwrap_or_else(|| IdSalt::new(("layer3d", self.name(), index)))
@@ -194,6 +199,7 @@ impl<'a> Layer3D<'a> {
             Self::AlphaShape(s) => s.style,
             Self::Graph(s) => s.style,
             Self::VolumeRender(_) => crate::SeriesStyle::default(),
+            Self::Custom(s) => s.style(),
             Self::PointCloud(s) => s.style,
         }
     }
@@ -274,6 +280,13 @@ impl<'a> Layer3D<'a> {
                     None
                 }
             }
+            Self::Custom(s) => s.extent(scales).filter(|[lo, hi]| {
+                (0..3).all(|i| {
+                    lo[i] <= hi[i]
+                        && scales[i].forward(lo[i]).is_some()
+                        && scales[i].forward(hi[i]).is_some()
+                })
+            }),
             Self::PointCloud(s) => s.data.extent(scales),
         }
     }

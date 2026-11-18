@@ -3,9 +3,13 @@ use super::{AxisScale, AxisTick, ticks::format_tick};
 const P_MIN: f64 = 1e-9;
 const P_MAX: f64 = 1.0 - 1e-9;
 
+pub(crate) fn valid_probability(p: f64) -> bool {
+    p > P_MIN && p < P_MAX
+}
+
 /// Peter J. Acklam inverse standard normal CDF (`Phi^{-1}(p)`), relative error < 1.15e-9.
 pub fn norm_inv(p: f64) -> Option<f64> {
-    if !p.is_finite() || p <= P_MIN || p >= P_MAX {
+    if !valid_probability(p) {
         return None;
     }
     const A: [f64; 6] = [
@@ -81,7 +85,7 @@ pub(crate) fn norm_cdf_clamped(z: f64) -> Option<f64> {
 }
 
 pub fn weibull_forward(p: f64) -> Option<f64> {
-    (p.is_finite() && p > P_MIN && p < P_MAX).then(|| (-(1.0 - p).ln()).ln())
+    valid_probability(p).then(|| (-(1.0 - p).ln()).ln())
 }
 
 pub fn weibull_inverse(w: f64) -> Option<f64> {

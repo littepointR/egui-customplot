@@ -119,7 +119,42 @@ impl Plot {
         }
         let outer = allocate_plot(ui, self.height);
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
-        let rect = data_rect(outer, &self.axes, &self.title, self.right_y_axis.as_ref());
+        let mut axis_outer = outer;
+        let placed =
+            self.decorations
+                .reserve(ui, &mut axis_outer, &self.title, self.color_bar.as_ref());
+        let title = if self.decorations.title.is_some() {
+            ""
+        } else {
+            &self.title
+        };
+        let color_bar = self
+            .color_bar
+            .as_ref()
+            .filter(|_| self.decorations.color_bar.is_none())
+            .and_then(|(scale, label)| {
+                crate::layout::reserve_color_bar(&mut axis_outer).map(|area| (area, *scale, label))
+            });
+        let outside = self
+            .show_legend
+            .then(|| {
+                if let Some(c) = self.legend_component.as_deref() {
+                    if self.legend_position == crate::LegendPosition::InsideTopRight {
+                        return None;
+                    }
+                    crate::layout::reserve_component(
+                        ui,
+                        &mut axis_outer,
+                        series.iter().map(|s| s.name()),
+                        c,
+                        self.legend_position,
+                    )
+                } else {
+                    crate::layout::reserve_legend(ui, &mut axis_outer, series, self.legend_position)
+                }
+            })
+            .flatten();
+        let rect = data_rect(axis_outer, &self.axes, title, self.right_y_axis.as_ref());
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
         let scales = [self.axes[0].scale, self.axes[1].scale];
@@ -141,10 +176,23 @@ impl Plot {
                 auto_transform
             })
         });
-        let legend_rect = self
-            .show_legend
-            .then(|| legend_rect(rect, series))
-            .flatten();
+        let legend_rect =
+            if self.show_legend && self.legend_position == crate::LegendPosition::InsideTopRight {
+                if let Some(c) = self.legend_component.as_deref() {
+                    let mut inside = rect;
+                    crate::layout::reserve_component(
+                        ui,
+                        &mut inside,
+                        series.iter().map(|s| s.name()),
+                        c,
+                        self.legend_position,
+                    )
+                } else {
+                    legend_rect(rect, series)
+                }
+            } else {
+                outside
+            };
         let sense = if self.navigation.allow_drag
             || self.navigation.allow_box_zoom
             || self.navigation.allow_brush
@@ -222,19 +270,22 @@ impl Plot {
         if !diagnostics.painting_skipped {
             paint_axes(
                 ui,
-                outer,
+                axis_outer,
                 transform,
                 &axis_ticks,
                 AxesStyle {
                     axes: &self.axes,
-                    title: &self.title,
+                    title,
                     style: &style,
                     show_grid: self.show_grid,
                     show_frame: self.show_frame,
                 },
             );
             if let Some((axis, t)) = self.right_y_axis.as_ref().zip(right_transform) {
-                paint_right_axis(ui, outer, t, axis, &right_axis_ticks, &style);
+                paint_right_axis(ui, axis_outer, t, axis, &right_axis_ticks, &style);
+            }
+            if let Some((area, scale, label)) = color_bar {
+                super::color_bar::paint_aligned(ui, area, rect, scale, label, style.text_color);
             }
             let (hidden_series, auto_cache) = state.split_visibility_and_auto_cache();
             paint_series(
@@ -274,8 +325,17 @@ impl Plot {
                 }
             }
         }
+        crate::layout::show_decorations(ui, id, placed, style.text_color);
         let legend_entries = legend_rect.map_or_else(Vec::new, |area| {
-            show_legend(ui, state, series, area, self.id_salt, &style)
+            show_legend(
+                ui,
+                state,
+                series,
+                area,
+                self.id_salt,
+                self.legend_component.as_deref(),
+                &style,
+            )
         });
         if let Some(cache) = cache {
             diagnostics.line_cache_bytes = cache.retained_bytes();
