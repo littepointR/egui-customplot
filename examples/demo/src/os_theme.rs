@@ -1,12 +1,7 @@
-use std::sync::{
-    Arc, Condvar, Mutex,
-    atomic::{AtomicU8, AtomicU64, Ordering},
-};
-use std::thread::JoinHandle;
-
 use eframe::egui;
 
 /// Parses `reg query ... /v AppsUseLightTheme` stdout (`0x0` -> Dark, non-zero -> Light).
+#[cfg(any(target_os = "windows", test))]
 pub(crate) fn parse_apps_use_light_theme(stdout: &str) -> Option<egui::Theme> {
     for line in stdout.lines() {
         if !line.to_ascii_lowercase().contains("appsuselighttheme") {
@@ -74,6 +69,11 @@ mod platform {
     use std::os::windows::process::CommandExt;
     use std::path::PathBuf;
     use std::process::Command;
+    use std::sync::{
+        Arc, Condvar, Mutex,
+        atomic::{AtomicU8, AtomicU64, Ordering},
+    };
+    use std::thread::JoinHandle;
     use std::time::Duration;
 
     const CREATE_NO_WINDOW: u32 = 0x0800_0000;
