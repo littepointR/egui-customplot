@@ -4,6 +4,13 @@ English | [简体中文](README.zh-CN.md)
 
 A native, embeddable scientific and engineering plotting library for [`egui`](https://github.com/emilk/egui), inspired by MATLAB's breadth of plot types while embracing Rust ownership, host-owned immutable data, explicit view state, and deterministic multi-pass UI behavior.
 
+| 3D surface · `--surfaces3d` | Filled contours · `--contours` |
+| --- | --- |
+| [![Peaks surface with contours projected onto the floor and a height color bar](docs/images/surface.png)](docs/images/surface.png) | [![Filled scalar field with labeled white isolines around peaks and valleys](docs/images/contours.png)](docs/images/contours.png) |
+| Orbit the peaks to inspect their shape. Floor contours locate them in the plane, and the color bar gives their height. | Read a scalar field from above. Filled bands separate value ranges, and labels identify the level of each isoline. |
+
+Each figure on this page was exported individually from the demo data with `PlotSnapshot` at three output pixels per logical point. Open an image for the full resolution.
+
 > **Project Status (`0.1.0`)**
 >
 > - **Implemented & tested**: Stages 1–16 — 133/133 items in the [MATLAB Plot Checklist](docs/MATLAB_PLOT_CHECKLIST.md) (`82 ML + 35 EX + 16 LG`) plus 26 extended engineering/modern capabilities (`EXT-01..26`) in [EXPANSION_PLAN](docs/EXPANSION_PLAN.md), the three-tier 10M-point `L1/L2/L3` performance engine, optional `feature = "wgpu"` hardware compute/instanced acceleration, optional `feature = "export"` PNG/hybrid-SVG snapshots, bilingual (`EN | 简体中文`) `rustdoc`, and a 27-gallery interactive demo.
@@ -95,6 +102,20 @@ cargo doc --workspace --no-deps --all-features --open
 ```
 
 ---
+
+## Engineering examples
+
+| Temperature and latency · `--custom-axes` | Time–frequency analysis · `--stage15` |
+| --- | --- |
+| [![Temperature and latency curves on a shared UTC timeline with separate vertical scales](docs/images/dual-axis.png)](docs/images/dual-axis.png) | [![STFT spectrogram with horizontal frequency bands crossed by a rising chirp](docs/images/spectrogram.png)](docs/images/spectrogram.png) |
+| Two signals share a UTC timeline. Read temperature on the left axis and elapsed duration on the right, each in its own units. | The short-time Fourier transform (STFT) separates a changing signal into time and frequency. The horizontal bands mark steady tones, and the rising band traces a chirp. |
+
+| Impedance matching · `--stage15` | Transpacific route · `--geo` |
+| --- | --- |
+| [![Smith chart comparing reflection-coefficient traces for an RLC load and a matching stub](docs/images/smith.png)](docs/images/smith.png) | [![Pacific route crossing the international date line on an offline coastline map](docs/images/pacific-route.png)](docs/images/pacific-route.png) |
+| Plot impedance or S-parameter sweeps as reflection coefficients. Compare the load and matching network on one Smith chart and see where each trace approaches the matched center. | Center the map on the Pacific to follow a route across the date line. The bundled coastline data works offline. |
+
+From the repository root, run `cargo run -p customplot-demo --release --locked -- --stage15` to open the RF and signal-processing gallery. Substitute a gallery flag from the tables to explore another example.
 
 ## Interactive Demo (`customplot-demo`)
 

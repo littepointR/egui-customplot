@@ -4,6 +4,13 @@
 
 面向 [`egui`](https://github.com/emilk/egui) 的原生嵌入式高性能科学计算与工程绘图库：以 MATLAB 全系绘图体验为参考，坚持宿主持有不可变数据、调用方显式持有视图状态、`egui` 多遍布局严格幂等，且绝不劫持窗口与渲染上下文。
 
+| 三维曲面 · `--surfaces3d` | 填色等高线 · `--contours` |
+| --- | --- |
+| [![三维峰形曲面，底部投影等高线，右侧为高度色标](docs/images/surface.png)](docs/images/surface.png) | [![二维标量场的填色区域，白色等值线标出各层数值](docs/images/contours.png)](docs/images/contours.png) |
+| 旋转视角观察峰谷，用底面的等高线判断它们的位置，右侧色标给出高度。 | 在二维平面上看标量场的分布。填色区分数值区间，线上的标签给出具体等值。 |
+
+本页插图均由演示数据通过 `PlotSnapshot` 单图导出，每个逻辑点对应 3 个输出像素。点击图片可查看原图。
+
 > **项目状态（`0.1.0`）**
 >
 > - **已实现并持续验证**：阶段 1～16 全部落地——覆盖 [MATLAB 绘图类型对照表](docs/MATLAB_PLOT_CHECKLIST.md) 全部 133/133 项（`82 ML + 35 EX + 16 LG`）、[Stages 12–16 扩展规划](docs/EXPANSION_PLAN.md) `EXT-01..26`、三层千万点 `L1/L2/L3` 引擎、可选 `feature = "wgpu"` 硬件 Compute/实例化加速、可选 `feature = "export"` PNG/混合 SVG 离线导出、支持交互式 `EN | 简体中文` 切换的 `rustdoc` 文档，以及涵盖 27 组展厅的交互演示程序。
@@ -95,6 +102,20 @@ cargo doc --workspace --no-deps --all-features --open
 ```
 
 ---
+
+## 工程绘图示例
+
+| 温度与延迟 · `--custom-axes` | 时频分析 · `--stage15` |
+| --- | --- |
+| [![沿同一 UTC 时间轴绘制的温度与延迟曲线，左右纵轴分别标示两者单位](docs/images/dual-axis.png)](docs/images/dual-axis.png) | [![短时傅里叶变换频谱图，水平频带与向上倾斜的扫频分量相交](docs/images/spectrogram.png)](docs/images/spectrogram.png) |
+| 两条曲线共用 UTC 时间轴。温度读左轴，延迟读右轴，两种单位可以同时保留。 | 短时傅里叶变换（STFT）把信号展开为时间与频率。水平亮带对应固定频率，斜带表示频率随时间升高。 |
+
+| 阻抗匹配 · `--stage15` | 跨太平洋航线 · `--geo` |
+| --- | --- |
+| [![Smith 圆图上蓝色 RLC 负载与橙色短截线匹配网络的反射系数轨迹](docs/images/smith.png)](docs/images/smith.png) | [![在离线海岸线底图上跨越国际日期变更线的太平洋航线](docs/images/pacific-route.png)](docs/images/pacific-route.png) |
+| 把阻抗或 S 参数转换为反射系数轨迹。在同一张 Smith 圆图上比较负载与匹配网络，越靠近中心表示匹配越好。 | 以太平洋为中心显示跨日期变更线的航段。底图使用随库提供的海岸线数据，可离线显示。 |
+
+在仓库根目录运行 `cargo run -p customplot-demo --release --locked -- --stage15` 即可打开射频与信号处理示例。将最后一个参数替换为其他图上方的画廊参数，即可查看对应示例。
 
 ## 交互式演示程序（`customplot-demo`）
 
