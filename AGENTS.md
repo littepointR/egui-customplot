@@ -9,4 +9,4 @@
 - 演示程序的启动、应用组装、控件、数据和诊断分文件；测试共用代码放 `tests/support/`，按功能添加集成测试。
 - 检查：`cargo fmt --all -- --check`、`cargo test --workspace --locked`、`cargo clippy --workspace --all-targets --locked -- -D warnings`、`cargo doc --workspace --no-deps --all-features --locked`、Release demo 构建。离线环境可附加 `--offline`。
 - 历史性能记录不能覆盖；新结果独立记录条件。CPU 构建 / tessellation 不是 GPU 或 FPS。未完成项继续保留在清单。
-- 许可证与 egui 一致采用 `MIT OR Apache-2.0`（`LICENSE-MIT` / `LICENSE-APACHE`）；`egui-customplot` 已配置为 `0.1.0` 面向 crates.io 发布，`customplot-demo` 保持 `publish = false`，未经明确指示不得自行发布新版本至 crates.io。
+- 许可证与 egui 一致采用 `MIT OR Apache-2.0`（`LICENSE-MIT` / `LICENSE-APACHE`）；`egui-customplot` 使用工作区 `Cargo.toml` 中的版本号发布到 crates.io，`customplot-demo` 保持 `publish = false`，未经明确指示不得自行发布新版本至 crates.io。

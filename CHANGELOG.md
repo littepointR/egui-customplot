@@ -3,6 +3,25 @@
 All notable milestones for `egui-customplot` are documented in this file.
 Detailed per-stage verification logs and benchmark records live under `docs/STAGE_*.md` and `docs/PROGRESS.md`.
 
+## [0.1.1] - 2026-11-19
+
+### Plotting and export
+
+- Render a plot at a chosen logical size and pixel density with `PlotSnapshot::render_at` and the `export` feature. The export example produces a 2400 × 1440 PNG and a hybrid SVG.
+- Place Cartesian legends to the right of or below a plot. The STFT demo uses one dB scale for the spectrogram and its color bar.
+- Measure time differences across plots with shared A/B cursors. Plot unit-step responses for supported first- and second-order continuous systems, including overshoot and settling time over the sampled interval.
+
+### 3D and customization
+
+- Let 3D axis labels follow the camera, pin them to an edge, or supply a host layout and painter. Hosts can also customize coordinate mappings, the camera lens, gestures, and 2D and 3D layers.
+- Improve label placement in narrow viewports, apply axis bounds independently, and honor line widths and marker shapes in both 3D depth modes.
+- The English and Chinese READMEs now share an illustrated guide with 40 directly rendered plot images.
+
+### Performance
+
+- Reduce redundant extrema queries during indexed stream appends and uniform waveform writes. Dense scatter pans batch projection and use egui's disc atlas while preserving the samples selected in each pixel cell.
+- On a Windows i9-14900KF, all seven scenes in the five-second-per-scene benchmark stayed below the 8.33 ms total p95 budget for three consecutive runs. With 10 million waveform samples and writes of 32,768 samples per frame, total p95 ranged from 1.031 to 1.154 ms. These timings cover host updates, CPU plot building and tessellation. [Benchmark data](https://github.com/littepointR/egui-customplot/blob/v0.1.1/docs/benchmarks/2026-11-19-waveform-windows-cpu.csv)
+
 ## [0.1.0] - 2026-11-18
 
 ### Added

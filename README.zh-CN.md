@@ -9,7 +9,7 @@ egui-customplot 是面向科学与工程应用的 Rust 绘图库，可在已有�
 | [![三维峰形曲面，底部投影等高线，右侧为高度色标](docs/images/surface.png)](docs/images/surface.png) | [![二维标量场的填色区域，白色等值线标出各层数值](docs/images/contours.png)](docs/images/contours.png) |
 | 旋转视角观察峰谷，用底面的等高线判断它们的位置，右侧色标给出高度。 | 在二维平面上看标量场的分布。填色区分数值区间，线上的标签给出具体等值。 |
 
-可按用途浏览[图表与能力图鉴](#图表与能力图鉴)，也可在[完整能力索引](#完整能力索引)中按名称查找。高清导出、图外图例、STFT 色标、共享 A/B 游标及单位阶跃响应均为 `0.1.0` 发布后工作树中的新增能力。
+可按用途浏览[图表与能力图鉴](#图表与能力图鉴)，也可在[完整能力索引](#完整能力索引)中按名称查找。`0.1.1` 新增高清导出、图外图例、STFT 色标、共享 A/B 游标和单位阶跃响应图。
 
 > **集成与验证范围**
 >
@@ -42,7 +42,7 @@ let surface = Plot3D::new("surface").z_axis(
 );
 ```
 
-| 要调整的部分 | 工作树中的公开入口 |
+| 要调整的部分 | 公开入口 |
 | --- | --- |
 | 一根 3D 轴 | 用 `Axis3D::label_edge` 固定标注棱，或实现 `AxisDecoration3D` 选棱、调整文字位置及绘制。用 `ScaleMapping3D` 在已有有效域上提供单调的正反变换。用 `CameraLens3D` 设置投影镜头，拾取射线使用对应的逆变换。`CameraNavigation3D` 可替换旋转、平移和滚轮手势到相机位置的映射。 |
 | 图例、标题、色标 | 二维和三维笛卡尔图、地理图均可接入 `LegendComponent` 和 `PlotDecoration`。极坐标图也支持替换图例和标题。组件按逻辑点测量尺寸。外置组件获得独立的裁剪区域，图内导航使用剩余区域。 |
@@ -68,9 +68,9 @@ let surface = Plot3D::new("surface").z_axis(
 ```toml
 [dependencies]
 egui = "0.37.0"
-egui-customplot = "0.1.0"
+egui-customplot = "0.1.1"
 # 按需开启特性：
-# egui-customplot = { version = "0.1.0", features = ["export", "wgpu"] }
+# egui-customplot = { version = "0.1.1", features = ["export", "wgpu"] }
 ```
 
 ### 最小二维绘图示例

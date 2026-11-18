@@ -9,7 +9,7 @@ An embeddable Rust plotting library for scientific and engineering applications 
 | [![Peaks surface with contours projected onto the floor and a height color bar](docs/images/surface.png)](docs/images/surface.png) | [![Filled scalar field with labeled white isolines around peaks and valleys](docs/images/contours.png)](docs/images/contours.png) |
 | Orbit the peaks to inspect their shape. Floor contours locate them in the plane, and the color bar gives their height. | Read a scalar field from above. Filled bands separate value ranges, and labels identify the level of each isoline. |
 
-[Explore the illustrated guide](#illustrated-chart-guide) or [look up a plot by name](#capability-index). High-density export, external legends, the STFT color bar, shared A/B cursors and unit-step plots are additions in the working tree after `0.1.0`.
+[Explore the illustrated guide](#illustrated-chart-guide) or [look up a plot by name](#capability-index). Version `0.1.1` adds high-resolution export, external legends, an STFT color bar, shared A/B cursors and unit-step response plots.
 
 > **Integration and verification**
 >
@@ -42,7 +42,7 @@ let surface = Plot3D::new("surface").z_axis(
 );
 ```
 
-| To change | Public entry point in the working tree |
+| To change | Public entry point |
 | --- | --- |
 | One 3D axis | Set a fixed edge with `Axis3D::label_edge`, or implement `AxisDecoration3D` to select an edge, position the labels or draw them. `ScaleMapping3D` accepts a monotone forward/inverse pair on a built-in validity domain. `CameraLens3D` supplies a projective lens with a matching picking ray. `CameraNavigation3D` maps orbit, pan and scroll gestures to the next camera pose. |
 | Legend, title or color bar | Attach a `LegendComponent` or `PlotDecoration` to a Cartesian 2D, 3D or geographic plot. Polar plots also accept custom legends and titles. The component measures its space in logical points. External components get a clipped drawing area outside plot navigation. |
@@ -68,9 +68,9 @@ Add `egui-customplot` to your `Cargo.toml`:
 ```toml
 [dependencies]
 egui = "0.37.0"
-egui-customplot = "0.1.0"
+egui-customplot = "0.1.1"
 # Optional features:
-# egui-customplot = { version = "0.1.0", features = ["export", "wgpu"] }
+# egui-customplot = { version = "0.1.1", features = ["export", "wgpu"] }
 ```
 
 ### Minimal 2D Plot
