@@ -18,6 +18,7 @@ struct OctreeNode {
 /// High-density 3D XYZ/RGB/Intensity point cloud with built-in octree LOD & picking (`pcshow`, `EXT-24`).
 #[derive(Clone, Debug)]
 pub struct PointCloud3DData {
+    pub(crate) version: u64,
     points: Arc<[Point3D]>,
     rgb: Option<Arc<[[u8; 3]]>>,
     intensity: Option<Arc<[f32]>>,
@@ -74,6 +75,7 @@ impl PointCloud3DData {
             &mut nodes,
         );
         Ok(Self {
+            version: crate::data::points::next_version(),
             points,
             rgb: None,
             intensity: None,
@@ -91,6 +93,7 @@ impl PointCloud3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.rgb = Some(rgb);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -112,6 +115,7 @@ impl PointCloud3DData {
             [lo, lo + 1.0]
         });
         self.intensity = Some(vals);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -168,24 +172,46 @@ impl PointCloud3DData {
             return Vec::new();
         }
         let mut out = Vec::with_capacity(max_points.min(self.order.len()));
+        let viewport = transform.rect().expand(12.0);
+        let bounds = transform.bounds();
         let mut stack = vec![0u32];
         while let Some(ni) = stack.pop() {
             if out.len() >= max_points {
                 break;
             }
             let node = &self.nodes[ni as usize];
-            let Some(diag) = projected_box_diag(node.min, node.max, transform) else {
+            let Some(projected) = projected_box(node, transform) else {
                 continue;
+            };
+            if !projected.intersects(viewport) {
+                continue;
+            }
+            let fully_visible = bounds.contains(node.min)
+                && bounds.contains(node.max)
+                && viewport.contains_rect(projected);
+            let visible = |idx: usize| {
+                let p = self.points[idx];
+                fully_visible
+                    || (bounds.contains(p)
+                        && transform
+                            .project_data(p)
+                            .is_some_and(|(pos, _)| viewport.contains(pos)))
             };
             if node.children == [u32::MAX; 8] {
                 let stride = (node.len as usize * 2 / (max_points - out.len()).max(1)).max(1);
-                for k in (0..node.len as usize).step_by(stride) {
-                    if out.len() >= max_points {
-                        break;
-                    }
-                    out.push(self.order[node.start as usize + k] as usize);
-                }
-            } else if diag < pixel_cell.max(1.5) {
+                let start = node.start as usize;
+                let available = max_points - out.len();
+                out.extend(
+                    self.order[start..start + node.len as usize]
+                        .iter()
+                        .map(|&idx| idx as usize)
+                        .filter(|&idx| visible(idx))
+                        .step_by(stride)
+                        .take(available),
+                );
+            } else if projected.size().length() < pixel_cell.max(1.5)
+                && visible(node.rep_index as usize)
+            {
                 out.push(node.rep_index as usize);
             } else {
                 for &child in &node.children {
@@ -212,14 +238,18 @@ impl PointCloud3DData {
         let mut stack = vec![0u32];
         while let Some(ni) = stack.pop() {
             let node = &self.nodes[ni as usize];
-            if !box_near_pointer(node.min, node.max, transform, pointer, radius) {
+            if !projected_box(node, transform)
+                .is_some_and(|rect| rect.expand(radius).contains(pointer))
+            {
                 continue;
             }
             if node.children == [u32::MAX; 8] {
                 for k in 0..node.len as usize {
                     let idx = self.order[node.start as usize + k] as usize;
                     let p = self.points[idx];
-                    if let Some((pos, depth)) = transform.project_data(p) {
+                    if transform.bounds().contains(p)
+                        && let Some((pos, depth)) = transform.project_data(p)
+                    {
                         let d = pos.distance(pointer);
                         if d <= radius && best.as_ref().is_none_or(|b| d < b.2) {
                             best = Some((idx, p, d, depth));
@@ -329,62 +359,23 @@ fn build_octree(
     idx
 }
 
-fn projected_box_diag(min: Point3D, max: Point3D, transform: Transform3D) -> Option<f32> {
-    let mut smin = Pos2::new(f32::INFINITY, f32::INFINITY);
-    let mut smax = Pos2::new(f32::NEG_INFINITY, f32::NEG_INFINITY);
-    let mut any_in = false;
-    let mut corners = 0u8;
-    for mask in 0..8 {
-        let p = [
-            if mask & 1 == 0 { min[0] } else { max[0] },
-            if mask & 2 == 0 { min[1] } else { max[1] },
-            if mask & 4 == 0 { min[2] } else { max[2] },
-        ];
-        if let Some(u) = transform.data_to_unit(p)
-            && let Some((pos, _)) = transform.project_unit(u)
-        {
-            if (-0.02..=1.02).contains(&u[0])
-                && (-0.02..=1.02).contains(&u[1])
-                && (-0.02..=1.02).contains(&u[2])
-            {
-                any_in = true;
-            }
-            smin = smin.min(pos);
-            smax = smax.max(pos);
-            corners += 1;
-        }
-    }
-    if corners == 8
-        && !egui::Rect::from_min_max(smin, smax).intersects(transform.rect().expand(8.0))
-    {
+/// Project the intersection in data space so a node enclosing the entire view
+/// and a node crossing a log-domain boundary both retain their visible points.
+fn projected_box(node: &OctreeNode, transform: Transform3D) -> Option<egui::Rect> {
+    let bounds = transform.bounds();
+    let lo = std::array::from_fn::<_, 3, _>(|i| node.min[i].max(bounds.min()[i]));
+    let hi = std::array::from_fn::<_, 3, _>(|i| node.max[i].min(bounds.max()[i]));
+    if (0..3).any(|i| lo[i] > hi[i]) {
         return None;
     }
-    (any_in && smin.x.is_finite()).then(|| smin.distance(smax))
-}
-
-fn box_near_pointer(
-    min: Point3D,
-    max: Point3D,
-    transform: Transform3D,
-    pointer: Pos2,
-    radius: f32,
-) -> bool {
-    let mut smin = Pos2::new(f32::INFINITY, f32::INFINITY);
-    let mut smax = Pos2::new(f32::NEG_INFINITY, f32::NEG_INFINITY);
-    let mut any = false;
-    for mask in 0..8 {
-        let p = [
-            if mask & 1 == 0 { min[0] } else { max[0] },
-            if mask & 2 == 0 { min[1] } else { max[1] },
-            if mask & 4 == 0 { min[2] } else { max[2] },
-        ];
-        if let Some((pos, _)) = transform.project_data(p) {
-            smin = smin.min(pos);
-            smax = smax.max(pos);
-            any = true;
+    let mut projected = egui::Rect::NOTHING;
+    for x in [lo[0], hi[0]] {
+        for y in [lo[1], hi[1]] {
+            for z in [lo[2], hi[2]] {
+                let (pos, _) = transform.project_data([x, y, z])?;
+                projected.extend_with(pos);
+            }
         }
     }
-    any && egui::Rect::from_min_max(smin, smax)
-        .expand(radius)
-        .contains(pointer)
+    Some(projected)
 }

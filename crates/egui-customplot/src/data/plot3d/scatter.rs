@@ -15,6 +15,7 @@ pub struct Bubble3DPoint {
 /// Immutable host-owned 3D bubble chart data (`bubblechart3`, `ML-016`).
 #[derive(Clone, Debug)]
 pub struct Bubble3DData {
+    pub(crate) version: u64,
     points: Arc<[Bubble3DPoint]>,
     size_extent: [f64; 2],
     radius_range: [f32; 2],
@@ -56,6 +57,7 @@ impl Bubble3DData {
             })
             .collect();
         self.points = Arc::from(next);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -63,6 +65,7 @@ impl Bubble3DData {
         let lo = radius_range[0].clamp(1.0, 64.0);
         let hi = radius_range[1].clamp(lo, 64.0);
         self.radius_range = [lo, hi];
+        self.version = crate::data::points::next_version();
         self
     }
 
@@ -86,6 +89,7 @@ impl Bubble3DData {
             [0.0, 1.0]
         };
         Self {
+            version: crate::data::points::next_version(),
             points: Arc::from(pts),
             size_extent,
             radius_range,
@@ -135,6 +139,7 @@ pub struct Swarm3DPoint {
 /// Immutable host-owned 3D beeswarm data (`swarmchart3`, `ML-018`) with radial XY disk jitter by Z density.
 #[derive(Clone, Debug)]
 pub struct Swarm3DData {
+    pub(crate) version: u64,
     points: Arc<[Swarm3DPoint]>,
     extents: CachedExtents3D,
     non_finite_points: usize,
@@ -219,6 +224,7 @@ impl Swarm3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             points: Arc::from(points),
             extents,
             non_finite_points: non_finite,

@@ -4,6 +4,8 @@
 mod resources;
 mod scatter_callback;
 mod scatter_pipeline;
+#[cfg(all(test, not(target_arch = "wasm32")))]
+mod tests;
 mod waveform_callback;
 mod waveform_pipeline;
 
@@ -19,8 +21,8 @@ use egui::Color32;
 use egui_wgpu::{RenderState, wgpu};
 
 use crate::{
-    LineInterpolation, LinePattern, MarkerSampling, MarkerStyle, PlotData, PlotDiagnostics,
-    PlotTransform, RenderBackend, WaveformLine,
+    LineInterpolation, LinePattern, LineSampling, MarkerSampling, MarkerStyle, PlotData,
+    PlotDiagnostics, PlotTransform, RenderBackend, WaveformLine,
 };
 use resources::{WgpuHostTag, WgpuPlotResources};
 
@@ -124,6 +126,7 @@ pub(crate) fn try_paint_waveform_wgpu(
     diagnostics: &mut PlotDiagnostics,
 ) -> bool {
     if line.backend == RenderBackend::Painter
+        || matches!(line.sampling, LineSampling::Exact | LineSampling::Visible)
         || super::is_capturing_snapshot(ui_ctx)
         || transform.scales().iter().any(|s| s.is_probability())
     {

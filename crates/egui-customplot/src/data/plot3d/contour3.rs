@@ -14,6 +14,7 @@ pub struct Contour3DLine {
 /// Immutable host-owned 3D contour collection (`contour3`, `ML-053`).
 #[derive(Clone, Debug)]
 pub struct Contour3DData {
+    pub(crate) version: u64,
     levels: Arc<[f64]>,
     lines: Arc<[Contour3DLine]>,
     extents: CachedExtents3D,
@@ -38,6 +39,7 @@ impl Contour3DData {
             });
         }
         Self {
+            version: crate::data::points::next_version(),
             levels: Arc::from(c2d.levels()),
             lines: Arc::from(lines),
             extents,
@@ -54,6 +56,7 @@ impl Contour3DData {
         let levels = resolve_levels(surf.z_range(), levels)?;
         if levels.is_empty() {
             return Ok(Self {
+                version: crate::data::points::next_version(),
                 levels: Arc::from([]),
                 lines: Arc::from([]),
                 extents: CachedExtents3D::default(),
@@ -114,6 +117,7 @@ impl Contour3DData {
         extents: CachedExtents3D,
     ) -> Self {
         Self {
+            version: crate::data::points::next_version(),
             levels: Arc::from(levels),
             lines: Arc::from(lines),
             extents,

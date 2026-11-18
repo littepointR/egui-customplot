@@ -9,6 +9,7 @@ use super::Streamline3DData;
 /// Host-owned seeded particle dataset along 3D streamlines (`streamparticles`, `ML-073`).
 #[derive(Clone, Debug)]
 pub struct StreamParticles3DData {
+    pub(crate) version: u64,
     streamlines: Streamline3DData,
     particles_per_line: usize,
 }
@@ -16,6 +17,7 @@ pub struct StreamParticles3DData {
 impl StreamParticles3DData {
     pub fn from_streamlines(streamlines: &Streamline3DData, particles_per_line: usize) -> Self {
         Self {
+            version: crate::data::points::next_version(),
             streamlines: streamlines.clone(),
             particles_per_line: particles_per_line.clamp(1, 32),
         }

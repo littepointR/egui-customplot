@@ -9,6 +9,7 @@ use crate::{AxisScale, PatchError, Point3D, data::triangulate_indexed_polygon};
 /// Supports convex and concave arbitrary polygon faces with vertex/face colors & lighting normals.
 #[derive(Clone, Debug)]
 pub struct Patch3DData {
+    pub(crate) version: u64,
     vertices: Arc<[Point3D]>,
     face_offsets: Arc<[usize]>,
     face_indices: Arc<[u32]>,
@@ -130,6 +131,7 @@ impl Patch3DData {
             .collect();
 
         Ok(Self {
+            version: crate::data::points::next_version(),
             vertices,
             face_offsets,
             face_indices,
@@ -154,6 +156,7 @@ impl Patch3DData {
         self.scalar_range = finite_range(scalars);
         self.vertex_scalars = Some(Arc::from(scalars));
         self.face_scalars = None;
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -163,6 +166,7 @@ impl Patch3DData {
         }
         self.scalar_range = finite_range(scalars);
         self.face_scalars = Some(Arc::from(scalars));
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -171,6 +175,7 @@ impl Patch3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.vertex_colors = Some(Arc::from(colors));
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -179,6 +184,7 @@ impl Patch3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.face_colors = Some(Arc::from(colors));
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 

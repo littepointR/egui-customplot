@@ -7,6 +7,7 @@ use super::{CachedExtents3D, Plot3DError};
 /// Host-owned indexed 3D tetrahedral mesh with shared-face boundary culling (`tetramesh`, `EX-014`).
 #[derive(Clone, Debug)]
 pub struct TetraMesh3DData {
+    pub(crate) version: u64,
     vertices: Arc<[Point3D]>,
     tetrahedra: Arc<[[u32; 4]]>,
     edges: Arc<[[u32; 2]]>,
@@ -110,6 +111,7 @@ impl TetraMesh3DData {
         let scalars: Vec<f64> = (0..tetrahedra.len()).map(|i| i as f64).collect();
         let scalar_range = (!scalars.is_empty()).then(|| [0.0, (tetrahedra.len() - 1) as f64]);
         Ok(Self {
+            version: crate::data::points::next_version(),
             vertices,
             tetrahedra,
             edges: Arc::from(raw_edges),
@@ -136,6 +138,7 @@ impl TetraMesh3DData {
         }
         self.cell_scalars = Arc::from(scalars);
         self.scalar_range = (lo <= hi).then_some([lo, hi]);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 

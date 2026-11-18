@@ -144,9 +144,7 @@ impl<'a> SmithPlot<'a> {
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
         let response = ui.interact(layout.plot_area, id, Sense::click_and_drag());
-        let pre_transform =
-            SmithTransform::new(layout.plot_area, state.center_gamma(), state.half_span());
-        let view_changed = state.navigate(ui, &response, pre_transform, self.allow_scroll_zoom);
+        let view_changed = state.navigate(ui, &response, layout.plot_area, self.allow_scroll_zoom);
         let transform =
             SmithTransform::new(layout.plot_area, state.center_gamma(), state.half_span());
 

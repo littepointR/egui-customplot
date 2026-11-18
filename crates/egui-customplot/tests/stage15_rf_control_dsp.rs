@@ -253,3 +253,35 @@ fn ext22_pure_rust_fft_bluestein_welch_stft_and_cwt_coi() {
     })
     .drop_without_applying_deltas();
 }
+#[test]
+fn root_stability_uses_each_pole_before_display_clustering() {
+    for (discrete, boundary) in [(true, 1.0), (false, 0.0)] {
+        for unstable in [boundary, boundary + 1e-5] {
+            let poles = [[boundary - 5e-5, 0.0], [unstable, 0.0]];
+            let data = PoleZeroData::from_roots_with_tol(&[], &poles, 1e-4, discrete).unwrap();
+            assert_eq!(data.poles()[0].multiplicity, 2);
+            assert!(!data.is_causal_stable());
+        }
+        let stable = [[boundary - 1e-10, 0.0]];
+        assert!(
+            PoleZeroData::from_roots_with_tol(&[], &stable, 1e-4, discrete)
+                .unwrap()
+                .is_causal_stable()
+        );
+    }
+}
+
+#[test]
+fn polynomial_degree_and_response_survive_common_coefficient_scaling() {
+    for k in [1e-250, 1e-15, 1.0, 1e250] {
+        let tf = TransferFunction::new(&[k], &[0.0, k, k]).unwrap();
+        assert_eq!(tf.den().len(), 2);
+        let [re, im] = tf.eval_jw(1.0).unwrap();
+        assert!((re - 0.5).abs() < 1e-12 && (im + 0.5).abs() < 1e-12);
+        let locus = RootLocusData::from_transfer_fn(&tf, &[1.0]).unwrap();
+        assert_eq!(locus.branches()[0].points(), &[[-2.0, 0.0]]);
+        let delayed = tf.with_delay(1.0).unwrap();
+        assert!(RootLocusData::from_transfer_fn(&delayed, &[1.0]).is_err());
+        assert!(RootLocusData::auto_gains(&delayed, 2.0, 12).is_err());
+    }
+}

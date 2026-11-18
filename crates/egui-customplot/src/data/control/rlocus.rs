@@ -33,12 +33,17 @@ impl RootLocusData {
         Self::from_transfer_fn(tf, &gains)
     }
 
+    /// Returns `InvalidPolynomial` for a nonzero delay, whose characteristic equation is transcendental.
     pub fn from_transfer_fn(tf: &TransferFunction, gains: &[f64]) -> Result<Self, ControlError> {
         if gains.is_empty() {
             return Err(ControlError::Empty);
         }
         if gains.iter().any(|g| !g.is_finite() || *g < 0.0) {
             return Err(ControlError::NonFinite);
+        }
+
+        if tf.delay_sec() != 0.0 {
+            return Err(ControlError::InvalidPolynomial);
         }
 
         let num = tf.num();

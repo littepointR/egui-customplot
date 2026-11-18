@@ -10,6 +10,7 @@ mod volshow_raycast;
 mod volume_flow;
 mod zbuffer;
 mod zbuffer_cache;
+mod zbuffer_key;
 
 use egui::Painter;
 
@@ -39,13 +40,14 @@ pub(crate) fn paint_plot3d(
     let area = transform.rect();
     if depth_mode == DepthMode::ZBuffer {
         let (w, h) = zbuffer::zbuffer_dims(area);
-        let key = zbuffer_cache::compute_zbuffer_key(
+        let key = zbuffer_key::compute_zbuffer_key(
             state, layers, planes, texts, transform, box_style, style, w, h,
         );
         if let Some(cache) = state.zbuffer_cache.as_ref().filter(|c| c.key == key) {
             zbuffer_cache::emit_cached_zbuffer(cache, painter, area, style.text_color, diagnostics);
             return;
         }
+        let before_render = *diagnostics;
         let mut scene = scene::Scene3D::default();
         layers::collect_layers_3d(
             &mut scene,
@@ -66,6 +68,7 @@ pub(crate) fn paint_plot3d(
             area,
             style.text_color,
             key,
+            before_render,
             diagnostics,
         );
         return;

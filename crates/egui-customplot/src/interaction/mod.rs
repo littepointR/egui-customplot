@@ -26,6 +26,7 @@ mod sky;
 mod smith;
 mod state;
 mod tooltip;
+mod view_gesture;
 
 pub use bar::HoveredBar;
 pub use cell::HoveredCell;

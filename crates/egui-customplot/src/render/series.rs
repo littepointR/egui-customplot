@@ -14,6 +14,7 @@ use crate::{
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn paint_series(
     ui: &Ui,
+    plot_id: egui::Id,
     hidden_series: &HashSet<IdSalt>,
     series: &[PlotLayer<'_>],
     transforms: SeriesTransforms,
@@ -46,9 +47,7 @@ pub(crate) fn paint_series(
                 continue;
             }
             PlotLayer::WaveformLine(line) => {
-                let draw_key = ui
-                    .make_persistent_id(("customplot-wgpu-wave", index))
-                    .value();
+                let draw_key = plot_id.with((ui.ctx().viewport_id(), index)).value();
                 super::fast_series::paint_waveform_line(
                     ui.ctx(),
                     &painter,
@@ -301,9 +300,7 @@ pub(crate) fn paint_series(
             Series::Scatter(scatter) => {
                 #[cfg(feature = "wgpu")]
                 let painted_wgpu = {
-                    let draw_key = ui
-                        .make_persistent_id(("customplot-wgpu-scatter", index))
-                        .value();
+                    let draw_key = plot_id.with((ui.ctx().viewport_id(), index)).value();
                     super::wgpu::try_paint_scatter_wgpu(
                         ui.ctx(),
                         &painter,

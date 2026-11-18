@@ -7,6 +7,7 @@ use super::TriMesh3DData;
 /// Immutable host-owned 3D implicit level-set surface `F(x, y, z) = 0` (`fimplicit3`, `ML-065`).
 #[derive(Clone, Debug)]
 pub struct ImplicitSurface3DData {
+    pub(crate) version: u64,
     mesh: Option<TriMesh3DData>,
     evaluations: usize,
     discontinuities: usize,
@@ -59,6 +60,7 @@ impl ImplicitSurface3DData {
         }
         let (mesh, discontinuities) = extract_kuhn_mesh(&x, &y, &z, &vals, 0.0, true);
         Ok(Self {
+            version: crate::data::points::next_version(),
             mesh,
             evaluations: req,
             discontinuities,

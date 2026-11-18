@@ -130,15 +130,7 @@ impl<'a> GeoGlobePlot<'a> {
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
         let response = ui.interact(outer, id, Sense::click_and_drag());
-        let (lat0, lon0) = state.center_lat_lon();
-        let pre_tf = GeoGlobeTransform::new(
-            outer,
-            lat0,
-            lon0,
-            state.zoom(),
-            self.data.get_alt_exaggeration(),
-        );
-        let view_changed = state.navigate(ui, &response, pre_tf, self.allow_scroll_zoom);
+        let view_changed = state.navigate(ui, &response, outer, self.allow_scroll_zoom);
         let (lat, lon) = state.center_lat_lon();
         let transform = GeoGlobeTransform::new(
             outer,

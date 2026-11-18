@@ -239,6 +239,7 @@ impl Plot {
             let (hidden_series, auto_cache) = state.split_visibility_and_auto_cache();
             paint_series(
                 ui,
+                id,
                 hidden_series,
                 series,
                 transforms,

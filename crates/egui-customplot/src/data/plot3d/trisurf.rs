@@ -7,6 +7,7 @@ use super::{CachedExtents3D, Plot3DError};
 /// Immutable host-owned 3D indexed triangle mesh (`trisurf` / 3D `trimesh`, `EX-013` / `EX-012`).
 #[derive(Clone, Debug)]
 pub struct TriMesh3DData {
+    pub(crate) version: u64,
     vertices: Arc<[Point3D]>,
     triangles: Arc<[[u32; 3]]>,
     edges: Arc<[[u32; 2]]>,
@@ -90,6 +91,7 @@ impl TriMesh3DData {
         }
 
         Ok(Self {
+            version: crate::data::points::next_version(),
             vertices,
             triangles,
             edges: Arc::from(raw_edges),
@@ -141,6 +143,7 @@ impl TriMesh3DData {
         self.vertex_scalars = Arc::from(scalars);
         self.face_scalars = None;
         self.scalar_range = (lo <= hi).then_some([lo, hi]);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -158,6 +161,7 @@ impl TriMesh3DData {
         }
         self.face_scalars = Some(Arc::from(scalars));
         self.scalar_range = (lo <= hi).then_some([lo, hi]);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -170,6 +174,7 @@ impl TriMesh3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.vertex_normals = normals;
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 

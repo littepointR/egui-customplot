@@ -9,7 +9,7 @@ use egui_wgpu::{Callback, wgpu};
 
 use super::{
     WgpuPlotConfig,
-    resources::{WgpuHostTag, lock_versions},
+    resources::{SampleSource, WgpuHostTag, lock_versions},
     scatter_callback::ScatterCallback,
     waveform_pipeline::{bgl_buffer, egui_blend_target},
 };
@@ -262,8 +262,11 @@ pub(super) fn try_paint_scatter(
     } else {
         0.0
     };
-    let source_id = (data.identity() as usize as u64) ^ 0xA5A5_5A5A_1234_5678;
     let version = data.version();
+    let source_id = SampleSource::Scatter {
+        version,
+        log_axes: scales.map(|scale| scale == AxisScale::Log10),
+    };
     let committed = lock_versions(&tag.committed_versions)
         .get(&source_id)
         .copied();

@@ -31,6 +31,7 @@ pub struct Streamline3DLine {
 /// Host-owned 3D RK4 streamlines & planar stream slices (`streamline`, `streamslice` 3D).
 #[derive(Clone, Debug)]
 pub struct Streamline3DData {
+    pub(crate) version: u64,
     lines: Arc<[Streamline3DLine]>,
     speed_range: Option<[f64; 2]>,
     extents: CachedExtents3D,
@@ -188,6 +189,7 @@ impl Streamline3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             lines: Arc::from(lines),
             speed_range: (lo <= hi).then_some([lo, hi]),
             extents,

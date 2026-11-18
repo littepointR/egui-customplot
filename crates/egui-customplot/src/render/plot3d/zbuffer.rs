@@ -30,6 +30,7 @@ pub(super) fn emit_zbuffer(
     plot_area: Rect,
     text_color: Color32,
     key: u64,
+    before_render: Plot3DDiagnostics,
     diagnostics: &mut Plot3DDiagnostics,
 ) -> Option<ZBufferCache> {
     let clipped = painter.with_clip_rect(plot_area);
@@ -39,7 +40,6 @@ pub(super) fn emit_zbuffer(
     let px_count = w * h;
     let mut depth = vec![f32::INFINITY; px_count];
     let mut rgba: Vec<[u8; 4]> = vec![[0; 4]; px_count];
-    let prev_diag = *diagnostics;
     diagnostics.zbuffer_pixels += px_count;
 
     // 1. Opaque triangles
@@ -180,13 +180,14 @@ pub(super) fn emit_zbuffer(
         key,
         norm_spans,
         labels,
-        visited_items: diagnostics.visited_items,
-        zbuffer_pixels: diagnostics.zbuffer_pixels - prev_diag.zbuffer_pixels,
-        zbuffer_spans: diagnostics.zbuffer_spans - prev_diag.zbuffer_spans,
-        output_triangles: diagnostics.output_triangles - prev_diag.output_triangles,
-        output_segments: diagnostics.output_segments - prev_diag.output_segments,
-        output_markers: diagnostics.output_markers - prev_diag.output_markers,
-        clipped_items: diagnostics.clipped_items - prev_diag.clipped_items,
+        visited_items: diagnostics.visited_items - before_render.visited_items,
+        output_planes: diagnostics.output_planes - before_render.output_planes,
+        zbuffer_pixels: diagnostics.zbuffer_pixels - before_render.zbuffer_pixels,
+        zbuffer_spans: diagnostics.zbuffer_spans - before_render.zbuffer_spans,
+        output_triangles: diagnostics.output_triangles - before_render.output_triangles,
+        output_segments: diagnostics.output_segments - before_render.output_segments,
+        output_markers: diagnostics.output_markers - before_render.output_markers,
+        clipped_items: diagnostics.clipped_items - before_render.clipped_items,
     })
 }
 

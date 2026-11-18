@@ -9,6 +9,7 @@ use super::{CachedExtents3D, Contour3DData, Plot3DError};
 /// Immutable host-owned structured `(rows x cols)` 3D surface grid (`surf` / `mesh` / `surfc`).
 #[derive(Clone, Debug)]
 pub struct Surface3DData {
+    pub(crate) version: u64,
     rows: usize,
     cols: usize,
     points: Arc<[Point3D]>,
@@ -84,6 +85,7 @@ impl Surface3DData {
         let z_range = (z_lo <= z_hi).then_some([z_lo, z_hi]);
         let normals = compute_grid_normals(rows, cols, &points);
         Ok(Self {
+            version: crate::data::points::next_version(),
             rows,
             cols,
             points,
@@ -106,6 +108,7 @@ impl Surface3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.normals = normals;
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -123,12 +126,14 @@ impl Surface3DData {
         }
         self.scalars = Arc::from(scalars);
         self.scalar_range = (lo <= hi).then_some([lo, hi]);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
     pub fn with_contours(mut self, levels: ContourLevels) -> Result<Self, ContourError> {
         let c = Contour3DData::from_surface(&self, levels)?;
         self.contours = Some(c);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 

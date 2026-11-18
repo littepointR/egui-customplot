@@ -26,6 +26,7 @@ bytemuck = { workspace = true, optional = true }
 
 [dev-dependencies]
 egui = { workspace = true, features = ["default_fonts"] }
+pollster = "1.0.1"
 roxmltree = "0.21.1"
 resvg = { version = "0.48.1", default-features = false, features = ["raster-images"] }
 

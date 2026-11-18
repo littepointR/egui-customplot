@@ -84,6 +84,7 @@ pub struct SkyPlotData {
     satellites: Arc<[SkySatellite]>,
     tracks: Arc<[SkyTrack]>,
     group_names: Arc<[String]>,
+    legend_groups: Arc<[usize]>,
 }
 
 impl SkyPlotData {
@@ -110,6 +111,7 @@ impl SkyPlotData {
             satellites: sats.into(),
             tracks: Arc::from([]),
             group_names: Arc::from([]),
+            legend_groups: Arc::from([]),
         })
     }
 
@@ -134,6 +136,7 @@ impl SkyPlotData {
             sat.group = g;
         }
         self.satellites = sats.into();
+        self.rebuild_legend_groups();
         Ok(self)
     }
 
@@ -143,12 +146,30 @@ impl SkyPlotData {
             .map(|n| n.as_ref().to_owned())
             .collect::<Vec<_>>()
             .into();
+        self.rebuild_legend_groups();
         self
     }
 
     pub fn with_tracks(mut self, tracks: Vec<SkyTrack>) -> Self {
         self.tracks = tracks.into();
+        self.rebuild_legend_groups();
         self
+    }
+
+    fn rebuild_legend_groups(&mut self) {
+        let ids: std::collections::BTreeSet<_> = (0..self.group_names.len())
+            .chain(self.satellites.iter().map(|sat| sat.group))
+            .chain(self.tracks.iter().map(|track| track.group))
+            .collect();
+        self.legend_groups = if self.group_names.is_empty() && ids.len() == 1 && ids.contains(&0) {
+            Arc::from([])
+        } else {
+            ids.into_iter().collect()
+        };
+    }
+
+    pub(crate) fn legend_groups(&self) -> &[usize] {
+        &self.legend_groups
     }
 
     pub fn satellites(&self) -> &[SkySatellite] {

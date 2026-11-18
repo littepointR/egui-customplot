@@ -154,18 +154,21 @@ impl<'a> Layer3D<'a> {
         index: usize,
         plot: &ResolvedPlotStyle<'_>,
     ) -> ResolvedSeriesStyle {
-        let mut st = match self {
+        let mut style = self.local_style();
+        if let Self::Bubble(s) = self
+            && style.color.is_none()
+            && let Some(cs) = s.color_scale
+        {
+            style.color = Some(cs.map().sample(0.5));
+        }
+        plot.resolve_series(index, style)
+    }
+
+    pub(crate) fn local_style(self) -> crate::SeriesStyle {
+        match self {
             Self::Line(s) => s.style,
             Self::Scatter(s) => s.style,
-            Self::Bubble(s) => {
-                let mut base = s.style;
-                if base.color.is_none()
-                    && let Some(cs) = s.color_scale
-                {
-                    base.color = Some(cs.map().sample(0.5));
-                }
-                base
-            }
+            Self::Bubble(s) => s.style,
             Self::Swarm(s) => s.style,
             Self::Comet(s) => s.style,
             Self::Bar(s) => s.style,
@@ -192,11 +195,7 @@ impl<'a> Layer3D<'a> {
             Self::Graph(s) => s.style,
             Self::VolumeRender(_) => crate::SeriesStyle::default(),
             Self::PointCloud(s) => s.style,
-        };
-        if let Some(c) = st.color {
-            st.color = Some(c);
         }
-        plot.resolve_series(index, st)
     }
 
     pub(crate) fn extent(self, scales: [AxisScale; 3]) -> Option<[Point3D; 2]> {

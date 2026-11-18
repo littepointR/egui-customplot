@@ -41,13 +41,14 @@ pub(crate) fn c_mul(a: [f64; 2], b: [f64; 2]) -> [f64; 2] {
 }
 #[inline]
 pub(crate) fn c_div(a: [f64; 2], b: [f64; 2]) -> Option<[f64; 2]> {
-    let denom = b[0] * b[0] + b[1] * b[1];
-    (denom > 1e-30 && denom.is_finite()).then(|| {
-        [
-            (a[0] * b[0] + a[1] * b[1]) / denom,
-            (a[1] * b[0] - a[0] * b[1]) / denom,
-        ]
-    })
+    let scale = b[0].abs().max(b[1].abs());
+    if scale == 0.0 || !scale.is_finite() {
+        return None;
+    }
+    let [re, im] = b.map(|x| x / scale);
+    let norm = re * re + im * im;
+    let [ar, ai] = a.map(|x| x / scale);
+    Some([(ar * re + ai * im) / norm, (ai * re - ar * im) / norm])
 }
 #[inline]
 pub(crate) fn c_abs(a: [f64; 2]) -> f64 {
@@ -66,7 +67,7 @@ pub fn poly_eval_complex(coeffs_desc: &[f64], z: [f64; 2]) -> [f64; 2] {
 pub(crate) fn trim_leading_zeros(coeffs: &[f64]) -> &[f64] {
     let start = coeffs
         .iter()
-        .position(|&c| c.abs() > 1e-14)
+        .position(|&c| c != 0.0)
         .unwrap_or(coeffs.len());
     &coeffs[start..]
 }
@@ -108,7 +109,7 @@ pub fn poly_roots_aberth(coeffs_desc: &[f64]) -> Result<Vec<[f64; 2]>, ControlEr
     // Factor out exact zero roots cleanly so multiplicity at 0 never perturbs Aberth.
     let mut zero_roots = 0usize;
     let mut end = norm.len();
-    while end > 1 && norm[end - 1].abs() <= 1e-15 {
+    while end > 1 && norm[end - 1] == 0.0 {
         zero_roots += 1;
         end -= 1;
     }

@@ -6,6 +6,7 @@ use crate::{AxisScale, Point3D, TriMeshError};
 /// Host-owned 3D alpha-shape concave boundary mesh (`alphaShape(x,y,z,alpha)`, `EXT-10`).
 #[derive(Clone, Debug)]
 pub struct AlphaShape3DData {
+    pub(crate) version: u64,
     mesh: Option<TriMesh3DData>,
     boundary_faces: Arc<[[u32; 3]]>,
     tetrahedra_count: usize,
@@ -76,6 +77,7 @@ impl AlphaShape3DData {
         };
 
         Ok(Self {
+            version: crate::data::points::next_version(),
             mesh,
             boundary_faces: Arc::from(compact_faces),
             tetrahedra_count,

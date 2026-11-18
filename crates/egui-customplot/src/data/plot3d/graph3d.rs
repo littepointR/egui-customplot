@@ -22,6 +22,7 @@ impl Default for GraphLayout3D {
 /// Immutable host-owned 3D network / digraph dataset (`EXT-11`).
 #[derive(Clone, Debug)]
 pub struct Graph3DData {
+    pub(crate) version: u64,
     node_count: usize,
     directed: bool,
     edges: Arc<[GraphEdge]>,
@@ -97,6 +98,7 @@ impl Graph3DData {
             extents.push_point(p);
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             node_count,
             directed,
             edges: Arc::from(ann.edges),
@@ -120,6 +122,7 @@ impl Graph3DData {
             .map(|(e, &w)| GraphEdge { weight: w, ..*e })
             .collect();
         self.edges = Arc::from(next);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -136,6 +139,7 @@ impl Graph3DData {
         }
         self.node_scalars = Some(Arc::from(scalars));
         self.scalar_range = (lo <= hi).then_some([lo, hi]);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -147,6 +151,7 @@ impl Graph3DData {
             return Err(GraphError::LengthMismatch);
         }
         self.node_labels = labels.iter().cloned().map(Into::into).collect();
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -158,6 +163,7 @@ impl Graph3DData {
             return Err(GraphError::LengthMismatch);
         }
         self.edge_labels = labels.iter().cloned().map(Into::into).collect();
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 

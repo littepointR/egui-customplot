@@ -5,6 +5,7 @@ use crate::{Bounds3D, FunctionContourError, GridError, Point3D};
 /// Rectilinear 3D scalar volume `(iz * ny + iy) * nx + ix` (`slice`, `contourslice`, `isosurface`, `isocaps`).
 #[derive(Clone, Debug)]
 pub struct ScalarVolume3D {
+    pub(crate) version: u64,
     x: Arc<[f64]>,
     y: Arc<[f64]>,
     z: Arc<[f64]>,
@@ -59,6 +60,7 @@ impl ScalarVolume3D {
         }
         let uniform = is_uniform_axis(&x) && is_uniform_axis(&y) && is_uniform_axis(&z);
         Ok(Self {
+            version: crate::data::points::next_version(),
             x,
             y,
             z,

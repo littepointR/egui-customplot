@@ -4,7 +4,7 @@ use egui::Rect;
 use egui_wgpu::{CallbackResources, CallbackTrait, ScreenDescriptor, wgpu};
 
 use super::{
-    resources::{MAX_DRAW_SLOTS, MAX_WAVE_COLUMNS, WgpuPlotResources},
+    resources::{MAX_DRAW_SLOTS, MAX_WAVE_COLUMNS, SampleSource, WgpuPlotResources},
     waveform_pipeline::{WaveDrawSlot, WaveUniforms},
 };
 
@@ -19,7 +19,7 @@ pub(super) enum WaveUpload {
 
 pub(super) struct WaveformCallback {
     pub(super) draw_key: u64,
-    pub(super) source_id: u64,
+    pub(super) source_id: SampleSource,
     pub(super) samples_version: u64,
     pub(super) total_bytes: usize,
     pub(super) upload: WaveUpload,
@@ -76,7 +76,6 @@ impl CallbackTrait for WaveformCallback {
         let Some(sample_buf) = res.sample_buffers.get(&self.source_id) else {
             return Vec::new();
         };
-        let sample_buf_ptr = (&raw const sample_buf.buffer) as usize as u64;
         let state = &mut res.waveform;
         if !state.slots.contains_key(&self.draw_key) {
             while state.slots.len() >= MAX_DRAW_SLOTS {
@@ -133,7 +132,7 @@ impl CallbackTrait for WaveformCallback {
         if slot
             .compute_bind_group
             .as_ref()
-            .is_none_or(|(p, _)| *p != sample_buf_ptr)
+            .is_none_or(|(source, _)| *source != self.source_id)
         {
             let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("customplot_wave_compute_bg"),
@@ -153,7 +152,7 @@ impl CallbackTrait for WaveformCallback {
                     },
                 ],
             });
-            slot.compute_bind_group = Some((sample_buf_ptr, bg));
+            slot.compute_bind_group = Some((self.source_id, bg));
         }
 
         let screen_w_pts = screen.size_in_pixels[0] as f32 / screen.pixels_per_point.max(0.01);

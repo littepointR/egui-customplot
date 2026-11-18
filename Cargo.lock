@@ -528,6 +528,7 @@ dependencies = [
  "egui",
  "egui-wgpu",
  "png",
+ "pollster",
  "resvg",
  "roxmltree",
  "wgpu",

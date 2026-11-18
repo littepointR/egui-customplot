@@ -32,6 +32,7 @@ pub struct Bar3DBox {
 /// Immutable host-owned 3D bar prisms (`bar3` / `bar3h`, `ML-036` / `ML-037`).
 #[derive(Clone, Debug)]
 pub struct Bar3DData {
+    pub(crate) version: u64,
     boxes: Arc<[Bar3DBox]>,
     cols: usize,
     mode: Bar3DMode,
@@ -124,6 +125,7 @@ impl Bar3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             boxes: Arc::from(boxes),
             cols,
             mode,
@@ -169,6 +171,7 @@ impl Bar3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             boxes: Arc::from(boxes),
             cols: nx,
             mode: Bar3DMode::Detached,
@@ -210,6 +213,7 @@ impl Bar3DData {
 /// Immutable 3D discrete stems rooted at `z = base_z` (`stem3`, `ML-040`).
 #[derive(Clone, Debug)]
 pub struct Stem3DData {
+    pub(crate) version: u64,
     points: Arc<[Point3D]>,
     base_z: f64,
     extents: CachedExtents3D,
@@ -233,6 +237,7 @@ impl Stem3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             points,
             base_z,
             extents,
@@ -278,6 +283,7 @@ pub struct Pie3DSlice {
 /// True extruded 3D cylinder-sector pie dataset (`pie3`, `LG-002`).
 #[derive(Clone, Debug)]
 pub struct Pie3DData {
+    pub(crate) version: u64,
     slices: Arc<[Pie3DSlice]>,
     thickness: f64,
     explode_offset: f64,
@@ -344,6 +350,7 @@ impl Pie3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             slices: Arc::from(slices),
             thickness: thickness.clamp(0.05, 1.5),
             explode_offset: 0.16,
@@ -354,6 +361,7 @@ impl Pie3DData {
         if offset.is_finite() && offset >= 0.0 {
             self.explode_offset = offset.clamp(0.0, 0.6);
         }
+        self.version = crate::data::points::next_version();
         self
     }
 

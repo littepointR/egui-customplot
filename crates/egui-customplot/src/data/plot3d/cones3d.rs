@@ -15,6 +15,7 @@ pub struct Cone3DItem {
 /// Host-owned 3D cone vector field (`coneplot`, `ML-076`).
 #[derive(Clone, Debug)]
 pub struct ConePlot3DData {
+    pub(crate) version: u64,
     mesh: Option<TriMesh3DData>,
     cones: Arc<[Cone3DItem]>,
     extents: CachedExtents3D,
@@ -40,6 +41,7 @@ impl ConePlot3DData {
         }
         if orig.is_empty() {
             return Ok(Self {
+                version: crate::data::points::next_version(),
                 mesh: None,
                 cones: Arc::from([]),
                 extents: CachedExtents3D::default(),
@@ -130,6 +132,7 @@ impl ConePlot3DData {
             })
             .flatten();
         Ok(Self {
+            version: crate::data::points::next_version(),
             mesh,
             cones: Arc::from(cones),
             extents,

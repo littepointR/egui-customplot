@@ -9,7 +9,7 @@ use egui_wgpu::{Callback, wgpu};
 
 use super::{
     WgpuPlotConfig,
-    resources::{MAX_WAVE_COLUMNS, WgpuHostTag, lock_versions},
+    resources::{MAX_WAVE_COLUMNS, SampleSource, WgpuHostTag, lock_versions},
     waveform_callback::{WaveUpload, WaveformCallback},
 };
 use crate::{
@@ -30,7 +30,7 @@ pub(super) struct WaveUniforms {
 pub(super) struct WaveDrawSlot {
     pub(super) uniform_buffer: wgpu::Buffer,
     pub(super) reduced_buffer: wgpu::Buffer,
-    pub(super) compute_bind_group: Option<(u64, wgpu::BindGroup)>,
+    pub(super) compute_bind_group: Option<(SampleSource, wgpu::BindGroup)>,
     pub(super) render_bind_group: wgpu::BindGroup,
     pub(super) segment_count: u32,
     pub(super) columns: u32,
@@ -171,7 +171,7 @@ pub(super) fn try_paint_waveform(
     let max_allowed = tag
         .max_binding_bytes
         .min(tag.budget_bytes.load(std::sync::atomic::Ordering::Relaxed));
-    if wave.len() < 2 || total_bytes > max_allowed {
+    if wave.len() < 2 || total_bytes.max(16) > max_allowed {
         return false;
     }
     let bounds = transform.bounds();
@@ -234,8 +234,9 @@ pub(super) fn try_paint_waveform(
     let min_wgs = (visible_count / 32_768).clamp(1, 256) as u32;
     let columns = (wave_px_cols as u32).max(min_wgs).min(plot_cols).max(1);
 
+    let source_id = SampleSource::Waveform(wave.source_id());
     let committed = lock_versions(&tag.committed_versions)
-        .get(&wave.source_id())
+        .get(&source_id)
         .copied();
     let (upload, uploaded_bytes) = if committed == Some(wave.samples_version()) {
         (WaveUpload::None, 0)
@@ -269,7 +270,7 @@ pub(super) fn try_paint_waveform(
         clip,
         WaveformCallback {
             draw_key,
-            source_id: wave.source_id(),
+            source_id,
             samples_version: wave.samples_version(),
             total_bytes,
             upload,

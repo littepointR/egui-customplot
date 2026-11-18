@@ -7,6 +7,7 @@ use super::{Stream3DOptions, Streamline3DData, Surface3DData, VectorField3D, uni
 /// Host-owned curl-twisted stream ribbons (`streamribbon`, `ML-074`).
 #[derive(Clone, Debug)]
 pub struct StreamRibbon3DData {
+    pub(crate) version: u64,
     strips: Arc<[Surface3DData]>,
     twists_rad: Arc<[f64]>,
     scalar_range: Option<[f64; 2]>,
@@ -83,6 +84,7 @@ impl StreamRibbon3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             strips: Arc::from(strips),
             twists_rad: Arc::from(twists),
             scalar_range: sl.speed_range(),
@@ -121,6 +123,7 @@ impl StreamRibbon3DData {
 /// Host-owned divergence-scaled cylindrical stream tubes (`streamtube`, `ML-075`).
 #[derive(Clone, Debug)]
 pub struct StreamTube3DData {
+    pub(crate) version: u64,
     tubes: Arc<[Surface3DData]>,
     scalar_range: Option<[f64; 2]>,
 }
@@ -201,6 +204,7 @@ impl StreamTube3DData {
             }
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             tubes: Arc::from(tubes),
             scalar_range: sl.speed_range(),
         })

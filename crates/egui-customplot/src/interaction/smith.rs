@@ -1,3 +1,4 @@
+use super::view_gesture::ViewGesture;
 use std::collections::HashSet;
 
 use egui::{Id, Pos2, Rect, Response, Ui, ViewportId};
@@ -10,7 +11,9 @@ struct SmithFrameGuard {
     viewport: ViewportId,
     id: Id,
     frame_nr: u64,
-    navigated: bool,
+    gesture: Option<ViewGesture>,
+    initial_center: [f64; 2],
+    initial_span: f64,
     legend_toggled: HashSet<usize>,
 }
 
@@ -69,7 +72,9 @@ impl SmithPlotState {
                 viewport,
                 id,
                 frame_nr,
-                navigated: false,
+                gesture: None,
+                initial_center: self.center_gamma,
+                initial_span: self.half_span,
                 legend_toggled: HashSet::new(),
             });
         }
@@ -79,52 +84,28 @@ impl SmithPlotState {
         &mut self,
         ui: &Ui,
         response: &Response,
-        transform: SmithTransform,
-        allow_zoom: bool,
+        plot_area: egui::Rect,
+        allow_scroll: bool,
     ) -> bool {
         let Some(guard) = self.frame.as_mut() else {
             return false;
         };
-        if guard.navigated {
+        let Some(gesture) = guard
+            .gesture
+            .or_else(|| ViewGesture::read(ui, response, allow_scroll))
+        else {
             return false;
-        }
-        if response.double_clicked()
-            || (response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Home)))
-        {
-            self.center_gamma = [0.0, 0.0];
-            self.half_span = 1.08;
-            guard.navigated = true;
-            return true;
-        }
-        if response.dragged_by(egui::PointerButton::Primary) {
-            let delta = response.drag_delta();
-            if delta.length_sq() > 0.0 {
-                let (c, s) = transform.pan(delta);
-                self.center_gamma = c;
-                self.half_span = s;
-                guard.navigated = true;
-                return true;
+        };
+        guard.gesture = Some(gesture);
+        let transform = SmithTransform::new(plot_area, guard.initial_center, guard.initial_span);
+        (self.center_gamma, self.half_span) = match gesture {
+            ViewGesture::Reset => ([0.0, 0.0], 1.08),
+            ViewGesture::Drag(delta) => transform.pan(delta),
+            ViewGesture::Scroll { anchor, delta } => {
+                transform.zoom_at(anchor, (-f64::from(delta) * 0.0025).exp().clamp(0.5, 2.0))
             }
-        }
-        if allow_zoom && let Some(pos) = response.hover_pos() {
-            let scroll = ui.input_mut(|i| {
-                if i.modifiers != egui::Modifiers::NONE {
-                    return 0.0;
-                }
-                let d = i.smooth_scroll_delta.y;
-                i.smooth_scroll_delta.y = 0.0;
-                d
-            });
-            if scroll != 0.0 {
-                let factor = (-f64::from(scroll) * 0.0025).exp().clamp(0.5, 2.0);
-                let (c, s) = transform.zoom_at(pos, factor);
-                self.center_gamma = c;
-                self.half_span = s;
-                guard.navigated = true;
-                return true;
-            }
-        }
-        false
+        };
+        true
     }
 
     pub(crate) fn toggle_trace(&mut self, idx: usize) -> bool {

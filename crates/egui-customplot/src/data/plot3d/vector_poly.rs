@@ -29,6 +29,7 @@ impl Quiver3DArrow {
 /// Immutable host-owned 3D vector field (`quiver3`, `ML-057`).
 #[derive(Clone, Debug)]
 pub struct Quiver3DData {
+    pub(crate) version: u64,
     arrows: Arc<[Quiver3DArrow]>,
     scale_factor: f64,
     extents: CachedExtents3D,
@@ -107,6 +108,7 @@ impl Quiver3DData {
             }
         }
         Self {
+            version: crate::data::points::next_version(),
             arrows,
             scale_factor,
             extents,
@@ -148,6 +150,7 @@ pub struct Polygon3D {
 /// Immutable host-owned 3D filled polygon collection (`fill3`, `EX-003`).
 #[derive(Clone, Debug)]
 pub struct Polygon3DData {
+    pub(crate) version: u64,
     polygons: Arc<[Polygon3D]>,
     extents: CachedExtents3D,
 }
@@ -198,6 +201,7 @@ impl Polygon3DData {
             });
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             polygons: Arc::from(out),
             extents,
         })

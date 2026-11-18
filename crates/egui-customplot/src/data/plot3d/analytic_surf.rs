@@ -10,6 +10,7 @@ use super::{CachedExtents3D, Plot3DError, Surface3DData};
 /// Multi-strip 3D ribbon plot dataset (`ribbon`, `ML-062`).
 #[derive(Clone, Debug)]
 pub struct Ribbon3DData {
+    pub(crate) version: u64,
     strips: Arc<[Surface3DData]>,
     extents: CachedExtents3D,
 }
@@ -57,6 +58,7 @@ impl Ribbon3DData {
             strips.push(surf);
         }
         Ok(Self {
+            version: crate::data::points::next_version(),
             strips: Arc::from(strips),
             extents,
         })

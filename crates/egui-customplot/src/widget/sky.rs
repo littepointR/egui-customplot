@@ -172,8 +172,11 @@ impl<'a> SkyPlot<'a> {
         }
         let outer = allocate_plot(ui, self.height);
         let style = resolve_plot_style(ui, self.theme.as_deref(), self.inherited_style, self.style);
-        let group_count = group_count(self.data);
-        let legend_count = if self.show_legend { group_count } else { 0 };
+        let legend_count = if self.show_legend {
+            self.data.legend_groups().len()
+        } else {
+            0
+        };
         let layout = compute_polar_layout(outer, !self.title.is_empty(), legend_count, None);
         let id = ui.make_persistent_id(self.id_salt);
         state.begin_frame(ui, id);
@@ -217,15 +220,7 @@ impl<'a> SkyPlot<'a> {
         }
 
         let legend_entries = layout.legend_rect.map_or_else(Vec::new, |rect| {
-            show_sky_legend(
-                ui,
-                state,
-                self.data,
-                group_count,
-                rect,
-                id.with("legend"),
-                &style,
-            )
+            show_sky_legend(ui, state, self.data, rect, id.with("legend"), &style)
         });
 
         let pointer = response
@@ -285,17 +280,4 @@ impl<'a> SkyPlot<'a> {
             legend_entries,
         }
     }
-}
-
-fn group_count(data: &SkyPlotData) -> usize {
-    let named = data.group_names().len();
-    let max_sat = data
-        .satellites()
-        .iter()
-        .map(|s| s.group + 1)
-        .max()
-        .unwrap_or(0);
-    let max_trk = data.tracks().iter().map(|t| t.group + 1).max().unwrap_or(0);
-    let count = named.max(max_sat).max(max_trk);
-    if count <= 1 && named == 0 { 0 } else { count }
 }

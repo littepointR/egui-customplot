@@ -1,3 +1,4 @@
+use super::view_gesture::ViewGesture;
 use egui::{Id, Pos2, Response, Ui, ViewportId};
 
 use crate::{GeoGlobeData, GeoGlobeTransform};
@@ -8,7 +9,10 @@ struct GlobeFrameGuard {
     viewport: ViewportId,
     id: Id,
     frame_nr: u64,
-    navigated: bool,
+    gesture: Option<ViewGesture>,
+    initial_lat: f64,
+    initial_lon: f64,
+    initial_zoom: f64,
 }
 
 /// Application-owned orbit/zoom view state for [`crate::GeoGlobePlot`] (`EXT-25`).
@@ -64,7 +68,10 @@ impl GeoGlobeState {
                 viewport,
                 id,
                 frame_nr,
-                navigated: false,
+                gesture: None,
+                initial_lat: self.center_lat_deg,
+                initial_lon: self.center_lon_deg,
+                initial_zoom: self.zoom,
             });
         }
     }
@@ -73,51 +80,41 @@ impl GeoGlobeState {
         &mut self,
         ui: &Ui,
         response: &Response,
-        transform: GeoGlobeTransform,
-        allow_scroll_zoom: bool,
+        plot_area: egui::Rect,
+        allow_scroll: bool,
     ) -> bool {
         let Some(guard) = self.frame.as_mut() else {
             return false;
         };
-        if guard.navigated {
+        let Some(gesture) = guard
+            .gesture
+            .or_else(|| ViewGesture::read(ui, response, allow_scroll))
+        else {
             return false;
-        }
-        if response.double_clicked()
-            || (response.has_focus() && ui.input(|i| i.key_pressed(egui::Key::Home)))
-        {
-            self.center_lat_deg = 25.0;
-            self.center_lon_deg = 105.0;
-            self.zoom = 1.0;
-            guard.navigated = true;
-            return true;
-        }
-        if response.dragged_by(egui::PointerButton::Primary) {
-            let d = response.drag_delta();
-            if d.length_sq() > 0.0 {
-                let (lat, lon) = transform.orbit(d);
-                self.center_lat_deg = lat;
-                self.center_lon_deg = lon;
-                guard.navigated = true;
-                return true;
+        };
+        guard.gesture = Some(gesture);
+        match gesture {
+            ViewGesture::Reset => {
+                self.center_lat_deg = 25.0;
+                self.center_lon_deg = 105.0;
+                self.zoom = 1.0;
+            }
+            ViewGesture::Drag(delta) => {
+                let transform = GeoGlobeTransform::new(
+                    plot_area,
+                    guard.initial_lat,
+                    guard.initial_lon,
+                    guard.initial_zoom,
+                    1.0,
+                );
+                (self.center_lat_deg, self.center_lon_deg) = transform.orbit(delta);
+            }
+            ViewGesture::Scroll { delta, .. } => {
+                let factor = (f64::from(delta) * 0.0025).exp().clamp(0.5, 2.0);
+                self.zoom = (guard.initial_zoom * factor).clamp(0.4, 8.0);
             }
         }
-        if allow_scroll_zoom && response.hovered() {
-            let scroll = ui.input_mut(|i| {
-                if i.modifiers != egui::Modifiers::NONE {
-                    return 0.0;
-                }
-                let d = i.smooth_scroll_delta.y;
-                i.smooth_scroll_delta.y = 0.0;
-                d
-            });
-            if scroll != 0.0 {
-                let factor = (f64::from(scroll) * 0.0025).exp().clamp(0.5, 2.0);
-                self.zoom = (self.zoom * factor).clamp(0.4, 8.0);
-                guard.navigated = true;
-                return true;
-            }
-        }
-        false
+        true
     }
 }
 

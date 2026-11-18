@@ -23,6 +23,7 @@ pub enum SlicePlane3D {
 /// Host-owned volumetric slice surfaces (`slice`, `ML-077`).
 #[derive(Clone, Debug)]
 pub struct VolumeSliceData {
+    pub(crate) version: u64,
     slices: Arc<[Surface3DData]>,
     scalar_range: Option<[f64; 2]>,
 }
@@ -90,6 +91,7 @@ impl VolumeSliceData {
             },
         );
         Ok(Self {
+            version: crate::data::points::next_version(),
             slices: Arc::from(slices),
             scalar_range,
         })

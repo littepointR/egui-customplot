@@ -153,6 +153,7 @@ pub(crate) fn union_bounds3(
 /// Immutable host-owned 3D polyline/scatter/stem points (`plot3` / `scatter3`).
 #[derive(Clone, Debug)]
 pub struct Point3DData {
+    pub(crate) version: u64,
     points: Arc<[Point3D]>,
     colors: Option<Arc<[egui::Color32]>>,
     radii: Option<Arc<[f32]>>,
@@ -178,6 +179,7 @@ impl Point3DData {
             extents.push_point(p);
         }
         Self {
+            version: crate::data::points::next_version(),
             points,
             colors: None,
             radii: None,
@@ -214,6 +216,7 @@ impl Point3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.colors = Some(colors);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -223,6 +226,7 @@ impl Point3DData {
             return Err(Plot3DError::LengthMismatch);
         }
         self.radii = Some(radii);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 
@@ -240,6 +244,7 @@ impl Point3DData {
         }
         self.scalars = Some(Arc::from(scalars));
         self.scalar_range = (lo <= hi).then_some([lo, hi]);
+        self.version = crate::data::points::next_version();
         Ok(self)
     }
 

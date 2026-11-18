@@ -150,7 +150,6 @@ pub(crate) fn show_sky_legend(
     ui: &mut Ui,
     state: &mut SkyPlotState,
     data: &SkyPlotData,
-    group_count: usize,
     rect: Rect,
     legend_id: Id,
     style: &ResolvedPlotStyle<'_>,
@@ -169,13 +168,13 @@ pub(crate) fn show_sky_legend(
         .inner_margin(egui::Margin::symmetric(6, 4))
         .show(&mut child, |ui| {
             ui.set_max_width((rect.width() - 16.0).max(1.0));
-            for g in 0..group_count {
+            for &g in data.legend_groups() {
                 let name = data
                     .group_names()
                     .get(g)
                     .filter(|s| !s.is_empty())
                     .cloned()
-                    .unwrap_or_else(|| format!("Group {}", g + 1));
+                    .unwrap_or_else(|| format!("Group {}", g as u128 + 1));
                 let visible = state.group_visible(g);
                 let c = style.resolve_series(g, Default::default()).stroke.color;
                 let resp = ui

@@ -117,3 +117,11 @@ Stage 11 完成全量 133 项（82 ML + 35 EX + 16 LG）逐行证据溯源补齐
   - **版本与发布配置**：将 [Cargo.toml](../Cargo.toml) 工作区版本从 `0.1.0-dev` 升至 `0.1.0` 并移除 `egui-customplot` 的 `publish = false` 限制；为 [crates/egui-customplot/Cargo.toml](../crates/egui-customplot/Cargo.toml) 补充 `documentation = "https://docs.rs/egui-customplot"` 与 `exclude = ["tests/"]`（排除依赖工作区根路径的集成测试，`docs/`、`src/`、`examples/`、`benches/` 与 `README.md` 保留打包）；[examples/demo/Cargo.toml](../examples/demo/Cargo.toml) 保持 `publish = false`。同步更新 [stage11_readiness_audit.rs](../crates/egui-customplot/tests/stage11_readiness_audit.rs)、[AGENTS.md](../AGENTS.md)、[CONTRIBUTING.md](../CONTRIBUTING.md)、[CHANGELOG.md](../CHANGELOG.md) 与 [SECURITY.md](../SECURITY.md)。
   - **README 精简与工作流补充**：从 [README.md](../README.md) 与 [README.zh-CN.md](../README.zh-CN.md) 移除 demo 多国语言相关说明并更新为 `egui-customplot = "0.1.0"`；在 [ci.yml](../.github/workflows/ci.yml) 增加 `cargo publish -p egui-customplot --dry-run --locked` 校验，并新增 [publish.yml](../.github/workflows/publish.yml) 支持标签发布或手动触发。
   - **验证门禁**：本地完成 `cargo fmt --all -- --check`、`cargo check -p egui-customplot --no-default-features --locked --offline`、`cargo doc`（`--no-default-features` 与 `--all-features`）、`cargo clippy --workspace --all-targets --all-features --locked -- -D warnings`、`cargo test --workspace --locked --offline`、`cargo test --workspace --all-features --locked --offline` 与 `cargo package -p egui-customplot --locked --offline` 打包验证，随后在 GitHub Actions 验证线上 `--dry-run`。
+
+- **2026-11-18 全仓审查修复与发布包复验**
+  - 点云八叉树按节点与当前数据范围的交集执行投影剔除，绘制和拾取共用裁剪结果。软件 Z-buffer 按数据快照版本、图层样式、色图、参考平面和文字内容判断缓存是否有效，命中时恢复对应的渲染计数。新增用例对比热缓存与冷启动的输出颜色。
+  - WGPU 绘制槽按视口、图表和图层区分。散点上传缓存区分两轴的线性和对数编码，波形保留 `Exact` / `Visible` 的采样语义，淘汰样本缓冲时同时释放引用它的计算绑定组。
+  - 极点稳定性在显示聚类前逐点判定。传递函数保留非零系数，并在复数除法中缩放分母。根轨迹对非零纯延迟返回 `ControlError::InvalidPolynomial`。测试覆盖离散和连续稳定边界，以及系数同时缩放 `1e-250` 至 `1e250` 的一阶系统。
+  - Sky 图例按数据中使用的组号和显式命名的组生成，覆盖 `usize::MAX`。Smith 图滚轮缩放和地球仪拖拽在 egui 重排时按最终布局重算，测试核对了缩放锚点和最终旋转角。
+  - 两份许可证随 crate 分发。CI 增加独立库无默认特性测试，并解包逐字节比对两份许可证。
+  - Windows 本地 `--locked --offline` 复验：独立库无默认特性 330 项通过；工作区默认和全特性各 403 项通过，各自默认跳过 1 项原生 GPU 测试；在 RX 7800 XT / DX12 上显式运行 WGPU 专项 3 项全部通过，包括四个图表的离屏像素回读。`cargo fmt --all -- --check`、全目标全特性 Clippy（`-D warnings`）、全特性文档、Release demo 构建及 `cargo package` 验证均通过。已从最终 `.crate` 读取并逐字节核对 MIT 与 Apache 许可证。

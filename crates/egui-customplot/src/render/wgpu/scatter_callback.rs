@@ -4,13 +4,13 @@ use egui::Rect;
 use egui_wgpu::{CallbackResources, CallbackTrait, ScreenDescriptor, wgpu};
 
 use super::{
-    resources::{MAX_DRAW_SLOTS, WgpuPlotResources},
+    resources::{MAX_DRAW_SLOTS, SampleSource, WgpuPlotResources},
     scatter_pipeline::{GpuScatterInstance, ScatterDrawSlot, ScatterUniforms},
 };
 
 pub(super) struct ScatterCallback {
     pub(super) draw_key: u64,
-    pub(super) source_id: u64,
+    pub(super) source_id: SampleSource,
     pub(super) version: u64,
     pub(super) total_bytes: usize,
     pub(super) upload: Option<Arc<[GpuScatterInstance]>>,

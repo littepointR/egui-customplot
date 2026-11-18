@@ -25,6 +25,7 @@ pub struct PoleZeroData {
     zeros: Arc<[ComplexRoot]>,
     poles: Arc<[ComplexRoot]>,
     discrete: bool,
+    stable: bool,
 }
 
 impl PoleZeroData {
@@ -54,6 +55,13 @@ impl PoleZeroData {
             zeros: cluster_roots(zeros, tol).into(),
             poles: cluster_roots(poles, tol).into(),
             discrete,
+            stable: poles.iter().all(|&[re, im]| {
+                if discrete {
+                    re.hypot(im) < 1.0
+                } else {
+                    re < 0.0
+                }
+            }),
         })
     }
 
@@ -86,11 +94,7 @@ impl PoleZeroData {
         &self.poles
     }
     pub fn is_causal_stable(&self) -> bool {
-        if self.discrete {
-            self.poles.iter().all(|p| p.magnitude() < 1.0 - 1e-9)
-        } else {
-            self.poles.iter().all(|p| p.re < -1e-9)
-        }
+        self.stable
     }
     pub fn sample_bytes(&self) -> usize {
         std::mem::size_of_val(&*self.zeros) + std::mem::size_of_val(&*self.poles)
